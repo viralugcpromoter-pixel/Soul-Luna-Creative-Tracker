@@ -590,12 +590,9 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
   const manualName = document.getElementById('f-manual-name').value.trim();
   const statusEl = document.getElementById('submit-status');
 
-  const adName = pickedAd ? pickedAd.name : manualName;
-  if(!conceptCreator || !adName || !by){
-    statusEl.textContent = 'Fill in concept creator, a working title/ad, and your name.';
-    statusEl.className = 'status-msg err';
-    return;
-  }
+  const adName = (pickedAd ? pickedAd.name : manualName) || `Untitled — ${new Date().toLocaleDateString()}`;
+  const finalConceptCreator = conceptCreator || 'Unassigned';
+  const finalBy = by || conceptCreator || 'Unknown';
 
   const payload = {
     ad_name: adName,
@@ -605,9 +602,9 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     script,
     concept_link: conceptLink,
     tags,
-    concept_creator: conceptCreator,
+    concept_creator: finalConceptCreator,
     editor,
-    submitted_by: by
+    submitted_by: finalBy
   };
 
   try{
@@ -664,17 +661,12 @@ async function renderEntries(){
         const cc = div.querySelector('.ie-cc').value.trim();
         const by = div.querySelector('.ie-by').value.trim();
         const name = div.querySelector('.ie-name').value.trim();
-        if(!cc || !by || !name){
-          ieStatus.textContent = 'Concept creator, working title, and your name are required.';
-          ieStatus.className = 'status-msg ie-status err';
-          return;
-        }
         try{
           await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
             id: e.id,
-            concept_creator: cc,
-            ad_name: name,
-            submitted_by: by,
+            concept_creator: cc || 'Unassigned',
+            ad_name: name || e.ad_name || `Untitled — ${new Date().toLocaleDateString()}`,
+            submitted_by: by || cc || e.submitted_by || 'Unknown',
             page: div.querySelector('.ie-page').value || null,
             date_launched: div.querySelector('.ie-date').value || null,
             editor: div.querySelector('.ie-editor').value.trim(),
