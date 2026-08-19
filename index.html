@@ -4,6 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Cosmetic Cocoon — Creative Tracker</title>
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<meta name="theme-color" content="#2A2420" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Creative Tracker" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -49,6 +54,16 @@
     --emphasis-bg:#23262B; --emphasis-text:#FFFFFF;
     --shadow:0 1px 2px rgba(35,38,43,.05), 0 8px 20px rgba(35,38,43,.06);
   }
+  [data-theme="purple"]{
+    --bg:#F6F4FA; --surface:#FFFFFF; --ink:#2C2438; --ink-soft:#6B5F7A;
+    --accent:#7B5EA7; --accent-soft:#E8E0F2;
+    --winner:#4B7A5D; --winner-soft:#DFEAE3;
+    --pending:#B08A3C; --pending-soft:#F1E6CD;
+    --not-winner:#8A7F94; --not-winner-soft:#E9E4EE;
+    --line:#E3DCEC; --input-bg:#FFFFFF;
+    --emphasis-bg:#2C2438; --emphasis-text:#FFFFFF;
+    --shadow:0 1px 2px rgba(44,36,56,.05), 0 8px 20px rgba(44,36,56,.07);
+  }
   [data-theme="charcoal"]{
     --bg:#1B1A18; --surface:#242220; --ink:#F2ECE6; --ink-soft:#A79E93;
     --accent:#D0A15E; --accent-soft:#3A3226;
@@ -72,7 +87,8 @@
   .brand .eyebrow{font-family:'Fraunces',serif;font-style:italic;font-size:13px;letter-spacing:0.04em;color:var(--accent);font-weight:500;}
   h1{font-family:'Fraunces',serif;font-weight:600;font-size:33px;margin:2px 0 0;letter-spacing:-0.02em;line-height:1.05;}
   .header-controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
-  .theme-switcher{display:flex;gap:7px;align-items:center;}
+  .theme-switcher{display:flex;gap:7px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 10px;box-shadow:var(--shadow);}
+  .theme-switcher-label{font-size:10.5px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-right:2px;}
   .swatch{width:18px;height:18px;border-radius:50%;background:var(--sw);border:2px solid transparent;padding:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);transition:transform .12s ease, border-color .12s ease;}
   .swatch:hover{transform:scale(1.18);}
   .swatch.active{border-color:var(--ink);}
@@ -142,6 +158,21 @@
   .entry-script{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;white-space:pre-wrap;margin-top:6px;max-height:120px;overflow-y:auto;color:var(--ink);}
   .perf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;}
   @media (max-width:560px){.perf-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:520px){
+    .wrap{padding:18px 14px 60px;}
+    h1{font-size:24px;}
+    header.top{gap:12px;padding-bottom:16px;margin-bottom:18px;}
+    .header-controls{align-items:flex-start;width:100%;}
+    .tabs{width:100%;justify-content:space-between;}
+    .tab-btn{padding:8px 10px;font-size:12px;flex:1;text-align:center;}
+    .theme-switcher{align-self:flex-end;}
+    .filter-bar > *{flex:1 1 100% !important;width:100% !important;}
+    .entry-actions{gap:6px;}
+    .entry-actions .btn-sm{flex:1 1 46%;text-align:center;padding:9px 8px;font-size:12px;}
+    .btn-danger-text{flex:1 1 100%;margin-left:0 !important;text-align:center;padding-top:4px;}
+    .card{padding:18px;}
+    .entry{padding:14px;}
+  }
   .perf-cell{background:var(--bg);border-radius:8px;padding:8px 10px;}
   .perf-cell .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
   .perf-cell .v{font-family:'IBM Plex Mono',monospace;font-size:14px;margin-top:2px;font-variant-numeric:tabular-nums;}
@@ -178,6 +209,12 @@
   .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
   .login-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;max-width:340px;width:100%;text-align:center;}
   .login-card input{margin-top:4px;}
+  .announcement-banner{display:flex;align-items:flex-start;gap:12px;background:var(--pending-soft);border:1px solid var(--pending);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .ann-text{font-weight:600;font-size:13.5px;color:var(--ink);}
+  .ann-meta{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .ann-close{background:none;border:none;color:var(--ink-soft);font-weight:700;cursor:pointer;font-size:14px;padding:0;flex-shrink:0;}
+  .ann-post-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .ann-post-row input{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;background:var(--input-bg);color:var(--ink);font-family:'Inter',sans-serif;}
 </style>
 </head>
 <body>
@@ -194,6 +231,19 @@
 
 <div class="wrap">
 
+  <div id="announcement-banner" class="announcement-banner" style="display:none;">
+    <div style="flex:1;">
+      <div class="ann-text" id="ann-text"></div>
+      <div class="ann-meta" id="ann-meta"></div>
+    </div>
+    <button class="ann-close" id="ann-dismiss" type="button">✕</button>
+  </div>
+  <div class="ann-post-row">
+    <input type="text" id="ann-input" placeholder="📢 Post an announcement for the team…" />
+    <input type="text" id="ann-by" placeholder="Your name" style="max-width:110px;" />
+    <button class="btn btn-ghost btn-sm" id="ann-post-btn" type="button">Post</button>
+  </div>
+
   <header class="top">
     <div class="brand">
       <span class="eyebrow">Cosmetic Cocoon</span>
@@ -207,10 +257,12 @@
         <button class="tab-btn" data-tab="assets">Assets</button>
       </div>
       <div class="theme-switcher" title="Color theme">
+        <span class="theme-switcher-label">Theme</span>
         <button class="swatch" data-theme="rose" style="--sw:#B8677A" aria-label="Rose theme"></button>
         <button class="swatch" data-theme="navy" style="--sw:#2F4C74" aria-label="Navy theme"></button>
         <button class="swatch" data-theme="emerald" style="--sw:#2F6B4F" aria-label="Emerald theme"></button>
         <button class="swatch" data-theme="slate" style="--sw:#52616F" aria-label="Slate theme"></button>
+        <button class="swatch" data-theme="purple" style="--sw:#7B5EA7" aria-label="Purple theme"></button>
         <button class="swatch" data-theme="charcoal" style="--sw:#D0A15E" aria-label="Charcoal theme"></button>
       </div>
     </div>
@@ -431,6 +483,7 @@ async function doLogin(){
       hideLogin();
       loadPages();
       loadEntries();
+      loadAnnouncement();
     }else{
       statusEl.textContent = 'Wrong password.';
     }
@@ -1047,6 +1100,38 @@ async function renderAnalytics(){
   }
 }
 
+// ---------- Announcements ----------
+async function loadAnnouncement(){
+  try{
+    const list = await api('/api/announcements');
+    const latest = list[0];
+    if(!latest) return;
+    const dismissedId = localStorage.getItem('cocoon-ann-dismissed');
+    if(dismissedId === latest.id) return;
+    document.getElementById('ann-text').textContent = latest.text;
+    document.getElementById('ann-meta').textContent = (latest.created_by||'Team') + ' · ' + new Date(latest.created_at).toLocaleString();
+    const banner = document.getElementById('announcement-banner');
+    banner.style.display = 'flex';
+    banner.dataset.id = latest.id;
+  }catch(e){}
+}
+document.getElementById('ann-dismiss').addEventListener('click', ()=>{
+  const banner = document.getElementById('announcement-banner');
+  localStorage.setItem('cocoon-ann-dismissed', banner.dataset.id||'');
+  banner.style.display = 'none';
+});
+document.getElementById('ann-post-btn').addEventListener('click', async ()=>{
+  const text = document.getElementById('ann-input').value.trim();
+  const by = document.getElementById('ann-by').value.trim();
+  if(!text) return;
+  try{
+    await api('/api/announcements', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text, created_by: by }) });
+    document.getElementById('ann-input').value = '';
+    localStorage.removeItem('cocoon-ann-dismissed');
+    loadAnnouncement();
+  }catch(e){}
+});
+
 // ---------- Assets ----------
 let assets = [];
 async function loadAssets(){
@@ -1117,6 +1202,7 @@ function escapeHtml(str){
 if(localStorage.getItem('cocoon-admin-token')){
   loadPages();
   loadEntries();
+  loadAnnouncement();
 }else{
   showLogin();
 }
