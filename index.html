@@ -191,17 +191,14 @@
 
         <div class="field full">
           <label>Ad Creative / Working Title</label>
-          <div class="row">
+          <input type="text" id="f-manual-name" placeholder="e.g. Cocoon Pico Laser — Testimonial Cut 3" />
+          <div class="hint">Type a working title now — or pull the real ad from Meta below once it's live.</div>
+          <div class="row" style="margin-top:8px;">
             <button class="btn btn-ghost btn-sm" id="btn-fetch-ads" type="button">Pull ads from Meta</button>
             <span id="fetch-ads-status" class="status-msg"></span>
           </div>
           <div id="ad-picker-result" class="ad-picker-result" style="display:none;"></div>
           <div id="picked-chip-holder"></div>
-          <button class="toggle-manual" id="btn-manual-toggle" type="button">No Meta ad yet? Type a working title</button>
-          <div id="manual-name-block" style="display:none;margin-top:8px;">
-            <input type="text" id="f-manual-name" placeholder="e.g. Cocoon Pico Laser — Testimonial Cut 3" />
-            <div class="hint">Fine to use a draft title at concept stage — pull the real ad from Meta once it's live.</div>
-          </div>
         </div>
 
         <div class="field full">
@@ -434,11 +431,6 @@ function renderPickedChip(){
   document.getElementById('clear-picked').addEventListener('click',()=>{ pickedAd=null; renderPickedChip(); });
 }
 
-document.getElementById('btn-manual-toggle').addEventListener('click',()=>{
-  const block = document.getElementById('manual-name-block');
-  block.style.display = block.style.display==='none' ? 'block' : 'none';
-});
-
 document.getElementById('btn-cancel-edit').addEventListener('click', ()=>{
   editingEntryId = null;
   resetForm();
@@ -477,7 +469,6 @@ function populateFormForEdit(entry){
   }else{
     pickedAd = null;
     document.getElementById('f-manual-name').value = entry.ad_name||'';
-    document.getElementById('manual-name-block').style.display='block';
   }
   renderPickedChip();
   document.getElementById('log-heading').textContent = 'Edit Creative';
