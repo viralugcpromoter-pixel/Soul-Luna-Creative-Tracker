@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Cosmetic Cocoon — Creative Tracker</title>
-<link rel="manifest" href="/manifest.json" />
-<link rel="apple-touch-icon" href="/icons/icon-192.png" />
-<meta name="theme-color" content="#2A2420" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>PREVIEW — Round 2 Features</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
 <meta name="apple-mobile-web-app-title" content="Creative Tracker" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,14 +55,14 @@
     --shadow:0 1px 2px rgba(35,38,43,.05), 0 8px 20px rgba(35,38,43,.06);
   }
   [data-theme="purple"]{
-    --bg:#F6F4FA; --surface:#FFFFFF; --ink:#2C2438; --ink-soft:#6B5F7A;
-    --accent:#7B5EA7; --accent-soft:#E8E0F2;
+    --bg:#F8F6FC; --surface:#FFFFFF; --ink:#241B33; --ink-soft:#6B5F80;
+    --accent:#6C4BA6; --accent-soft:#EDE6F7;
     --winner:#4B7A5D; --winner-soft:#DFEAE3;
     --pending:#B08A3C; --pending-soft:#F1E6CD;
-    --not-winner:#8A7F94; --not-winner-soft:#E9E4EE;
-    --line:#E3DCEC; --input-bg:#FFFFFF;
-    --emphasis-bg:#2C2438; --emphasis-text:#FFFFFF;
-    --shadow:0 1px 2px rgba(44,36,56,.05), 0 8px 20px rgba(44,36,56,.07);
+    --not-winner:#8A7F94; --not-winner-soft:#EDE8F2;
+    --line:#E5DEF0; --input-bg:#FFFFFF;
+    --emphasis-bg:#6C4BA6; --emphasis-text:#FFFFFF;
+    --shadow:0 1px 2px rgba(36,27,51,.06), 0 8px 20px rgba(36,27,51,.08);
   }
   [data-theme="charcoal"]{
     --bg:#1B1A18; --surface:#242220; --ink:#F2ECE6; --ink-soft:#A79E93;
@@ -154,6 +154,16 @@
   .badge.pending{background:var(--pending-soft);color:var(--pending);}
   .badge.not_winner{background:var(--not-winner-soft);color:var(--not-winner);}
   .badge.done{background:var(--winner-soft);color:var(--winner);}
+  .badge.review{background:#3A2620;color:#E08A6A;}
+  [data-theme="rose"] .badge.review, [data-theme="navy"] .badge.review, [data-theme="emerald"] .badge.review, [data-theme="slate"] .badge.review, [data-theme="purple"] .badge.review{background:#FBE8E0;color:#C05A32;}
+  .entry.needs-review{border-left-color:#C96A4A;}
+  .entry-head{cursor:pointer;}
+  .chev{display:inline-block;transition:transform .15s ease;color:var(--ink-soft);font-size:11px;margin-left:2px;}
+  .entry.open .chev{transform:rotate(90deg);}
+  .expand-body{display:none;}
+  .entry.open .expand-body{display:block;margin-top:4px;}
+  .brand-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .btn-dup{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);}
   .badge-stack{display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
   .entry-script{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;white-space:pre-wrap;margin-top:6px;max-height:120px;overflow-y:auto;color:var(--ink);}
   .perf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;}
@@ -193,56 +203,15 @@
   .pipe-step.done .pipe-label{color:var(--ink);}
   .pipe-line{width:22px;height:2px;background:var(--line);margin:0 7px;transition:background-color .2s ease;}
   .pipe-line.done{background:var(--winner);}
-  .lb-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
-  .lb-row:last-child{border-bottom:none;}
-  .lb-name{font-weight:600;}
-  .lb-stats{color:var(--ink-soft);font-size:12.5px;}
-  .history-block{margin-top:12px;}
-  .history-block summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--accent);list-style:none;}
-  .history-block summary::-webkit-details-marker{display:none;}
-  .history-block summary::before{content:'▸ ';}
-  .history-block[open] summary::before{content:'▾ ';}
-  .history-list{margin-top:8px;padding-left:2px;border-left:2px solid var(--line);}
-  .history-row{display:flex;gap:10px;padding:4px 0 4px 12px;font-size:12px;}
-  .history-time{color:var(--ink-soft);white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:11px;}
-  .history-text{color:var(--ink);}
-  .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
-  .login-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;max-width:340px;width:100%;text-align:center;}
-  .login-card input{margin-top:4px;}
-  .announcement-banner{display:flex;align-items:flex-start;gap:12px;background:var(--pending-soft);border:1px solid var(--pending);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
-  .ann-text{font-weight:600;font-size:13.5px;color:var(--ink);}
-  .ann-meta{font-size:11px;color:var(--ink-soft);margin-top:2px;}
-  .ann-close{background:none;border:none;color:var(--ink-soft);font-weight:700;cursor:pointer;font-size:14px;padding:0;flex-shrink:0;}
-  .ann-post-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
-  .ann-post-row input{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;background:var(--input-bg);color:var(--ink);font-family:'Inter',sans-serif;}
+
+  .demo-banner{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:20px;}
+  .demo-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:26px 0 8px;}
 </style>
 </head>
-<body>
-<div id="login-overlay" class="login-overlay" style="display:none;">
-  <div class="login-card">
-    <div class="eyebrow" style="font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--accent);">Cosmetic Cocoon</div>
-    <h1 style="font-family:'Fraunces',serif;font-weight:600;font-size:26px;margin:2px 0 4px;">Creative Tracker</h1>
-    <p class="hint" style="margin:0 0 16px;">Admin password required.</p>
-    <input type="password" id="login-password" placeholder="Password" />
-    <button class="btn btn-primary" id="login-submit" style="margin-top:10px;width:100%;">Enter</button>
-    <div class="status-msg err" id="login-status" style="margin-top:8px;min-height:16px;"></div>
-  </div>
-</div>
+<body data-theme="purple" style="background:var(--bg);margin:0;color:var(--ink);font-family:'Inter',sans-serif;">
+<div class="wrap" style="max-width:800px;margin:0 auto;padding:28px 20px 80px;">
 
-<div class="wrap">
-
-  <div id="announcement-banner" class="announcement-banner" style="display:none;">
-    <div style="flex:1;">
-      <div class="ann-text" id="ann-text"></div>
-      <div class="ann-meta" id="ann-meta"></div>
-    </div>
-    <button class="ann-close" id="ann-dismiss" type="button">✕</button>
-  </div>
-  <div class="ann-post-row">
-    <input type="text" id="ann-input" placeholder="📢 Post an announcement for the team…" />
-    <input type="text" id="ann-by" placeholder="Your name" style="max-width:110px;" />
-    <button class="btn btn-ghost btn-sm" id="ann-post-btn" type="button">Post</button>
-  </div>
+  <div class="demo-banner">⚡ PREVIEW — ito na yung DEFAULT look (purple theme), sample data lang. I-click-click mo, gumagana yung interactions.</div>
 
   <header class="top">
     <div class="brand">
@@ -251,961 +220,99 @@
     </div>
     <div class="header-controls">
       <div class="tabs">
-        <button class="tab-btn active" data-tab="log">Log Creative</button>
-        <button class="tab-btn" data-tab="track">Tracker</button>
-        <button class="tab-btn" data-tab="analytics">Analytics</button>
-        <button class="tab-btn" data-tab="assets">Assets</button>
+        <button class="tab-btn active">Log Creative</button>
+        <button class="tab-btn">Tracker</button>
+        <button class="tab-btn">Analytics</button>
+        <button class="tab-btn">Assets</button>
       </div>
-      <div class="theme-switcher" title="Color theme">
+      <div class="theme-switcher">
         <span class="theme-switcher-label">Theme</span>
-        <button class="swatch" data-theme="rose" style="--sw:#B8677A" aria-label="Rose theme"></button>
-        <button class="swatch" data-theme="navy" style="--sw:#2F4C74" aria-label="Navy theme"></button>
-        <button class="swatch" data-theme="emerald" style="--sw:#2F6B4F" aria-label="Emerald theme"></button>
-        <button class="swatch" data-theme="slate" style="--sw:#52616F" aria-label="Slate theme"></button>
-        <button class="swatch" data-theme="purple" style="--sw:#7B5EA7" aria-label="Purple theme"></button>
-        <button class="swatch" data-theme="charcoal" style="--sw:#D0A15E" aria-label="Charcoal theme"></button>
+        <button class="swatch active" style="--sw:#6C4BA6"></button>
+        <button class="swatch" style="--sw:#B8677A"></button>
+        <button class="swatch" style="--sw:#2F4C74"></button>
+        <button class="swatch" style="--sw:#2F6B4F"></button>
+        <button class="swatch" style="--sw:#52616F"></button>
+        <button class="swatch" style="--sw:#D0A15E"></button>
       </div>
     </div>
   </header>
 
-  <!-- LOG PANEL -->
-  <section class="panel active" id="panel-log">
-    <div class="card">
-      <div class="row" style="justify-content:space-between;margin-bottom:14px;">
-        <h2 style="font-family:'Fraunces',serif;font-size:19px;margin:0;">Log a Creative</h2>
-      </div>
-      <div class="form-grid">
-        <div class="field">
-          <label>Concept / Script Creator</label>
-          <input type="text" id="f-concept-creator" placeholder="Who wrote the script/concept" />
-        </div>
-        <div class="field">
-          <label>Assign to Editor</label>
-          <input type="text" id="f-editor" placeholder="Name of the editor this is assigned to" />
-        </div>
-
-        <div class="field full">
-          <label>Ad Creative / Working Title</label>
-          <input type="text" id="f-manual-name" placeholder="e.g. Cocoon Pico Laser — Testimonial Cut 3" />
-          <div class="hint">Type a working title now — or pull the real ad from Meta below once it's live.</div>
-          <div class="row" style="margin-top:8px;">
-            <button class="btn btn-ghost btn-sm" id="btn-fetch-ads" type="button">Pull ads from Meta</button>
-            <span id="fetch-ads-status" class="status-msg"></span>
-          </div>
-          <div id="ad-picker-result" class="ad-picker-result" style="display:none;"></div>
-          <div id="picked-chip-holder"></div>
-        </div>
-
-        <div class="field full">
-          <label>Page / Ad Account <span style="font-weight:400;text-transform:none;letter-spacing:0;">(fill in once it's ready to launch)</span></label>
-          <select id="f-page">
-            <option value="">Select page…</option>
-          </select>
-          <button class="toggle-manual" id="btn-addpage-toggle" type="button">+ Add a new page / ad account</button>
-          <div id="addpage-block" style="display:none;margin-top:8px;">
-            <div class="row">
-              <input type="text" id="f-newpage-id" placeholder="Ad account ID (e.g. act_123456789)" style="flex:1;min-width:180px;" />
-              <input type="text" id="f-newpage-label" placeholder="Label (e.g. Cosmetic Cocoon — UAE)" style="flex:1;min-width:180px;" />
-              <button class="btn btn-ghost btn-sm" id="btn-save-newpage" type="button">Add</button>
-            </div>
-            <span id="addpage-status" class="status-msg"></span>
-            <div id="custom-pages-list" style="margin-top:10px;"></div>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Date Launched</label>
-          <input type="date" id="f-date" />
-        </div>
-        <div class="field">
-          <label>Submitted By</label>
-          <input type="text" id="f-by" placeholder="Your name" />
-        </div>
-
-        <div class="field full">
-          <label>Concept (Drive link)</label>
-          <input type="text" id="f-concept" placeholder="Google Drive link to the concept/creative file" />
-        </div>
-
-        <div class="field full">
-          <label>Tags</label>
-          <div class="tag-input-box" id="f-tags-box">
-            <input type="text" class="tag-entry-input" placeholder="Type a tag, press Enter" />
-          </div>
-          <div class="hint">Optional — press Enter after each one. Angle, service, format, whatever's useful — add as many as you want.</div>
-        </div>
-
-        <div class="field full">
-          <label>Script</label>
-          <textarea id="f-script" placeholder="Paste the script, or a link to it (Drive, Doc, etc.)"></textarea>
+  <div class="demo-label">1 — Collapsed by default (i-click ang card)</div>
+  <div class="entry" id="card1" onclick="document.getElementById('card1').classList.toggle('open')">
+    <div class="entry-head">
+      <div>
+        <div class="entry-title"><span class="brand-dot" style="background:#B8677A"></span>Pico Laser Testimonial — Ate Ver. <span class="chev">▸</span></div>
+        <div class="entry-meta">Cosmetic Cocoon — Messaging · Launched 2026-08-10 · Editor: Louise</div>
+        <div class="pipeline-track">
+          <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Concept</span></div>
+          <div class="pipe-line done"></div>
+          <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Editing</span></div>
+          <div class="pipe-line done"></div>
+          <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Launched</span></div>
         </div>
       </div>
-
-      <div class="submit-row">
-        <button class="btn btn-primary" id="btn-submit" type="button">Log this creative</button>
-        <span class="status-msg" id="submit-status"></span>
+      <div class="badge-stack">
+        <span class="badge done">Edited</span>
+        <span class="badge done">Live</span>
+        <span class="badge winner">Winner</span>
       </div>
     </div>
-
-    <p class="about">Concept creator logs the idea + script first — page, Meta ad, and date can wait. Editor and ads team update the same entry later (use Edit on the Tracker card) and check off Editing done / Launched as it moves along.</p>
-  </section>
-
-  <!-- TRACKER PANEL -->
-  <section class="panel" id="panel-track">
-    <div class="filter-bar">
-      <input type="text" id="filt-search" placeholder="Search ad name or script…" style="width:200px;padding:8px 10px;font-size:13px;" />
-      <select id="filt-page">
-        <option value="">All pages</option>
-      </select>
-      <select id="filt-status">
-        <option value="">All statuses</option>
-        <option value="pending">Pending</option>
-        <option value="winner">Winner</option>
-        <option value="not_winner">Not a winner</option>
-      </select>
-      <input type="text" id="filt-tag" placeholder="Filter by tag…" style="width:150px;padding:8px 10px;font-size:13px;" />
-      <input type="text" id="filt-editor" placeholder="Filter by editor…" style="width:150px;padding:8px 10px;font-size:13px;" />
-      <span class="count-note" id="entry-count"></span>
-    </div>
-    <div id="entries-holder"></div>
-  </section>
-
-  <!-- ANALYTICS PANEL -->
-  <section class="panel" id="panel-analytics">
-    <div class="perf-grid" id="analytics-summary" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;"></div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">Winning Creatives</h3>
-      <div id="analytics-winners"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Editor</h3>
-      <div id="analytics-editor"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Concept / Script Creator</h3>
-      <div id="analytics-creator"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Tag</h3>
-      <div id="analytics-tags"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Page / Brand</h3>
-      <div id="analytics-pages"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">Launch Log — sino na-run talaga</h3>
-      <div id="analytics-launchlog"></div>
-    </div>
-    <div class="card">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">All Outputs</h3>
-      <div id="analytics-outputs"></div>
-    </div>
-  </section>
-
-  <!-- ASSETS PANEL -->
-  <section class="panel" id="panel-assets">
-    <div class="card" style="margin-bottom:16px;">
-      <h2 style="font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;">Add an Asset</h2>
-      <div class="form-grid">
-        <div class="field full">
-          <label>Title</label>
-          <input type="text" id="a-title" placeholder="e.g. Cocoon Logo Pack, UGC B-roll folder" />
-        </div>
-        <div class="field">
-          <label>Type</label>
-          <select id="a-type">
-            <option value="gdrive">Google Drive</option>
-            <option value="canva">Canva</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Added by</label>
-          <input type="text" id="a-by" placeholder="Your name" />
-        </div>
-        <div class="field full">
-          <label>Link</label>
-          <input type="text" id="a-url" placeholder="https://..." />
-        </div>
-      </div>
-      <div class="submit-row">
-        <button class="btn btn-primary" id="a-submit" type="button">Add asset</button>
-        <span class="status-msg" id="a-status"></span>
+    <div class="expand-body">
+      <div class="tag-row"><span class="tag-chip">testimonial</span><span class="tag-chip">pico laser</span></div>
+      <div class="entry-script">"Sobrang effective talaga, nawala yung dark spots ko sa loob lang ng 3 sessions..." (script preview)</div>
+      <div class="entry-actions">
+        <button class="btn btn-ghost btn-sm">Edit</button>
+        <button class="btn btn-dup btn-sm">⧉ Duplicate</button>
+        <button class="btn btn-ghost btn-sm">Undo editing</button>
+        <button class="btn btn-ghost btn-sm">Pull performance</button>
       </div>
     </div>
-    <p class="about" style="margin-top:0;margin-bottom:16px;">Shared reference library — Drive folders, Canva templates, brand assets. Everyone on the team pulls from here when shooting or editing.</p>
-    <div id="assets-holder"></div>
-  </section>
+    <div class="note" style="font-size:12px;color:var(--ink-soft);font-style:italic;margin-top:6px;">← I-click ang card. Notice: may kulay-pink na dot bago ang title (Cosmetic Cocoon brand color)</div>
+  </div>
+
+  <div class="demo-label">2 — Ibang brand, ibang dot color</div>
+  <div class="entry">
+    <div class="entry-head">
+      <div>
+        <div class="entry-title"><span class="brand-dot" style="background:#4B7A5D"></span>Scalp Treatment Hook Test C <span class="chev">▸</span></div>
+        <div class="entry-meta">Avinichi · Launched 2026-08-05 · Editor: Vince</div>
+        <div class="pipeline-track">
+          <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Concept</span></div>
+          <div class="pipe-line done"></div>
+          <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Editing</span></div>
+          <div class="pipe-line done"></div>
+          <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Launched</span></div>
+        </div>
+      </div>
+      <div class="badge-stack">
+        <span class="badge review">⚠ Needs review</span>
+        <span class="badge pending">Pending</span>
+      </div>
+    </div>
+  </div>
+  <div class="note" style="font-size:12px;color:var(--ink-soft);font-style:italic;margin-top:-8px;margin-bottom:16px;">← Berdeng dot = Avinichi. Orange "Needs review" badge kasi 14 days nang launched, walang verdict pa</div>
+
+  <div class="demo-label">3 — Duplicate in action</div>
+  <div class="entry">
+    <div class="entry-head">
+      <div>
+        <div class="entry-title"><span class="brand-dot" style="background:#2F4C74"></span>Melasma Before-After UGC <span class="chev">▸</span></div>
+        <div class="entry-meta">La Rose Cebu · Launched 2026-08-15 · Editor: Mica</div>
+      </div>
+      <span class="badge winner">Winner</span>
+    </div>
+    <div class="entry-actions" style="margin-top:12px;">
+      <button class="btn btn-dup btn-sm" onclick="alert('Sa totoong app: gagawa agad ito ng BAGONG pending entry — \'Copy of Melasma Before-After UGC\' — kopyado na ang creator, editor, tags, at script. Pipiliin mo na lang ang bagong Meta ad/date kapag ready na i-launch yung variation.')">⧉ Duplicate</button>
+    </div>
+    <div class="note" style="font-size:12px;color:var(--ink-soft);font-style:italic;margin-top:8px;">← I-click yung Duplicate button para makita ang mangyayari</div>
+  </div>
+
+  <div class="demo-label">4 — Loading state (ganito habang naglo-load)</div>
+  <div class="empty" style="text-align:center;padding:40px 20px;color:var(--ink-soft);">
+    <span class="spinner" style="width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin .7s linear infinite;"></span> Loading…
+  </div>
 
 </div>
-
-<script>
-let PAGES = {};
-let entries = [];
-let pickedAd = null; // {id, name}
-let inlineEditId = null; // entry id currently expanded for inline edit in Tracker
-let CUSTOM_PAGE_IDS = [];
-
-// ---------- API helpers ----------
-async function api(path, opts){
-  opts = opts || {};
-  opts.headers = { ...(opts.headers||{}), 'x-admin-token': localStorage.getItem('cocoon-admin-token')||'' };
-  const r = await fetch(path, opts);
-  if(r.status === 401){
-    localStorage.removeItem('cocoon-admin-token');
-    showLogin();
-    throw new Error('Unauthorized');
-  }
-  const data = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.error || ('Request failed: '+r.status));
-  return data;
-}
-
-function showLogin(){
-  document.getElementById('login-overlay').style.display = 'flex';
-}
-function hideLogin(){
-  document.getElementById('login-overlay').style.display = 'none';
-}
-
-document.getElementById('login-submit').addEventListener('click', doLogin);
-document.getElementById('login-password').addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') doLogin(); });
-
-async function doLogin(){
-  const pw = document.getElementById('login-password').value;
-  const statusEl = document.getElementById('login-status');
-  statusEl.textContent = '';
-  try{
-    const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password:pw}) });
-    if(r.ok){
-      localStorage.setItem('cocoon-admin-token', pw);
-      hideLogin();
-      loadPages();
-      loadEntries();
-      loadAnnouncement();
-    }else{
-      statusEl.textContent = 'Wrong password.';
-    }
-  }catch(e){
-    statusEl.textContent = "Couldn't reach server — try again.";
-  }
-}
-
-async function loadEntries(){
-  try{ entries = await api('/api/entries'); }
-  catch(e){ entries = []; }
-}
-
-async function loadPages(){
-  try{
-    const res = await api('/api/pages');
-    PAGES = res.pages || {};
-    CUSTOM_PAGE_IDS = res.customIds || [];
-  }catch(e){ PAGES = {}; CUSTOM_PAGE_IDS = []; }
-  renderPageOptions();
-  renderCustomPagesList();
-}
-async function saveCustomPage(id, label){
-  await api('/api/pages', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id,label}) });
-  await loadPages();
-}
-async function removeCustomPage(id){
-  if(!confirm('Remove this page from the list?')) return;
-  try{
-    await api('/api/pages?id='+encodeURIComponent(id), { method:'DELETE' });
-    await loadPages();
-  }catch(e){}
-}
-function renderCustomPagesList(){
-  const holder = document.getElementById('custom-pages-list');
-  if(CUSTOM_PAGE_IDS.length===0){ holder.innerHTML=''; return; }
-  holder.innerHTML = `<div class="hint" style="margin-bottom:6px;">Your added pages:</div>` + CUSTOM_PAGE_IDS.map(id=>`
-    <div class="tag-chip-removable" style="margin:0 6px 6px 0;">${escapeHtml(PAGES[id]||id)} <button type="button" data-remove-page="${escapeHtml(id)}">✕</button></div>
-  `).join('');
-  holder.querySelectorAll('[data-remove-page]').forEach(btn=>{
-    btn.addEventListener('click',()=>removeCustomPage(btn.dataset.removePage));
-  });
-}
-function renderPageOptions(){
-  const logSel = document.getElementById('f-page');
-  const filtSel = document.getElementById('filt-page');
-  const logCurrent = logSel.value;
-  const filtCurrent = filtSel.value;
-  logSel.innerHTML = '<option value="">Select page…</option>';
-  filtSel.innerHTML = '<option value="">All pages</option>';
-  Object.entries(PAGES).forEach(([id,label])=>{
-    logSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`);
-    filtSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`);
-  });
-  if(PAGES[logCurrent]) logSel.value = logCurrent;
-  if(PAGES[filtCurrent]) filtSel.value = filtCurrent;
-}
-
-document.getElementById('btn-addpage-toggle').addEventListener('click', ()=>{
-  const block = document.getElementById('addpage-block');
-  block.style.display = block.style.display==='none' ? 'block' : 'none';
-});
-document.getElementById('btn-save-newpage').addEventListener('click', async ()=>{
-  const idEl = document.getElementById('f-newpage-id');
-  const labelEl = document.getElementById('f-newpage-label');
-  const statusEl = document.getElementById('addpage-status');
-  const id = idEl.value.trim();
-  const label = labelEl.value.trim();
-  if(!id || !label){
-    statusEl.textContent = 'Fill in both the account ID and a label.';
-    statusEl.className = 'status-msg err';
-    return;
-  }
-  try{
-    await saveCustomPage(id, label);
-    document.getElementById('f-page').value = id;
-    idEl.value=''; labelEl.value='';
-    statusEl.textContent = 'Added ✓ — selected below.';
-    statusEl.className = 'status-msg ok';
-  }catch(e){
-    statusEl.textContent = "Couldn't save — try again.";
-    statusEl.className = 'status-msg err';
-  }
-});
-
-// ---------- theme (localStorage — this is a real deployed site, not a Claude artifact) ----------
-function applyTheme(name){
-  document.documentElement.setAttribute('data-theme', name);
-  document.querySelectorAll('.swatch').forEach(s=>{
-    s.classList.toggle('active', s.dataset.theme===name);
-  });
-}
-document.querySelectorAll('.swatch').forEach(s=>{
-  s.addEventListener('click', ()=>{
-    applyTheme(s.dataset.theme);
-    try{ localStorage.setItem('cocoon-theme', s.dataset.theme); }catch(e){}
-  });
-});
-applyTheme((function(){ try{ return localStorage.getItem('cocoon-theme') || 'rose'; }catch(e){ return 'rose'; } })());
-
-// ---------- tabs ----------
-document.querySelectorAll('.tab-btn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
-    if(btn.dataset.tab==='track') renderEntries();
-    if(btn.dataset.tab==='analytics') renderAnalytics();
-    if(btn.dataset.tab==='assets') renderAssets();
-  });
-});
-
-// ---------- Pull ads from Meta (Log tab) ----------
-document.getElementById('btn-fetch-ads').addEventListener('click', async ()=>{
-  const page = document.getElementById('f-page').value;
-  const statusEl = document.getElementById('fetch-ads-status');
-  const resultEl = document.getElementById('ad-picker-result');
-  if(!page){ statusEl.textContent='Pick a page first.'; statusEl.className='status-msg err'; return; }
-  statusEl.innerHTML = '<span class="spinner"></span> Pulling ads…';
-  statusEl.className = 'status-msg';
-  resultEl.style.display='none';
-  try{
-    const data = await api('/api/meta-list-ads', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({page}) });
-    const list = data.ads || [];
-    if(list.length===0){
-      statusEl.textContent = "Couldn't find ads for this page — try manual entry below.";
-      statusEl.className = 'status-msg err';
-      return;
-    }
-    statusEl.textContent = `Found ${list.length} ad(s) — pick one:`;
-    resultEl.innerHTML = '';
-    list.forEach(ad=>{
-      const row = document.createElement('div');
-      row.className='ad-picker-row';
-      row.innerHTML = `<span class="name">${escapeHtml(ad.ad_name||'(untitled)')}</span><span class="id">${escapeHtml(ad.ad_id||'')}</span>`;
-      row.addEventListener('click',()=>{
-        pickedAd = { id: ad.ad_id, name: ad.ad_name };
-        renderPickedChip();
-        resultEl.style.display='none';
-      });
-      resultEl.appendChild(row);
-    });
-    resultEl.style.display='block';
-  }catch(e){
-    statusEl.textContent = "Couldn't reach Meta right now — try manual entry below.";
-    statusEl.className = 'status-msg err';
-  }
-});
-
-function renderPickedChip(){
-  const holder = document.getElementById('picked-chip-holder');
-  if(!pickedAd){ holder.innerHTML=''; return; }
-  holder.innerHTML = `<div class="picked-chip">${escapeHtml(pickedAd.name)} <button type="button" id="clear-picked">✕</button></div>`;
-  document.getElementById('clear-picked').addEventListener('click',()=>{ pickedAd=null; renderPickedChip(); });
-}
-
-function wireTagInput(boxEl, initialTags){
-  boxEl._tags = Array.isArray(initialTags) ? [...initialTags] : [];
-  const input = boxEl.querySelector('.tag-entry-input');
-  function render(){
-    boxEl.querySelectorAll('.tag-chip-removable').forEach(c=>c.remove());
-    boxEl._tags.forEach((t,i)=>{
-      const chip = document.createElement('span');
-      chip.className='tag-chip-removable';
-      chip.innerHTML = `${escapeHtml(t)} <button type="button">✕</button>`;
-      chip.querySelector('button').addEventListener('click',()=>{ boxEl._tags.splice(i,1); render(); });
-      boxEl.insertBefore(chip, input);
-    });
-  }
-  input.addEventListener('keydown',(ev)=>{
-    if(ev.key==='Enter' || ev.key===','){
-      ev.preventDefault();
-      const v = input.value.trim().replace(/,$/,'');
-      if(v && !boxEl._tags.includes(v)){ boxEl._tags.push(v); }
-      input.value='';
-      render();
-    }else if(ev.key==='Backspace' && input.value===''){
-      boxEl._tags.pop();
-      render();
-    }
-  });
-  render();
-}
-wireTagInput(document.getElementById('f-tags-box'), []);
-
-function resetForm(){
-  document.getElementById('f-concept-creator').value='';
-  document.getElementById('f-page').value='';
-  document.getElementById('f-date').value='';
-  document.getElementById('f-editor').value='';
-  document.getElementById('f-by').value='';
-  document.getElementById('f-concept').value='';
-  document.getElementById('f-script').value='';
-  document.getElementById('f-manual-name').value='';
-  wireTagInput(document.getElementById('f-tags-box'), []);
-  pickedAd = null;
-  renderPickedChip();
-}
-
-// ---------- Submit new creative ----------
-document.getElementById('btn-submit').addEventListener('click', async ()=>{
-  const conceptCreator = document.getElementById('f-concept-creator').value.trim();
-  const page = document.getElementById('f-page').value;
-  const date = document.getElementById('f-date').value;
-  const by = document.getElementById('f-by').value.trim();
-  const editor = document.getElementById('f-editor').value.trim();
-  const script = document.getElementById('f-script').value.trim();
-  const conceptLink = document.getElementById('f-concept').value.trim();
-  const tags = document.getElementById('f-tags-box')._tags || [];
-  const manualName = document.getElementById('f-manual-name').value.trim();
-  const statusEl = document.getElementById('submit-status');
-
-  const adName = (pickedAd ? pickedAd.name : manualName) || `Untitled — ${new Date().toLocaleDateString()}`;
-  const finalConceptCreator = conceptCreator || 'Unassigned';
-  const finalBy = by || conceptCreator || 'Unknown';
-
-  const payload = {
-    ad_name: adName,
-    meta_ad_id: pickedAd ? pickedAd.id : null,
-    page: page || null,
-    date_launched: date || null,
-    script,
-    concept_link: conceptLink,
-    tags,
-    concept_creator: finalConceptCreator,
-    editor,
-    submitted_by: finalBy
-  };
-
-  try{
-    await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...payload, winner_status:'pending', performance:null }) });
-    statusEl.textContent = 'Logged ✓';
-    statusEl.className = 'status-msg ok';
-    resetForm();
-    setTimeout(()=>{ statusEl.textContent=''; },2500);
-  }catch(e){
-    statusEl.textContent = "Couldn't save — try again.";
-    statusEl.className = 'status-msg err';
-  }
-});
-
-// ---------- Tracker rendering ----------
-document.getElementById('filt-search').addEventListener('input', renderEntries);
-document.getElementById('filt-page').addEventListener('change', renderEntries);
-document.getElementById('filt-status').addEventListener('change', renderEntries);
-document.getElementById('filt-tag').addEventListener('input', renderEntries);
-document.getElementById('filt-editor').addEventListener('input', renderEntries);
-
-async function renderEntries(){
-  await loadEntries();
-  const holder = document.getElementById('entries-holder');
-  const fq = document.getElementById('filt-search').value.trim().toLowerCase();
-  const fp = document.getElementById('filt-page').value;
-  const fs = document.getElementById('filt-status').value;
-  const ft = document.getElementById('filt-tag').value.trim().toLowerCase();
-  const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
-  let list = entries.filter(e=>
-    (!fq || (e.ad_name||'').toLowerCase().includes(fq) || (e.script||'').toLowerCase().includes(fq)) &&
-    (!fp || e.page===fp) &&
-    (!fs || e.winner_status===fs) &&
-    (!ft || (e.tags||[]).some(t=>t.toLowerCase().includes(ft))) &&
-    (!fe || (e.editor||'').toLowerCase().includes(fe))
-  );
-
-  document.getElementById('entry-count').textContent = `${list.length} creative${list.length===1?'':'s'}`;
-
-  if(list.length===0){
-    holder.innerHTML = `<div class="empty"><div class="big">Nothing logged yet</div>Log your first creative from the Log Creative tab.</div>`;
-    return;
-  }
-
-  holder.innerHTML = '';
-  list.forEach(e=>{
-    const div = document.createElement('div');
-    const perf = e.performance;
-
-    if(inlineEditId === e.id){
-      div.className = 'entry';
-      div.innerHTML = buildInlineEditHTML(e);
-      holder.appendChild(div);
-      wireTagInput(div.querySelector('.tag-input-box'), e.tags||[]);
-      const ieStatus = div.querySelector('.ie-status');
-      div.querySelector('.ie-save').addEventListener('click', async ()=>{
-        const cc = div.querySelector('.ie-cc').value.trim();
-        const by = div.querySelector('.ie-by').value.trim();
-        const name = div.querySelector('.ie-name').value.trim();
-        try{
-          await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-            id: e.id,
-            concept_creator: cc || 'Unassigned',
-            ad_name: name || e.ad_name || `Untitled — ${new Date().toLocaleDateString()}`,
-            submitted_by: by || cc || e.submitted_by || 'Unknown',
-            page: div.querySelector('.ie-page').value || null,
-            date_launched: div.querySelector('.ie-date').value || null,
-            editor: div.querySelector('.ie-editor').value.trim(),
-            concept_link: div.querySelector('.ie-link').value.trim(),
-            output_link: div.querySelector('.ie-output').value.trim(),
-            script: div.querySelector('.ie-script').value.trim(),
-            tags: div.querySelector('.tag-input-box')._tags || []
-          })});
-          inlineEditId = null;
-          renderEntries();
-        }catch(err){
-          ieStatus.textContent = "Couldn't save — try again.";
-          ieStatus.className = 'status-msg ie-status err';
-        }
-      });
-      div.querySelector('.ie-cancel').addEventListener('click', ()=>{
-        inlineEditId = null;
-        renderEntries();
-      });
-      return;
-    }
-
-    div.className = 'entry ' + (e.winner_status==='winner'?'winner':e.winner_status==='pending'?'pending':'');
-    const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
-    div.innerHTML = `
-      <div class="entry-head">
-        <div>
-          <div class="entry-title">${escapeHtml(e.ad_name)}</div>
-          <div class="entry-meta">${PAGES[e.page]||e.page||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
-          <div class="pipeline-track">
-            <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Concept</span></div>
-            <div class="pipe-line ${e.editing_done?'done':''}"></div>
-            <div class="pipe-step ${e.editing_done?'done':''}"><span class="pipe-dot"></span><span class="pipe-label">Editing</span></div>
-            <div class="pipe-line ${e.launched?'done':''}"></div>
-            <div class="pipe-step ${e.launched?'done':''}"><span class="pipe-dot"></span><span class="pipe-label">Launched</span></div>
-          </div>
-          ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
-          ${e.output_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View output ↗</a></div>`:''}
-          ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-        </div>
-        <div class="badge-stack">
-          ${e.editing_done?'<span class="badge done">Edited</span>':''}
-          ${e.launched?'<span class="badge done">Live</span>':''}
-          <span class="badge ${e.winner_status}">${badgeLabel}</span>
-        </div>
-      </div>
-      ${e.script?`<div class="entry-script">${escapeHtml(e.script)}</div>`:''}
-      ${perf?`
-      <div class="perf-grid">
-        <div class="perf-cell"><div class="k">Spend</div><div class="v">${escapeHtml(String(perf.spend ?? '—'))}</div></div>
-        <div class="perf-cell"><div class="k">Impressions</div><div class="v">${escapeHtml(String(perf.impressions ?? '—'))}</div></div>
-        <div class="perf-cell"><div class="k">Clicks</div><div class="v">${escapeHtml(String(perf.clicks ?? '—'))}</div></div>
-        <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(String(perf.ctr ?? '—'))}</div></div>
-      </div>
-      ${(perf.actions&&perf.actions.length)?`<div class="hint">Actions: ${perf.actions.map(a=>escapeHtml(a.action_type+': '+a.value)).join(', ')}</div>`:''}
-      <div class="hint">Pulled ${perf.pulledAt ? new Date(perf.pulledAt).toLocaleString() : ''}</div>
-      `:''}
-      ${(e.history&&e.history.length)?`
-      <details class="history-block">
-        <summary>History (${e.history.length})</summary>
-        <div class="history-list">
-          ${e.history.slice().reverse().map(h=>`<div class="history-row"><span class="history-time">${new Date(h.at).toLocaleString()}</span><span class="history-text">${escapeHtml(h.text)}</span></div>`).join('')}
-        </div>
-      </details>
-      `:''}
-      <div class="entry-actions" data-id="${e.id}">
-        <button class="btn btn-ghost btn-sm act-edit">Edit</button>
-        <button class="btn btn-ghost btn-sm act-toggle-editing">${e.editing_done?'Undo editing':'Mark editing done'}</button>
-        <button class="btn btn-ghost btn-sm act-toggle-launch">${e.launched?'Undo launch':'Mark launched'}</button>
-        <button class="btn btn-ghost btn-sm act-pull">${perf?'Refresh performance':'Pull performance'}</button>
-        <button class="btn btn-ghost btn-sm act-winner">Mark winner</button>
-        <button class="btn btn-ghost btn-sm act-notwinner">Not a winner</button>
-        <button class="btn btn-ghost btn-sm act-pending">Reset to pending</button>
-        <button class="btn-danger-text act-delete" type="button">Delete</button>
-      </div>
-      <span class="status-msg act-status" style="display:block;margin-top:6px;"></span>
-    `;
-    holder.appendChild(div);
-
-    const actions = div.querySelector('.entry-actions');
-    const statusMsg = div.querySelector('.act-status');
-
-    actions.querySelector('.act-edit').addEventListener('click',()=>{ inlineEditId = e.id; renderEntries(); });
-    actions.querySelector('.act-toggle-editing').addEventListener('click',()=>toggleFlag(e.id,'editing_done',e.editing_done));
-    actions.querySelector('.act-toggle-launch').addEventListener('click', async ()=>{
-      if(!e.launched && (!e.page || !e.date_launched)){
-        statusMsg.textContent = "Set page and date launched first — use Edit.";
-        statusMsg.className = 'status-msg act-status err';
-        return;
-      }
-      toggleFlag(e.id,'launched',e.launched);
-    });
-    actions.querySelector('.act-winner').addEventListener('click',()=>updateStatus(e.id,'winner'));
-    actions.querySelector('.act-notwinner').addEventListener('click',()=>updateStatus(e.id,'not_winner'));
-    actions.querySelector('.act-pending').addEventListener('click',()=>updateStatus(e.id,'pending'));
-    actions.querySelector('.act-delete').addEventListener('click',()=>deleteEntry(e.id));
-    actions.querySelector('.act-pull').addEventListener('click', async ()=>{
-      if(!e.page){
-        statusMsg.textContent = "No page set yet — use Edit to add one first.";
-        statusMsg.className = 'status-msg act-status err';
-        return;
-      }
-      statusMsg.innerHTML = '<span class="spinner"></span> Pulling from Meta…';
-      try{
-        const data = await api('/api/meta-pull', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ page: e.page, adId: e.meta_ad_id, adName: e.ad_name })
-        });
-        if(!data.found){
-          statusMsg.textContent = "Couldn't find matching data — you can still set status manually.";
-          statusMsg.className = 'status-msg act-status err';
-          return;
-        }
-        await api('/api/entries', {
-          method:'PUT', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ id: e.id, performance: { ...data, pulledAt: new Date().toISOString() } })
-        });
-        statusMsg.textContent = 'Pulled ✓ — review the numbers, then confirm the status.';
-        statusMsg.className = 'status-msg act-status ok';
-        renderEntries();
-      }catch(err){
-        statusMsg.textContent = "Couldn't reach Meta right now.";
-        statusMsg.className = 'status-msg act-status err';
-      }
-    });
-  });
-}
-
-function buildInlineEditHTML(e){
-  const pageOptions = Object.entries(PAGES).map(([id,label])=>
-    `<option value="${escapeHtml(id)}" ${e.page===id?'selected':''}>${escapeHtml(label)}</option>`
-  ).join('');
-  return `
-    <div class="form-grid" style="margin-bottom:4px;">
-      <div class="field">
-        <label>Concept / Script Creator</label>
-        <input type="text" class="ie-cc" value="${escapeHtml(e.concept_creator||'')}" />
-      </div>
-      <div class="field">
-        <label>Assign to Editor</label>
-        <input type="text" class="ie-editor" value="${escapeHtml(e.editor||'')}" />
-      </div>
-      <div class="field full">
-        <label>Ad Creative / Working Title</label>
-        <input type="text" class="ie-name" value="${escapeHtml(e.ad_name||'')}" />
-        ${e.meta_ad_id?`<div class="hint">Linked Meta ad ID: ${escapeHtml(e.meta_ad_id)}</div>`:''}
-      </div>
-      <div class="field full">
-        <label>Page / Ad Account</label>
-        <select class="ie-page"><option value="">Select page…</option>${pageOptions}</select>
-      </div>
-      <div class="field">
-        <label>Date Launched</label>
-        <input type="date" class="ie-date" value="${e.date_launched||''}" />
-      </div>
-      <div class="field">
-        <label>Submitted By</label>
-        <input type="text" class="ie-by" value="${escapeHtml(e.submitted_by||'')}" />
-      </div>
-      <div class="field full">
-        <label>Concept (Drive link)</label>
-        <input type="text" class="ie-link" value="${escapeHtml(e.concept_link||'')}" />
-      </div>
-      <div class="field full">
-        <label>Output (finished file link)</label>
-        <input type="text" class="ie-output" value="${escapeHtml(e.output_link||'')}" placeholder="Drive link to the finished video/image" />
-      </div>
-      <div class="field full">
-        <label>Tags</label>
-        <div class="tag-input-box"><input type="text" class="tag-entry-input" placeholder="Type a tag, press Enter" /></div>
-      </div>
-      <div class="field full">
-        <label>Script</label>
-        <textarea class="ie-script">${escapeHtml(e.script||'')}</textarea>
-      </div>
-    </div>
-    <div class="submit-row">
-      <button class="btn btn-primary btn-sm ie-save" type="button">Save changes</button>
-      <button class="btn-link ie-cancel" type="button">Cancel</button>
-      <span class="status-msg ie-status"></span>
-    </div>
-  `;
-}
-
-async function updateStatus(id, status){
-  await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, winner_status: status }) });
-  renderEntries();
-}
-async function toggleFlag(id, field, current){
-  await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, [field]: !current }) });
-  renderEntries();
-}
-async function deleteEntry(id){
-  if(!confirm('Delete this entry?')) return;
-  await api('/api/entries?id='+encodeURIComponent(id), { method:'DELETE' });
-  renderEntries();
-}
-
-// ---------- Analytics ----------
-async function renderAnalytics(){
-  await loadEntries();
-  const total = entries.length;
-  const launched = entries.filter(e=>e.launched).length;
-  const winners = entries.filter(e=>e.winner_status==='winner').length;
-  const notWinners = entries.filter(e=>e.winner_status==='not_winner').length;
-
-  document.getElementById('analytics-summary').innerHTML = `
-    <div class="perf-cell"><div class="k">Total logged</div><div class="v">${total}</div></div>
-    <div class="perf-cell"><div class="k">Launched</div><div class="v">${launched}</div></div>
-    <div class="perf-cell"><div class="k">Winners</div><div class="v">${winners}</div></div>
-    <div class="perf-cell"><div class="k">Not winners</div><div class="v">${notWinners}</div></div>
-  `;
-
-  const winnerEntries = entries.filter(e=>e.winner_status==='winner');
-  const winnersHolder = document.getElementById('analytics-winners');
-  if(winnerEntries.length===0){
-    winnersHolder.innerHTML = `<div class="hint">No winners tagged yet — mark a creative as Winner in the Tracker tab to see it here.</div>`;
-  }else{
-    winnersHolder.innerHTML = winnerEntries.map(e=>{
-      const perf = e.performance;
-      return `
-      <div class="lb-row" style="align-items:flex-start;flex-direction:column;gap:4px;">
-        <div class="lb-name">${escapeHtml(e.ad_name)}</div>
-        <div class="lb-stats">${PAGES[e.page]||e.page||'No page'} · Editor: ${escapeHtml(e.editor||'—')} · Concept: ${escapeHtml(e.concept_creator||'—')}${e.date_launched?' · Launched '+e.date_launched:''}</div>
-        ${e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a>`:''}
-        ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:2px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-        ${e.script?`<div class="entry-script" style="width:100%;">${escapeHtml(e.script)}</div>`:''}
-        ${perf?`<div class="lb-stats">Spend ${escapeHtml(String(perf.spend??'—'))} · Impressions ${escapeHtml(String(perf.impressions??'—'))} · CTR ${escapeHtml(String(perf.ctr??'—'))}</div>`:''}
-      </div>`;
-    }).join('');
-  }
-
-  function leaderboard(field){
-    const map = {};
-    entries.forEach(e=>{
-      const name = (e[field]||'').trim();
-      if(!name) return;
-      if(!map[name]) map[name] = { total:0, winners:0 };
-      map[name].total++;
-      if(e.winner_status==='winner') map[name].winners++;
-    });
-    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
-  }
-
-  function leaderboardByTags(){
-    const map = {};
-    entries.forEach(e=>{
-      (e.tags||[]).forEach(t=>{
-        if(!map[t]) map[t] = { total:0, winners:0 };
-        map[t].total++;
-        if(e.winner_status==='winner') map[t].winners++;
-      });
-    });
-    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
-  }
-
-  function leaderboardByPage(){
-    const map = {};
-    entries.forEach(e=>{
-      if(!e.page) return;
-      const label = PAGES[e.page] || e.page;
-      if(!map[label]) map[label] = { total:0, winners:0 };
-      map[label].total++;
-      if(e.winner_status==='winner') map[label].winners++;
-    });
-    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
-  }
-
-  function renderLB(holderId, field){
-    const rows = leaderboard(field);
-    const holder = document.getElementById(holderId);
-    if(rows.length===0){ holder.innerHTML = `<div class="hint">Nothing logged yet.</div>`; return; }
-    holder.innerHTML = rows.map(([name,stats])=>`
-      <div class="lb-row">
-        <span class="lb-name">${escapeHtml(name)}</span>
-        <span class="lb-stats">${stats.winners} winner${stats.winners===1?'':'s'} · ${stats.total} logged</span>
-      </div>
-    `).join('');
-  }
-
-  function renderRows(holderId, rows){
-    const holder = document.getElementById(holderId);
-    if(rows.length===0){ holder.innerHTML = `<div class="hint">Nothing logged yet.</div>`; return; }
-    holder.innerHTML = rows.map(([name,stats])=>`
-      <div class="lb-row">
-        <span class="lb-name">${escapeHtml(name)}</span>
-        <span class="lb-stats">${stats.winners} winner${stats.winners===1?'':'s'} · ${stats.total} logged</span>
-      </div>
-    `).join('');
-  }
-
-  renderLB('analytics-editor','editor');
-  renderLB('analytics-creator','concept_creator');
-  renderRows('analytics-tags', leaderboardByTags());
-  renderRows('analytics-pages', leaderboardByPage());
-
-  const launchLogHolder = document.getElementById('analytics-launchlog');
-  const launchedEntries = entries.filter(e=>e.launched).sort((a,b)=> (b.date_launched||'').localeCompare(a.date_launched||''));
-  if(launchedEntries.length===0){
-    launchLogHolder.innerHTML = `<div class="hint">Wala pang launched creatives.</div>`;
-  }else{
-    launchLogHolder.innerHTML = launchedEntries.map(e=>`
-      <div class="lb-row">
-        <span class="lb-name">${escapeHtml(e.ad_name)}</span>
-        <span class="lb-stats">${PAGES[e.page]||e.page||'—'} · ${e.date_launched||'—'} · ${escapeHtml(e.editor||e.submitted_by||'—')}</span>
-      </div>
-    `).join('');
-  }
-
-  const outputsHolder = document.getElementById('analytics-outputs');
-  const withOutputs = entries.filter(e=>e.output_link).sort((a,b)=> new Date(b.submitted_at) - new Date(a.submitted_at));
-  if(withOutputs.length===0){
-    outputsHolder.innerHTML = `<div class="hint">Wala pang naka-link na output files. Idagdag sa Edit ng entry ("Output" field).</div>`;
-  }else{
-    outputsHolder.innerHTML = withOutputs.map(e=>`
-      <div class="lb-row">
-        <span class="lb-name">${escapeHtml(e.ad_name)}</span>
-        <span class="lb-stats">${escapeHtml(e.editor||'—')} · <a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">Open ↗</a></span>
-      </div>
-    `).join('');
-  }
-}
-
-// ---------- Announcements ----------
-async function loadAnnouncement(){
-  try{
-    const list = await api('/api/announcements');
-    const latest = list[0];
-    if(!latest) return;
-    const dismissedId = localStorage.getItem('cocoon-ann-dismissed');
-    if(dismissedId === latest.id) return;
-    document.getElementById('ann-text').textContent = latest.text;
-    document.getElementById('ann-meta').textContent = (latest.created_by||'Team') + ' · ' + new Date(latest.created_at).toLocaleString();
-    const banner = document.getElementById('announcement-banner');
-    banner.style.display = 'flex';
-    banner.dataset.id = latest.id;
-  }catch(e){}
-}
-document.getElementById('ann-dismiss').addEventListener('click', ()=>{
-  const banner = document.getElementById('announcement-banner');
-  localStorage.setItem('cocoon-ann-dismissed', banner.dataset.id||'');
-  banner.style.display = 'none';
-});
-document.getElementById('ann-post-btn').addEventListener('click', async ()=>{
-  const text = document.getElementById('ann-input').value.trim();
-  const by = document.getElementById('ann-by').value.trim();
-  if(!text) return;
-  try{
-    await api('/api/announcements', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text, created_by: by }) });
-    document.getElementById('ann-input').value = '';
-    localStorage.removeItem('cocoon-ann-dismissed');
-    loadAnnouncement();
-  }catch(e){}
-});
-
-// ---------- Assets ----------
-let assets = [];
-async function loadAssets(){
-  try{ assets = await api('/api/assets'); }
-  catch(e){ assets = []; }
-}
-async function renderAssets(){
-  await loadAssets();
-  const holder = document.getElementById('assets-holder');
-  if(assets.length===0){
-    holder.innerHTML = `<div class="empty"><div class="big">Walang assets pa</div>Idagdag ang unang Drive o Canva link sa itaas.</div>`;
-    return;
-  }
-  const TYPE_LABEL = { gdrive:'Google Drive', canva:'Canva', other:'Other' };
-  holder.innerHTML = assets.map(a=>`
-    <div class="entry" style="border-left-color:var(--accent);">
-      <div class="entry-head">
-        <div>
-          <div class="entry-title">${escapeHtml(a.title)}</div>
-          <div class="entry-meta">${TYPE_LABEL[a.type]||a.type} ${a.added_by?'· Added by '+escapeHtml(a.added_by):''} · ${new Date(a.created_at).toLocaleDateString()}</div>
-          <div style="margin-top:6px;"><a href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer" class="btn-link">Open ↗</a></div>
-        </div>
-      </div>
-      <div class="entry-actions">
-        <button class="btn-danger-text act-del-asset" data-id="${a.id}" type="button">Delete</button>
-      </div>
-    </div>
-  `).join('');
-  holder.querySelectorAll('.act-del-asset').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      if(!confirm('Delete this asset?')) return;
-      await api('/api/assets?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
-      renderAssets();
-    });
-  });
-}
-document.getElementById('a-submit').addEventListener('click', async ()=>{
-  const title = document.getElementById('a-title').value.trim();
-  const type = document.getElementById('a-type').value;
-  const by = document.getElementById('a-by').value.trim();
-  const url = document.getElementById('a-url').value.trim();
-  const statusEl = document.getElementById('a-status');
-  if(!title || !url){
-    statusEl.textContent = 'Fill in title and link.';
-    statusEl.className = 'status-msg err';
-    return;
-  }
-  try{
-    await api('/api/assets', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, type, url, added_by: by }) });
-    document.getElementById('a-title').value='';
-    document.getElementById('a-by').value='';
-    document.getElementById('a-url').value='';
-    statusEl.textContent = 'Added ✓';
-    statusEl.className = 'status-msg ok';
-    renderAssets();
-    setTimeout(()=>{ statusEl.textContent=''; },2000);
-  }catch(e){
-    statusEl.textContent = "Couldn't save — try again.";
-    statusEl.className = 'status-msg err';
-  }
-});
-
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-// init
-if(localStorage.getItem('cocoon-admin-token')){
-  loadPages();
-  loadEntries();
-  loadAnnouncement();
-}else{
-  showLogin();
-}
-</script>
+<style>@keyframes spin{to{transform:rotate(360deg);}}</style>
 </body>
 </html>
