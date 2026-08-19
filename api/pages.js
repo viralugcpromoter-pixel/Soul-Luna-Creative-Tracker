@@ -20,7 +20,10 @@ export default async function handler(req, res) {
       if (error) throw error;
       const custom = {};
       (data || []).forEach((p) => { custom[p.id] = p.label; });
-      return res.status(200).json({ ...BASE_PAGES, ...custom });
+      return res.status(200).json({
+        pages: { ...BASE_PAGES, ...custom },
+        customIds: Object.keys(custom)
+      });
     }
 
     if (req.method === 'POST') {
@@ -29,6 +32,17 @@ export default async function handler(req, res) {
       const { error } = await supabase.from('pages').upsert({ id, label });
       if (error) throw error;
       return res.status(200).json({ ok: true });
+    }
+
+    if (req.method === 'DELETE') {
+      const id = (req.query && req.query.id) || (req.body && req.body.id);
+      if (!id) return res.status(400).json({ error: 'Missing id' });
+      if (Object.prototype.hasOwnProperty.call(BASE_PAGES, id)) {
+        return res.status(400).json({ error: 'Cannot remove a built-in page' });
+      }
+      const { error } = await supabase.from('pages').delete().eq('id', id);
+      if (error) throw error;
+      return res.status(200).json({ deleted: true });
     }
 
     res.status(405).json({ error: 'Method not allowed' });
