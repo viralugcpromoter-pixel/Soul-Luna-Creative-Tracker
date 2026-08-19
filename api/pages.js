@@ -11,6 +11,9 @@ const BASE_PAGES = {
   act_533836145607020: 'Cosmetic Cocoon — Lead',
   act_1045439867619481: 'Cosmetic Cocoon — Cocoon 2',
   act_653049897306859: 'Cosmetic Cocoon — Cocoon 3',
+  act_841004865593276: 'Avinichi',
+  act_2331807916986125: 'La Rose Manila',
+  act_1234807434404497: 'La Rose Cebu',
 };
 
 export default async function handler(req, res) {
