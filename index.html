@@ -111,6 +111,11 @@
   .ad-picker-row .name{font-size:13.5px;font-weight:500;}
   .ad-picker-row .id{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
   .picked-chip{display:inline-flex;align-items:center;gap:8px;background:var(--winner-soft);color:var(--winner);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;margin-top:8px;}
+  .tag-input-box{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:7px 8px;background:var(--input-bg);}
+  .tag-input-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .tag-input-box input{border:none !important;outline:none;flex:1;min-width:120px;padding:3px 4px !important;background:transparent !important;box-shadow:none !important;}
+  .tag-chip-removable{display:inline-flex;align-items:center;gap:5px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600;padding:4px 6px 4px 10px;border-radius:999px;white-space:nowrap;}
+  .tag-chip-removable button{background:none;border:none;color:var(--accent);font-weight:700;padding:0;cursor:pointer;font-size:13px;line-height:1;}
   .picked-chip button{background:none;border:none;color:var(--winner);font-weight:700;padding:0;}
   .submit-row{margin-top:18px;display:flex;align-items:center;gap:12px;}
   .status-msg{font-size:13px;color:var(--ink-soft);}
@@ -198,8 +203,7 @@
   <section class="panel active" id="panel-log">
     <div class="card">
       <div class="row" style="justify-content:space-between;margin-bottom:14px;">
-        <h2 id="log-heading" style="font-family:'Fraunces',serif;font-size:19px;margin:0;">Log a Creative</h2>
-        <button class="btn-link" id="btn-cancel-edit" type="button" style="display:none;">Cancel edit</button>
+        <h2 style="font-family:'Fraunces',serif;font-size:19px;margin:0;">Log a Creative</h2>
       </div>
       <div class="form-grid">
         <div class="field">
@@ -236,6 +240,7 @@
               <button class="btn btn-ghost btn-sm" id="btn-save-newpage" type="button">Add</button>
             </div>
             <span id="addpage-status" class="status-msg"></span>
+            <div id="custom-pages-list" style="margin-top:10px;"></div>
           </div>
         </div>
 
@@ -255,8 +260,10 @@
 
         <div class="field full">
           <label>Tags</label>
-          <input type="text" id="f-tags" placeholder="e.g. testimonial, pico laser, UGC — comma separated" />
-          <div class="hint">Optional — tag the angle, service, or format so patterns are easier to spot later.</div>
+          <div class="tag-input-box" id="f-tags-box">
+            <input type="text" class="tag-entry-input" placeholder="Type a tag, press Enter" />
+          </div>
+          <div class="hint">Optional — press Enter after each one. Angle, service, format, whatever's useful — add as many as you want.</div>
         </div>
 
         <div class="field full">
@@ -316,7 +323,8 @@
 let PAGES = {};
 let entries = [];
 let pickedAd = null; // {id, name}
-let editingEntryId = null;
+let inlineEditId = null; // entry id currently expanded for inline edit in Tracker
+let CUSTOM_PAGE_IDS = [];
 
 // ---------- API helpers ----------
 async function api(path, opts){
@@ -332,13 +340,34 @@ async function loadEntries(){
 }
 
 async function loadPages(){
-  try{ PAGES = await api('/api/pages'); }
-  catch(e){ PAGES = {}; }
+  try{
+    const res = await api('/api/pages');
+    PAGES = res.pages || {};
+    CUSTOM_PAGE_IDS = res.customIds || [];
+  }catch(e){ PAGES = {}; CUSTOM_PAGE_IDS = []; }
   renderPageOptions();
+  renderCustomPagesList();
 }
 async function saveCustomPage(id, label){
   await api('/api/pages', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id,label}) });
   await loadPages();
+}
+async function removeCustomPage(id){
+  if(!confirm('Remove this page from the list?')) return;
+  try{
+    await api('/api/pages?id='+encodeURIComponent(id), { method:'DELETE' });
+    await loadPages();
+  }catch(e){}
+}
+function renderCustomPagesList(){
+  const holder = document.getElementById('custom-pages-list');
+  if(CUSTOM_PAGE_IDS.length===0){ holder.innerHTML=''; return; }
+  holder.innerHTML = `<div class="hint" style="margin-bottom:6px;">Your added pages:</div>` + CUSTOM_PAGE_IDS.map(id=>`
+    <div class="tag-chip-removable" style="margin:0 6px 6px 0;">${escapeHtml(PAGES[id]||id)} <button type="button" data-remove-page="${escapeHtml(id)}">✕</button></div>
+  `).join('');
+  holder.querySelectorAll('[data-remove-page]').forEach(btn=>{
+    btn.addEventListener('click',()=>removeCustomPage(btn.dataset.removePage));
+  });
 }
 function renderPageOptions(){
   const logSel = document.getElementById('f-page');
@@ -408,10 +437,6 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(btn.dataset.tab==='analytics') renderAnalytics();
   });
 });
-function goToTab(name){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+name));
-}
 
 // ---------- Pull ads from Meta (Log tab) ----------
 document.getElementById('btn-fetch-ads').addEventListener('click', async ()=>{
@@ -457,13 +482,34 @@ function renderPickedChip(){
   document.getElementById('clear-picked').addEventListener('click',()=>{ pickedAd=null; renderPickedChip(); });
 }
 
-document.getElementById('btn-cancel-edit').addEventListener('click', ()=>{
-  editingEntryId = null;
-  resetForm();
-  document.getElementById('log-heading').textContent = 'Log a Creative';
-  document.getElementById('btn-submit').textContent = 'Log this creative';
-  document.getElementById('btn-cancel-edit').style.display = 'none';
-});
+function wireTagInput(boxEl, initialTags){
+  boxEl._tags = Array.isArray(initialTags) ? [...initialTags] : [];
+  const input = boxEl.querySelector('.tag-entry-input');
+  function render(){
+    boxEl.querySelectorAll('.tag-chip-removable').forEach(c=>c.remove());
+    boxEl._tags.forEach((t,i)=>{
+      const chip = document.createElement('span');
+      chip.className='tag-chip-removable';
+      chip.innerHTML = `${escapeHtml(t)} <button type="button">✕</button>`;
+      chip.querySelector('button').addEventListener('click',()=>{ boxEl._tags.splice(i,1); render(); });
+      boxEl.insertBefore(chip, input);
+    });
+  }
+  input.addEventListener('keydown',(ev)=>{
+    if(ev.key==='Enter' || ev.key===','){
+      ev.preventDefault();
+      const v = input.value.trim().replace(/,$/,'');
+      if(v && !boxEl._tags.includes(v)){ boxEl._tags.push(v); }
+      input.value='';
+      render();
+    }else if(ev.key==='Backspace' && input.value===''){
+      boxEl._tags.pop();
+      render();
+    }
+  });
+  render();
+}
+wireTagInput(document.getElementById('f-tags-box'), []);
 
 function resetForm(){
   document.getElementById('f-concept-creator').value='';
@@ -472,38 +518,14 @@ function resetForm(){
   document.getElementById('f-editor').value='';
   document.getElementById('f-by').value='';
   document.getElementById('f-concept').value='';
-  document.getElementById('f-tags').value='';
   document.getElementById('f-script').value='';
   document.getElementById('f-manual-name').value='';
+  wireTagInput(document.getElementById('f-tags-box'), []);
   pickedAd = null;
   renderPickedChip();
 }
 
-function populateFormForEdit(entry){
-  editingEntryId = entry.id;
-  document.getElementById('f-concept-creator').value = entry.concept_creator||'';
-  document.getElementById('f-page').value = entry.page||'';
-  document.getElementById('f-date').value = entry.date_launched||'';
-  document.getElementById('f-editor').value = entry.editor||'';
-  document.getElementById('f-by').value = entry.submitted_by||'';
-  document.getElementById('f-concept').value = entry.concept_link||'';
-  document.getElementById('f-tags').value = (entry.tags||[]).join(', ');
-  document.getElementById('f-script').value = entry.script||'';
-  if(entry.meta_ad_id){
-    pickedAd = { id: entry.meta_ad_id, name: entry.ad_name };
-    document.getElementById('f-manual-name').value='';
-  }else{
-    pickedAd = null;
-    document.getElementById('f-manual-name').value = entry.ad_name||'';
-  }
-  renderPickedChip();
-  document.getElementById('log-heading').textContent = 'Edit Creative';
-  document.getElementById('btn-submit').textContent = 'Save changes';
-  document.getElementById('btn-cancel-edit').style.display = 'inline-block';
-  goToTab('log');
-}
-
-// ---------- Submit (new or edit) ----------
+// ---------- Submit new creative ----------
 document.getElementById('btn-submit').addEventListener('click', async ()=>{
   const conceptCreator = document.getElementById('f-concept-creator').value.trim();
   const page = document.getElementById('f-page').value;
@@ -512,8 +534,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
   const editor = document.getElementById('f-editor').value.trim();
   const script = document.getElementById('f-script').value.trim();
   const conceptLink = document.getElementById('f-concept').value.trim();
-  const tagsRaw = document.getElementById('f-tags').value.trim();
-  const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+  const tags = document.getElementById('f-tags-box')._tags || [];
   const manualName = document.getElementById('f-manual-name').value.trim();
   const statusEl = document.getElementById('submit-status');
 
@@ -538,24 +559,11 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
   };
 
   try{
-    if(editingEntryId){
-      await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: editingEntryId, ...payload }) });
-      statusEl.textContent = 'Updated ✓';
-      statusEl.className = 'status-msg ok';
-      editingEntryId = null;
-      resetForm();
-      document.getElementById('log-heading').textContent = 'Log a Creative';
-      document.getElementById('btn-submit').textContent = 'Log this creative';
-      document.getElementById('btn-cancel-edit').style.display = 'none';
-      goToTab('track');
-      renderEntries();
-    }else{
-      await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...payload, winner_status:'pending', performance:null }) });
-      statusEl.textContent = 'Logged ✓';
-      statusEl.className = 'status-msg ok';
-      resetForm();
-      setTimeout(()=>{ statusEl.textContent=''; },2500);
-    }
+    await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...payload, winner_status:'pending', performance:null }) });
+    statusEl.textContent = 'Logged ✓';
+    statusEl.className = 'status-msg ok';
+    resetForm();
+    setTimeout(()=>{ statusEl.textContent=''; },2500);
   }catch(e){
     statusEl.textContent = "Couldn't save — try again.";
     statusEl.className = 'status-msg err';
@@ -592,9 +600,52 @@ async function renderEntries(){
   holder.innerHTML = '';
   list.forEach(e=>{
     const div = document.createElement('div');
+    const perf = e.performance;
+
+    if(inlineEditId === e.id){
+      div.className = 'entry';
+      div.innerHTML = buildInlineEditHTML(e);
+      holder.appendChild(div);
+      wireTagInput(div.querySelector('.tag-input-box'), e.tags||[]);
+      const ieStatus = div.querySelector('.ie-status');
+      div.querySelector('.ie-save').addEventListener('click', async ()=>{
+        const cc = div.querySelector('.ie-cc').value.trim();
+        const by = div.querySelector('.ie-by').value.trim();
+        const name = div.querySelector('.ie-name').value.trim();
+        if(!cc || !by || !name){
+          ieStatus.textContent = 'Concept creator, working title, and your name are required.';
+          ieStatus.className = 'status-msg ie-status err';
+          return;
+        }
+        try{
+          await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+            id: e.id,
+            concept_creator: cc,
+            ad_name: name,
+            submitted_by: by,
+            page: div.querySelector('.ie-page').value || null,
+            date_launched: div.querySelector('.ie-date').value || null,
+            editor: div.querySelector('.ie-editor').value.trim(),
+            concept_link: div.querySelector('.ie-link').value.trim(),
+            script: div.querySelector('.ie-script').value.trim(),
+            tags: div.querySelector('.tag-input-box')._tags || []
+          })});
+          inlineEditId = null;
+          renderEntries();
+        }catch(err){
+          ieStatus.textContent = "Couldn't save — try again.";
+          ieStatus.className = 'status-msg ie-status err';
+        }
+      });
+      div.querySelector('.ie-cancel').addEventListener('click', ()=>{
+        inlineEditId = null;
+        renderEntries();
+      });
+      return;
+    }
+
     div.className = 'entry ' + (e.winner_status==='winner'?'winner':e.winner_status==='pending'?'pending':'');
     const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
-    const perf = e.performance;
     div.innerHTML = `
       <div class="entry-head">
         <div>
@@ -648,7 +699,7 @@ async function renderEntries(){
     const actions = div.querySelector('.entry-actions');
     const statusMsg = div.querySelector('.act-status');
 
-    actions.querySelector('.act-edit').addEventListener('click',()=>populateFormForEdit(e));
+    actions.querySelector('.act-edit').addEventListener('click',()=>{ inlineEditId = e.id; renderEntries(); });
     actions.querySelector('.act-toggle-editing').addEventListener('click',()=>toggleFlag(e.id,'editing_done',e.editing_done));
     actions.querySelector('.act-toggle-launch').addEventListener('click', async ()=>{
       if(!e.launched && (!e.page || !e.date_launched)){
@@ -692,6 +743,58 @@ async function renderEntries(){
       }
     });
   });
+}
+
+function buildInlineEditHTML(e){
+  const pageOptions = Object.entries(PAGES).map(([id,label])=>
+    `<option value="${escapeHtml(id)}" ${e.page===id?'selected':''}>${escapeHtml(label)}</option>`
+  ).join('');
+  return `
+    <div class="form-grid" style="margin-bottom:4px;">
+      <div class="field">
+        <label>Concept / Script Creator</label>
+        <input type="text" class="ie-cc" value="${escapeHtml(e.concept_creator||'')}" />
+      </div>
+      <div class="field">
+        <label>Assign to Editor</label>
+        <input type="text" class="ie-editor" value="${escapeHtml(e.editor||'')}" />
+      </div>
+      <div class="field full">
+        <label>Ad Creative / Working Title</label>
+        <input type="text" class="ie-name" value="${escapeHtml(e.ad_name||'')}" />
+        ${e.meta_ad_id?`<div class="hint">Linked Meta ad ID: ${escapeHtml(e.meta_ad_id)}</div>`:''}
+      </div>
+      <div class="field full">
+        <label>Page / Ad Account</label>
+        <select class="ie-page"><option value="">Select page…</option>${pageOptions}</select>
+      </div>
+      <div class="field">
+        <label>Date Launched</label>
+        <input type="date" class="ie-date" value="${e.date_launched||''}" />
+      </div>
+      <div class="field">
+        <label>Submitted By</label>
+        <input type="text" class="ie-by" value="${escapeHtml(e.submitted_by||'')}" />
+      </div>
+      <div class="field full">
+        <label>Concept (Drive link)</label>
+        <input type="text" class="ie-link" value="${escapeHtml(e.concept_link||'')}" />
+      </div>
+      <div class="field full">
+        <label>Tags</label>
+        <div class="tag-input-box"><input type="text" class="tag-entry-input" placeholder="Type a tag, press Enter" /></div>
+      </div>
+      <div class="field full">
+        <label>Script</label>
+        <textarea class="ie-script">${escapeHtml(e.script||'')}</textarea>
+      </div>
+    </div>
+    <div class="submit-row">
+      <button class="btn btn-primary btn-sm ie-save" type="button">Save changes</button>
+      <button class="btn-link ie-cancel" type="button">Cancel</button>
+      <span class="status-msg ie-status"></span>
+    </div>
+  `;
 }
 
 async function updateStatus(id, status){
