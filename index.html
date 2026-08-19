@@ -98,7 +98,8 @@
   .sidebar-nav .tab-btn.active{background:var(--emphasis-bg);color:var(--emphasis-text);}
   .sidebar-nav .tab-btn:hover:not(.active){background:var(--accent-soft);color:var(--ink);}
   .panel{display:none;}
-  .panel.active{display:block;}
+  .panel.active{display:block;animation:fadeInUp .35s ease;}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
   @media (max-width:760px){
     .app-shell{flex-direction:column;}
     .sidebar{width:100%;height:auto;position:static;flex-direction:row;align-items:center;flex-wrap:wrap;padding:14px 16px;gap:14px;}
@@ -152,7 +153,8 @@
   .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
   .filter-bar select{width:auto;padding:8px 10px;font-size:13px;}
   .count-note{font-size:12.5px;color:var(--ink-soft);margin-left:auto;}
-  .entry{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--not-winner);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);transition:background-color .2s ease, border-color .2s ease, transform .15s ease;}
+  .entry{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--not-winner);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);transition:background-color .2s ease, border-color .2s ease, transform .15s ease;animation:cardIn .35s ease backwards;}
+  @keyframes cardIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   .entry:hover{transform:translateY(-2px);}
   .entry.winner{border-left-color:var(--winner);}
   .entry.pending{border-left-color:var(--pending);}
@@ -172,8 +174,9 @@
   .entry-head{cursor:pointer;}
   .chev{display:inline-block;transition:transform .15s ease;color:var(--ink-soft);font-size:11px;margin-left:2px;}
   .entry.open .chev{transform:rotate(90deg);}
-  .expand-body{display:none;}
-  .entry.open .expand-body{display:block;margin-top:4px;}
+  .expand-body{max-height:0;overflow:hidden;opacity:0;transition:max-height .32s cubic-bezier(.4,0,.2,1), opacity .25s ease, margin-top .32s ease;}
+  .entry.open .expand-body{max-height:900px;opacity:1;margin-top:6px;}
+  .entry-title .chev{transition:transform .25s cubic-bezier(.4,0,.2,1);}
   .brand-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
   .btn-dup{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);}
   .badge-stack{display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
@@ -212,6 +215,24 @@
   .lb-row:last-child{border-bottom:none;}
   .lb-name{font-weight:600;}
   .lb-stats{color:var(--ink-soft);font-size:12.5px;}
+  .an-h{font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px;cursor:default;}
+  details.an-collapsible{margin-bottom:16px;}
+  details.an-collapsible summary.an-h{cursor:pointer;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 22px;box-shadow:var(--shadow);margin:0;}
+  details.an-collapsible summary.an-h::-webkit-details-marker{display:none;}
+  details.an-collapsible summary.an-h::after{content:'▸';margin-left:auto;color:var(--ink-soft);font-size:12px;transition:transform .2s ease;}
+  details.an-collapsible[open] summary.an-h::after{transform:rotate(90deg);}
+  details.an-collapsible[open] summary.an-h{border-bottom-left-radius:0;border-bottom-right-radius:0;box-shadow:none;}
+  details.an-collapsible > div{background:var(--surface);border:1px solid var(--line);border-top:none;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);padding:0 22px 16px;}
+  .lb-row-wrap{position:relative;margin-bottom:2px;}
+  .lb-bar{position:absolute;left:0;top:0;bottom:0;background:var(--accent-soft);border-radius:8px;z-index:0;transition:width .5s cubic-bezier(.4,0,.2,1);}
+  .lb-row{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .lb-row:last-child{border-bottom:none;}
+  .lb-rank{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--bg);font-size:10.5px;font-weight:700;color:var(--ink-soft);margin-right:8px;flex-shrink:0;}
+  .lb-rank.gold{background:#F3D98B;color:#7A5A0A;}
+  .lb-rank.silver{background:#DCE0E4;color:#5A6068;}
+  .lb-rank.bronze{background:#E6C2A0;color:#7A4A1E;}
+  .kpi-winrate .v{color:var(--winner);}
+  .kpi-not .v{color:var(--not-winner);}
   .history-block{margin-top:12px;}
   .history-block summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--accent);list-style:none;}
   .history-block summary::-webkit-details-marker{display:none;}
@@ -221,6 +242,8 @@
   .history-row{display:flex;gap:10px;padding:4px 0 4px 12px;font-size:12px;}
   .history-time{color:var(--ink-soft);white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:11px;}
   .history-text{color:var(--ink);}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--emphasis-bg);color:var(--emphasis-text);padding:11px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:2000;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
   .login-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;max-width:340px;width:100%;text-align:center;}
   .login-card input{margin-top:4px;}
@@ -233,6 +256,7 @@
 </style>
 </head>
 <body>
+<div id="toast" class="toast"></div>
 <div id="login-overlay" class="login-overlay" style="display:none;">
   <div class="login-card">
     <div class="eyebrow" style="font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--accent);">Cosmetic Cocoon</div>
@@ -386,34 +410,18 @@
 
   <!-- ANALYTICS PANEL -->
   <section class="panel" id="panel-analytics">
-    <div class="perf-grid" id="analytics-summary" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;"></div>
+    <div class="perf-grid" id="analytics-summary" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px;"></div>
     <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">Winning Creatives</h3>
-      <div id="analytics-winners"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Editor</h3>
+      <h3 class="an-h">✎ By Editor</h3>
       <div id="analytics-editor"></div>
     </div>
     <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Concept / Script Creator</h3>
-      <div id="analytics-creator"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Tag</h3>
-      <div id="analytics-tags"></div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Page / Brand</h3>
+      <h3 class="an-h">📍 By Brand</h3>
       <div id="analytics-pages"></div>
     </div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">Launch Log — sino na-run talaga</h3>
-      <div id="analytics-launchlog"></div>
-    </div>
     <div class="card">
-      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">All Outputs</h3>
-      <div id="analytics-outputs"></div>
+      <h3 class="an-h">🏷 By Creative Type</h3>
+      <div id="analytics-tags"></div>
     </div>
   </section>
 
@@ -491,6 +499,14 @@ async function api(path, opts){
   const data = await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(data.error || ('Request failed: '+r.status));
   return data;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
 function showLogin(){
@@ -749,6 +765,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...payload, winner_status:'pending', performance:null }) });
     statusEl.textContent = 'Logged ✓';
     statusEl.className = 'status-msg ok';
+    showToast('✓ Creative logged');
     resetForm();
     setTimeout(()=>{ statusEl.textContent=''; },2500);
   }catch(e){
@@ -789,9 +806,10 @@ async function renderEntries(){
   }
 
   holder.innerHTML = '';
-  list.forEach(e=>{
+  list.forEach((e,idx)=>{
     const div = document.createElement('div');
     const perf = e.performance;
+    div.style.animationDelay = Math.min(idx*0.035, 0.4) + 's';
 
     if(inlineEditId === e.id){
       div.className = 'entry';
@@ -926,6 +944,7 @@ async function renderEntries(){
           editing_done: false,
           launched: false
         })});
+        showToast('✓ Duplicated — edit the copy to set it up');
         renderEntries();
       }catch(err){
         statusMsg.textContent = "Couldn't duplicate — try again.";
@@ -1058,32 +1077,28 @@ async function renderAnalytics(){
   const launched = entries.filter(e=>e.launched).length;
   const winners = entries.filter(e=>e.winner_status==='winner').length;
   const notWinners = entries.filter(e=>e.winner_status==='not_winner').length;
+  const decided = winners + notWinners;
+  const winRate = decided>0 ? Math.round((winners/decided)*100) : 0;
 
   document.getElementById('analytics-summary').innerHTML = `
-    <div class="perf-cell"><div class="k">Total logged</div><div class="v">${total}</div></div>
-    <div class="perf-cell"><div class="k">Launched</div><div class="v">${launched}</div></div>
-    <div class="perf-cell"><div class="k">Winners</div><div class="v">${winners}</div></div>
-    <div class="perf-cell"><div class="k">Not winners</div><div class="v">${notWinners}</div></div>
+    <div class="perf-cell"><div class="k">Total logged</div><div class="v countup" data-to="${total}">0</div></div>
+    <div class="perf-cell"><div class="k">Launched</div><div class="v countup" data-to="${launched}">0</div></div>
+    <div class="perf-cell kpi-winrate"><div class="k">Winners</div><div class="v countup" data-to="${winners}">0</div></div>
+    <div class="perf-cell kpi-not"><div class="k">Not winners</div><div class="v countup" data-to="${notWinners}">0</div></div>
+    <div class="perf-cell kpi-winrate"><div class="k">Win Rate</div><div class="v countup" data-to="${winRate}" data-suffix="%">0</div></div>
   `;
-
-  const winnerEntries = entries.filter(e=>e.winner_status==='winner');
-  const winnersHolder = document.getElementById('analytics-winners');
-  if(winnerEntries.length===0){
-    winnersHolder.innerHTML = `<div class="hint">No winners tagged yet — mark a creative as Winner in the Tracker tab to see it here.</div>`;
-  }else{
-    winnersHolder.innerHTML = winnerEntries.map(e=>{
-      const perf = e.performance;
-      return `
-      <div class="lb-row" style="align-items:flex-start;flex-direction:column;gap:4px;">
-        <div class="lb-name">${escapeHtml(e.ad_name)}</div>
-        <div class="lb-stats">${PAGES[e.page]||e.page||'No page'} · Editor: ${escapeHtml(e.editor||'—')} · Concept: ${escapeHtml(e.concept_creator||'—')}${e.date_launched?' · Launched '+e.date_launched:''}</div>
-        ${e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a>`:''}
-        ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:2px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-        ${e.script?`<div class="entry-script" style="width:100%;">${escapeHtml(e.script)}</div>`:''}
-        ${perf?`<div class="lb-stats">Spend ${escapeHtml(String(perf.spend??'—'))} · Impressions ${escapeHtml(String(perf.impressions??'—'))} · CTR ${escapeHtml(String(perf.ctr??'—'))}</div>`:''}
-      </div>`;
-    }).join('');
-  }
+  document.querySelectorAll('.countup').forEach(el=>{
+    const target = parseInt(el.dataset.to,10) || 0;
+    const suffix = el.dataset.suffix || '';
+    const start = performance.now();
+    const dur = 500;
+    function tick(now){
+      const p = Math.min((now-start)/dur, 1);
+      el.textContent = Math.round(target * (1 - Math.pow(1-p, 3))) + suffix;
+      if(p<1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
 
   function leaderboard(field){
     const map = {};
@@ -1123,57 +1138,32 @@ async function renderAnalytics(){
 
   function renderLB(holderId, field){
     const rows = leaderboard(field);
+    renderRankedRows(holderId, rows);
+  }
+
+  function renderRankedRows(holderId, rows){
     const holder = document.getElementById(holderId);
     if(rows.length===0){ holder.innerHTML = `<div class="hint">Nothing logged yet.</div>`; return; }
-    holder.innerHTML = rows.map(([name,stats])=>`
-      <div class="lb-row">
-        <span class="lb-name">${escapeHtml(name)}</span>
-        <span class="lb-stats">${stats.winners} winner${stats.winners===1?'':'s'} · ${stats.total} logged</span>
+    const maxTotal = Math.max(...rows.map(([,s])=>s.total), 1);
+    const rankClass = ['gold','silver','bronze'];
+    holder.innerHTML = rows.map(([name,stats],i)=>`
+      <div class="lb-row-wrap">
+        <div class="lb-bar" style="width:${(stats.total/maxTotal*100).toFixed(0)}%"></div>
+        <div class="lb-row">
+          <span class="lb-name"><span class="lb-rank ${rankClass[i]||''}">${i+1}</span>${escapeHtml(name)}</span>
+          <span class="lb-stats">${stats.winners} winner${stats.winners===1?'':'s'} · ${stats.total} logged</span>
+        </div>
       </div>
     `).join('');
   }
 
   function renderRows(holderId, rows){
-    const holder = document.getElementById(holderId);
-    if(rows.length===0){ holder.innerHTML = `<div class="hint">Nothing logged yet.</div>`; return; }
-    holder.innerHTML = rows.map(([name,stats])=>`
-      <div class="lb-row">
-        <span class="lb-name">${escapeHtml(name)}</span>
-        <span class="lb-stats">${stats.winners} winner${stats.winners===1?'':'s'} · ${stats.total} logged</span>
-      </div>
-    `).join('');
+    renderRankedRows(holderId, rows);
   }
 
   renderLB('analytics-editor','editor');
-  renderLB('analytics-creator','concept_creator');
   renderRows('analytics-tags', leaderboardByTags());
   renderRows('analytics-pages', leaderboardByPage());
-
-  const launchLogHolder = document.getElementById('analytics-launchlog');
-  const launchedEntries = entries.filter(e=>e.launched).sort((a,b)=> (b.date_launched||'').localeCompare(a.date_launched||''));
-  if(launchedEntries.length===0){
-    launchLogHolder.innerHTML = `<div class="hint">Wala pang launched creatives.</div>`;
-  }else{
-    launchLogHolder.innerHTML = launchedEntries.map(e=>`
-      <div class="lb-row">
-        <span class="lb-name">${escapeHtml(e.ad_name)}</span>
-        <span class="lb-stats">${PAGES[e.page]||e.page||'—'} · ${e.date_launched||'—'} · ${escapeHtml(e.editor||e.submitted_by||'—')}</span>
-      </div>
-    `).join('');
-  }
-
-  const outputsHolder = document.getElementById('analytics-outputs');
-  const withOutputs = entries.filter(e=>e.output_link).sort((a,b)=> new Date(b.submitted_at) - new Date(a.submitted_at));
-  if(withOutputs.length===0){
-    outputsHolder.innerHTML = `<div class="hint">Wala pang naka-link na output files. Idagdag sa Edit ng entry ("Output" field).</div>`;
-  }else{
-    outputsHolder.innerHTML = withOutputs.map(e=>`
-      <div class="lb-row">
-        <span class="lb-name">${escapeHtml(e.ad_name)}</span>
-        <span class="lb-stats">${escapeHtml(e.editor||'—')} · <a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">Open ↗</a></span>
-      </div>
-    `).join('');
-  }
 }
 
 // ---------- Announcements ----------
@@ -1204,6 +1194,7 @@ document.getElementById('ann-post-btn').addEventListener('click', async ()=>{
     await api('/api/announcements', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text, created_by: by }) });
     document.getElementById('ann-input').value = '';
     localStorage.removeItem('cocoon-ann-dismissed');
+    showToast('📢 Announcement posted');
     loadAnnouncement();
   }catch(e){}
 });
@@ -1263,6 +1254,7 @@ document.getElementById('a-submit').addEventListener('click', async ()=>{
     document.getElementById('a-url').value='';
     statusEl.textContent = 'Added ✓';
     statusEl.className = 'status-msg ok';
+    showToast('✓ Asset added');
     renderAssets();
     setTimeout(()=>{ statusEl.textContent=''; },2000);
   }catch(e){
