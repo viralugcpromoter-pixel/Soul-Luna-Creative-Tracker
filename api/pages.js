@@ -1,10 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
-import { checkAuth } from './_auth.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
+function checkAuth(req, res) {
+  const token = req.headers['x-admin-token'];
+  if (!token || token !== process.env.ADMIN_PASSWORD) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return false;
+  }
+  return true;
+}
 
 // Starting set — edit freely, or just add more from the app itself once deployed.
 const BASE_PAGES = {
