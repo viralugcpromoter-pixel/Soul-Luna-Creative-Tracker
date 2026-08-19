@@ -204,6 +204,7 @@
         <button class="tab-btn active" data-tab="log">Log Creative</button>
         <button class="tab-btn" data-tab="track">Tracker</button>
         <button class="tab-btn" data-tab="analytics">Analytics</button>
+        <button class="tab-btn" data-tab="assets">Assets</button>
       </div>
       <div class="theme-switcher" title="Color theme">
         <button class="swatch" data-theme="rose" style="--sw:#B8677A" aria-label="Rose theme"></button>
@@ -300,6 +301,7 @@
   <!-- TRACKER PANEL -->
   <section class="panel" id="panel-track">
     <div class="filter-bar">
+      <input type="text" id="filt-search" placeholder="Search ad name or script…" style="width:200px;padding:8px 10px;font-size:13px;" />
       <select id="filt-page">
         <option value="">All pages</option>
       </select>
@@ -327,10 +329,61 @@
       <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Editor</h3>
       <div id="analytics-editor"></div>
     </div>
-    <div class="card">
+    <div class="card" style="margin-bottom:16px;">
       <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Concept / Script Creator</h3>
       <div id="analytics-creator"></div>
     </div>
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Tag</h3>
+      <div id="analytics-tags"></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Page / Brand</h3>
+      <div id="analytics-pages"></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">Launch Log — sino na-run talaga</h3>
+      <div id="analytics-launchlog"></div>
+    </div>
+    <div class="card">
+      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">All Outputs</h3>
+      <div id="analytics-outputs"></div>
+    </div>
+  </section>
+
+  <!-- ASSETS PANEL -->
+  <section class="panel" id="panel-assets">
+    <div class="card" style="margin-bottom:16px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;">Add an Asset</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Title</label>
+          <input type="text" id="a-title" placeholder="e.g. Cocoon Logo Pack, UGC B-roll folder" />
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <select id="a-type">
+            <option value="gdrive">Google Drive</option>
+            <option value="canva">Canva</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Added by</label>
+          <input type="text" id="a-by" placeholder="Your name" />
+        </div>
+        <div class="field full">
+          <label>Link</label>
+          <input type="text" id="a-url" placeholder="https://..." />
+        </div>
+      </div>
+      <div class="submit-row">
+        <button class="btn btn-primary" id="a-submit" type="button">Add asset</button>
+        <span class="status-msg" id="a-status"></span>
+      </div>
+    </div>
+    <p class="about" style="margin-top:0;margin-bottom:16px;">Shared reference library — Drive folders, Canva templates, brand assets. Everyone on the team pulls from here when shooting or editing.</p>
+    <div id="assets-holder"></div>
   </section>
 
 </div>
@@ -487,6 +540,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
     if(btn.dataset.tab==='track') renderEntries();
     if(btn.dataset.tab==='analytics') renderAnalytics();
+    if(btn.dataset.tab==='assets') renderAssets();
   });
 });
 
@@ -620,6 +674,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
 });
 
 // ---------- Tracker rendering ----------
+document.getElementById('filt-search').addEventListener('input', renderEntries);
 document.getElementById('filt-page').addEventListener('change', renderEntries);
 document.getElementById('filt-status').addEventListener('change', renderEntries);
 document.getElementById('filt-tag').addEventListener('input', renderEntries);
@@ -628,11 +683,13 @@ document.getElementById('filt-editor').addEventListener('input', renderEntries);
 async function renderEntries(){
   await loadEntries();
   const holder = document.getElementById('entries-holder');
+  const fq = document.getElementById('filt-search').value.trim().toLowerCase();
   const fp = document.getElementById('filt-page').value;
   const fs = document.getElementById('filt-status').value;
   const ft = document.getElementById('filt-tag').value.trim().toLowerCase();
   const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
   let list = entries.filter(e=>
+    (!fq || (e.ad_name||'').toLowerCase().includes(fq) || (e.script||'').toLowerCase().includes(fq)) &&
     (!fp || e.page===fp) &&
     (!fs || e.winner_status===fs) &&
     (!ft || (e.tags||[]).some(t=>t.toLowerCase().includes(ft))) &&
@@ -671,6 +728,7 @@ async function renderEntries(){
             date_launched: div.querySelector('.ie-date').value || null,
             editor: div.querySelector('.ie-editor').value.trim(),
             concept_link: div.querySelector('.ie-link').value.trim(),
+            output_link: div.querySelector('.ie-output').value.trim(),
             script: div.querySelector('.ie-script').value.trim(),
             tags: div.querySelector('.tag-input-box')._tags || []
           })});
@@ -703,6 +761,7 @@ async function renderEntries(){
             <div class="pipe-step ${e.launched?'done':''}"><span class="pipe-dot"></span><span class="pipe-label">Launched</span></div>
           </div>
           ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
+          ${e.output_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View output ↗</a></div>`:''}
           ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
         </div>
         <div class="badge-stack">
@@ -829,6 +888,10 @@ function buildInlineEditHTML(e){
         <input type="text" class="ie-link" value="${escapeHtml(e.concept_link||'')}" />
       </div>
       <div class="field full">
+        <label>Output (finished file link)</label>
+        <input type="text" class="ie-output" value="${escapeHtml(e.output_link||'')}" placeholder="Drive link to the finished video/image" />
+      </div>
+      <div class="field full">
         <label>Tags</label>
         <div class="tag-input-box"><input type="text" class="tag-entry-input" placeholder="Type a tag, press Enter" /></div>
       </div>
@@ -905,6 +968,30 @@ async function renderAnalytics(){
     return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
   }
 
+  function leaderboardByTags(){
+    const map = {};
+    entries.forEach(e=>{
+      (e.tags||[]).forEach(t=>{
+        if(!map[t]) map[t] = { total:0, winners:0 };
+        map[t].total++;
+        if(e.winner_status==='winner') map[t].winners++;
+      });
+    });
+    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
+  }
+
+  function leaderboardByPage(){
+    const map = {};
+    entries.forEach(e=>{
+      if(!e.page) return;
+      const label = PAGES[e.page] || e.page;
+      if(!map[label]) map[label] = { total:0, winners:0 };
+      map[label].total++;
+      if(e.winner_status==='winner') map[label].winners++;
+    });
+    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
+  }
+
   function renderLB(holderId, field){
     const rows = leaderboard(field);
     const holder = document.getElementById(holderId);
@@ -917,9 +1004,110 @@ async function renderAnalytics(){
     `).join('');
   }
 
+  function renderRows(holderId, rows){
+    const holder = document.getElementById(holderId);
+    if(rows.length===0){ holder.innerHTML = `<div class="hint">Nothing logged yet.</div>`; return; }
+    holder.innerHTML = rows.map(([name,stats])=>`
+      <div class="lb-row">
+        <span class="lb-name">${escapeHtml(name)}</span>
+        <span class="lb-stats">${stats.winners} winner${stats.winners===1?'':'s'} · ${stats.total} logged</span>
+      </div>
+    `).join('');
+  }
+
   renderLB('analytics-editor','editor');
   renderLB('analytics-creator','concept_creator');
+  renderRows('analytics-tags', leaderboardByTags());
+  renderRows('analytics-pages', leaderboardByPage());
+
+  const launchLogHolder = document.getElementById('analytics-launchlog');
+  const launchedEntries = entries.filter(e=>e.launched).sort((a,b)=> (b.date_launched||'').localeCompare(a.date_launched||''));
+  if(launchedEntries.length===0){
+    launchLogHolder.innerHTML = `<div class="hint">Wala pang launched creatives.</div>`;
+  }else{
+    launchLogHolder.innerHTML = launchedEntries.map(e=>`
+      <div class="lb-row">
+        <span class="lb-name">${escapeHtml(e.ad_name)}</span>
+        <span class="lb-stats">${PAGES[e.page]||e.page||'—'} · ${e.date_launched||'—'} · ${escapeHtml(e.editor||e.submitted_by||'—')}</span>
+      </div>
+    `).join('');
+  }
+
+  const outputsHolder = document.getElementById('analytics-outputs');
+  const withOutputs = entries.filter(e=>e.output_link).sort((a,b)=> new Date(b.submitted_at) - new Date(a.submitted_at));
+  if(withOutputs.length===0){
+    outputsHolder.innerHTML = `<div class="hint">Wala pang naka-link na output files. Idagdag sa Edit ng entry ("Output" field).</div>`;
+  }else{
+    outputsHolder.innerHTML = withOutputs.map(e=>`
+      <div class="lb-row">
+        <span class="lb-name">${escapeHtml(e.ad_name)}</span>
+        <span class="lb-stats">${escapeHtml(e.editor||'—')} · <a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">Open ↗</a></span>
+      </div>
+    `).join('');
+  }
 }
+
+// ---------- Assets ----------
+let assets = [];
+async function loadAssets(){
+  try{ assets = await api('/api/assets'); }
+  catch(e){ assets = []; }
+}
+async function renderAssets(){
+  await loadAssets();
+  const holder = document.getElementById('assets-holder');
+  if(assets.length===0){
+    holder.innerHTML = `<div class="empty"><div class="big">Walang assets pa</div>Idagdag ang unang Drive o Canva link sa itaas.</div>`;
+    return;
+  }
+  const TYPE_LABEL = { gdrive:'Google Drive', canva:'Canva', other:'Other' };
+  holder.innerHTML = assets.map(a=>`
+    <div class="entry" style="border-left-color:var(--accent);">
+      <div class="entry-head">
+        <div>
+          <div class="entry-title">${escapeHtml(a.title)}</div>
+          <div class="entry-meta">${TYPE_LABEL[a.type]||a.type} ${a.added_by?'· Added by '+escapeHtml(a.added_by):''} · ${new Date(a.created_at).toLocaleDateString()}</div>
+          <div style="margin-top:6px;"><a href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer" class="btn-link">Open ↗</a></div>
+        </div>
+      </div>
+      <div class="entry-actions">
+        <button class="btn-danger-text act-del-asset" data-id="${a.id}" type="button">Delete</button>
+      </div>
+    </div>
+  `).join('');
+  holder.querySelectorAll('.act-del-asset').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Delete this asset?')) return;
+      await api('/api/assets?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
+      renderAssets();
+    });
+  });
+}
+document.getElementById('a-submit').addEventListener('click', async ()=>{
+  const title = document.getElementById('a-title').value.trim();
+  const type = document.getElementById('a-type').value;
+  const by = document.getElementById('a-by').value.trim();
+  const url = document.getElementById('a-url').value.trim();
+  const statusEl = document.getElementById('a-status');
+  if(!title || !url){
+    statusEl.textContent = 'Fill in title and link.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+  try{
+    await api('/api/assets', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, type, url, added_by: by }) });
+    document.getElementById('a-title').value='';
+    document.getElementById('a-by').value='';
+    document.getElementById('a-url').value='';
+    statusEl.textContent = 'Added ✓';
+    statusEl.className = 'status-msg ok';
+    renderAssets();
+    setTimeout(()=>{ statusEl.textContent=''; },2000);
+  }catch(e){
+    statusEl.textContent = "Couldn't save — try again.";
+    statusEl.className = 'status-msg err';
+  }
+});
 
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
