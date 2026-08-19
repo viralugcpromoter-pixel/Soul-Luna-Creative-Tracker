@@ -185,8 +185,8 @@
           <input type="text" id="f-concept-creator" placeholder="Who wrote the script/concept" />
         </div>
         <div class="field">
-          <label>Editor</label>
-          <input type="text" id="f-editor" placeholder="Who edits/produces it (fill in once assigned)" />
+          <label>Assign to Editor</label>
+          <input type="text" id="f-editor" placeholder="Name of the editor this is assigned to" />
         </div>
 
         <div class="field full">
@@ -276,6 +276,7 @@
         <option value="not_winner">Not a winner</option>
       </select>
       <input type="text" id="filt-tag" placeholder="Filter by tag…" style="width:150px;padding:8px 10px;font-size:13px;" />
+      <input type="text" id="filt-editor" placeholder="Filter by editor…" style="width:150px;padding:8px 10px;font-size:13px;" />
       <span class="count-note" id="entry-count"></span>
     </div>
     <div id="entries-holder"></div>
@@ -569,6 +570,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
 document.getElementById('filt-page').addEventListener('change', renderEntries);
 document.getElementById('filt-status').addEventListener('change', renderEntries);
 document.getElementById('filt-tag').addEventListener('input', renderEntries);
+document.getElementById('filt-editor').addEventListener('input', renderEntries);
 
 async function renderEntries(){
   await loadEntries();
@@ -576,10 +578,12 @@ async function renderEntries(){
   const fp = document.getElementById('filt-page').value;
   const fs = document.getElementById('filt-status').value;
   const ft = document.getElementById('filt-tag').value.trim().toLowerCase();
+  const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
   let list = entries.filter(e=>
     (!fp || e.page===fp) &&
     (!fs || e.winner_status===fs) &&
-    (!ft || (e.tags||[]).some(t=>t.toLowerCase().includes(ft)))
+    (!ft || (e.tags||[]).some(t=>t.toLowerCase().includes(ft))) &&
+    (!fe || (e.editor||'').toLowerCase().includes(fe))
   );
 
   document.getElementById('entry-count').textContent = `${list.length} creative${list.length===1?'':'s'}`;
