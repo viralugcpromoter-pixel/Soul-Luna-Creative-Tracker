@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cosmetic Cocoon — Creative Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root, [data-theme="rose"]{
+    --bg:#FAF6F2; --surface:#FFFFFF; --ink:#2A2420; --ink-soft:#6E645C;
+    --accent:#B8677A; --accent-soft:#F1DEE2;
+    --winner:#5C7A5E; --winner-soft:#E3EBE1;
+    --pending:#B4842A; --pending-soft:#F3E7CE;
+    --not-winner:#8A8078; --not-winner-soft:#EDE8E2;
+    --line:#E8DFD8; --input-bg:#FFFFFF;
+    --emphasis-bg:#2A2420; --emphasis-text:#FFFFFF;
+    --shadow:0 1px 2px rgba(42,36,32,.05), 0 8px 20px rgba(42,36,32,.06);
+    --radius:14px;
+  }
+  [data-theme="navy"]{
+    --bg:#F4F6F9; --surface:#FFFFFF; --ink:#1B2530; --ink-soft:#5B6A7A;
+    --accent:#2F4C74; --accent-soft:#DEE6F0;
+    --winner:#2F6B4F; --winner-soft:#DCEAE1;
+    --pending:#A6742C; --pending-soft:#F0E3CB;
+    --not-winner:#7C8593; --not-winner-soft:#E7E9EC;
+    --line:#DEE3E9; --input-bg:#FFFFFF;
+    --emphasis-bg:#1B2530; --emphasis-text:#FFFFFF;
+    --shadow:0 1px 2px rgba(27,37,48,.05), 0 8px 20px rgba(27,37,48,.07);
+  }
+  [data-theme="emerald"]{
+    --bg:#F5F8F5; --surface:#FFFFFF; --ink:#1E2A22; --ink-soft:#5E6E63;
+    --accent:#2F6B4F; --accent-soft:#DCEAE1;
+    --winner:#2F6B4F; --winner-soft:#DCEAE1;
+    --pending:#B4842A; --pending-soft:#F3E7CE;
+    --not-winner:#87938B; --not-winner-soft:#E4EAE6;
+    --line:#DEE6E0; --input-bg:#FFFFFF;
+    --emphasis-bg:#1E2A22; --emphasis-text:#FFFFFF;
+    --shadow:0 1px 2px rgba(30,42,34,.05), 0 8px 20px rgba(30,42,34,.07);
+  }
+  [data-theme="slate"]{
+    --bg:#F4F5F6; --surface:#FFFFFF; --ink:#23262B; --ink-soft:#6B7178;
+    --accent:#52616F; --accent-soft:#E3E7EA;
+    --winner:#4B7A5D; --winner-soft:#DFEAE3;
+    --pending:#B08A3C; --pending-soft:#F1E6CD;
+    --not-winner:#7C828A; --not-winner-soft:#E6E8EA;
+    --line:#E1E4E7; --input-bg:#FFFFFF;
+    --emphasis-bg:#23262B; --emphasis-text:#FFFFFF;
+    --shadow:0 1px 2px rgba(35,38,43,.05), 0 8px 20px rgba(35,38,43,.06);
+  }
+  [data-theme="charcoal"]{
+    --bg:#1B1A18; --surface:#242220; --ink:#F2ECE6; --ink-soft:#A79E93;
+    --accent:#D0A15E; --accent-soft:#3A3226;
+    --winner:#8FBE94; --winner-soft:#28352A;
+    --pending:#E0B563; --pending-soft:#3A2F1E;
+    --not-winner:#9A9187; --not-winner-soft:#2E2B27;
+    --line:#37332E; --input-bg:#2C2A27;
+    --emphasis-bg:#D0A15E; --emphasis-text:#1B1A18;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;transition:background-color .25s ease, color .25s ease;}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 80px;}
+  header.top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+  .brand{display:flex;flex-direction:column;gap:2px;}
+  .brand .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:30px;margin:2px 0 0;letter-spacing:-0.01em;}
+  .header-controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .theme-switcher{display:flex;gap:7px;align-items:center;}
+  .swatch{width:18px;height:18px;border-radius:50%;background:var(--sw);border:2px solid transparent;padding:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);transition:transform .12s ease, border-color .12s ease;}
+  .swatch:hover{transform:scale(1.18);}
+  .swatch.active{border-color:var(--ink);}
+  .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:var(--shadow);}
+  .tab-btn{border:none;background:transparent;padding:9px 18px;border-radius:999px;font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;color:var(--ink-soft);cursor:pointer;transition:background .15s ease, color .15s ease;}
+  .tab-btn.active{background:var(--emphasis-bg);color:var(--emphasis-text);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);transition:background-color .2s ease, border-color .2s ease;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .form-grid .full{grid-column:1/-1;}
+  @media (max-width:620px){.form-grid{grid-template-columns:1fr;}}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+  input[type=text],input[type=date],select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:var(--input-bg);}
+  input::placeholder,textarea::placeholder{color:var(--ink-soft);opacity:.75;}
+  [data-theme="charcoal"] input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.85);}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  textarea{resize:vertical;min-height:90px;}
+  .field{margin-bottom:2px;}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:5px;}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .check-inline{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:500;color:var(--ink);cursor:pointer;}
+  .check-inline input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  button{font-family:'Inter',sans-serif;cursor:pointer;}
+  .btn{border:none;border-radius:10px;padding:10px 16px;font-weight:600;font-size:13.5px;}
+  .btn-primary{background:var(--emphasis-bg);color:var(--emphasis-text);}
+  .btn-primary:disabled{opacity:.5;cursor:default;}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
+  .btn-ghost:hover{border-color:var(--accent);}
+  .btn-link{background:none;border:none;color:var(--accent);font-weight:600;font-size:13px;padding:2px 0;}
+  .ad-picker-result{margin-top:10px;border:1px dashed var(--line);border-radius:10px;padding:10px;max-height:220px;overflow-y:auto;}
+  .ad-picker-row{display:flex;justify-content:space-between;gap:10px;padding:8px 6px;border-radius:8px;cursor:pointer;}
+  .ad-picker-row:hover{background:var(--accent-soft);}
+  .ad-picker-row .name{font-size:13.5px;font-weight:500;}
+  .ad-picker-row .id{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
+  .picked-chip{display:inline-flex;align-items:center;gap:8px;background:var(--winner-soft);color:var(--winner);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;margin-top:8px;}
+  .picked-chip button{background:none;border:none;color:var(--winner);font-weight:700;padding:0;}
+  .submit-row{margin-top:18px;display:flex;align-items:center;gap:12px;}
+  .status-msg{font-size:13px;color:var(--ink-soft);}
+  .status-msg.err{color:#B03A2E;}
+  .status-msg.ok{color:var(--winner);}
+  .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+  .filter-bar select{width:auto;padding:8px 10px;font-size:13px;}
+  .count-note{font-size:12.5px;color:var(--ink-soft);margin-left:auto;}
+  .entry{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--not-winner);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);transition:background-color .2s ease, border-color .2s ease;}
+  .entry.winner{border-left-color:var(--winner);}
+  .entry.pending{border-left-color:var(--pending);}
+  .entry-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .entry-title{font-family:'Fraunces',serif;font-size:17px;font-weight:600;}
+  .entry-meta{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+  .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .tag-chip{background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;}
+  .badge{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:4px 10px;border-radius:999px;white-space:nowrap;height:fit-content;}
+  .badge.winner{background:var(--winner-soft);color:var(--winner);}
+  .badge.pending{background:var(--pending-soft);color:var(--pending);}
+  .badge.not_winner{background:var(--not-winner-soft);color:var(--not-winner);}
+  .entry-script{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;white-space:pre-wrap;margin-top:6px;max-height:120px;overflow-y:auto;color:var(--ink);}
+  .perf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;}
+  @media (max-width:560px){.perf-grid{grid-template-columns:repeat(2,1fr);}}
+  .perf-cell{background:var(--bg);border-radius:8px;padding:8px 10px;}
+  .perf-cell .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+  .perf-cell .v{font-family:'IBM Plex Mono',monospace;font-size:14px;margin-top:2px;}
+  .entry-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .btn-sm{padding:7px 12px;font-size:12.5px;border-radius:8px;}
+  .btn-danger-text{background:none;border:none;color:#B03A2E;font-size:12px;font-weight:600;padding:0;margin-left:auto;}
+  .empty{text-align:center;padding:50px 20px;color:var(--ink-soft);}
+  .empty .big{font-family:'Fraunces',serif;font-size:20px;color:var(--ink);margin-bottom:6px;}
+  .toggle-manual{font-size:12px;color:var(--accent);background:none;border:none;font-weight:600;padding:0;margin-top:8px;cursor:pointer;}
+  .spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .about{font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin-top:20px;}
+  .pipeline-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .pipe-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--not-winner-soft);color:var(--not-winner);}
+  .pipe-badge.on{background:var(--winner-soft);color:var(--winner);}
+  .lb-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .lb-row:last-child{border-bottom:none;}
+  .lb-name{font-weight:600;}
+  .lb-stats{color:var(--ink-soft);font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Cosmetic Cocoon</span>
+      <h1>Creative Tracker</h1>
+    </div>
+    <div class="header-controls">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="log">Log Creative</button>
+        <button class="tab-btn" data-tab="track">Tracker</button>
+        <button class="tab-btn" data-tab="analytics">Analytics</button>
+      </div>
+      <div class="theme-switcher" title="Color theme">
+        <button class="swatch" data-theme="rose" style="--sw:#B8677A" aria-label="Rose theme"></button>
+        <button class="swatch" data-theme="navy" style="--sw:#2F4C74" aria-label="Navy theme"></button>
+        <button class="swatch" data-theme="emerald" style="--sw:#2F6B4F" aria-label="Emerald theme"></button>
+        <button class="swatch" data-theme="slate" style="--sw:#52616F" aria-label="Slate theme"></button>
+        <button class="swatch" data-theme="charcoal" style="--sw:#D0A15E" aria-label="Charcoal theme"></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- LOG PANEL -->
+  <section class="panel active" id="panel-log">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:14px;">
+        <h2 id="log-heading" style="font-family:'Fraunces',serif;font-size:19px;margin:0;">Log a Creative</h2>
+        <button class="btn-link" id="btn-cancel-edit" type="button" style="display:none;">Cancel edit</button>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Concept / Script Creator</label>
+          <input type="text" id="f-concept-creator" placeholder="Who wrote the script/concept" />
+        </div>
+        <div class="field">
+          <label>Editor</label>
+          <input type="text" id="f-editor" placeholder="Who edits/produces it (fill in once assigned)" />
+        </div>
+
+        <div class="field full">
+          <label>Ad Creative / Working Title</label>
+          <div class="row">
+            <button class="btn btn-ghost btn-sm" id="btn-fetch-ads" type="button">Pull ads from Meta</button>
+            <span id="fetch-ads-status" class="status-msg"></span>
+          </div>
+          <div id="ad-picker-result" class="ad-picker-result" style="display:none;"></div>
+          <div id="picked-chip-holder"></div>
+          <button class="toggle-manual" id="btn-manual-toggle" type="button">No Meta ad yet? Type a working title</button>
+          <div id="manual-name-block" style="display:none;margin-top:8px;">
+            <input type="text" id="f-manual-name" placeholder="e.g. Cocoon Pico Laser — Testimonial Cut 3" />
+            <div class="hint">Fine to use a draft title at concept stage — pull the real ad from Meta once it's live.</div>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>Page / Ad Account <span style="font-weight:400;text-transform:none;letter-spacing:0;">(fill in once it's ready to launch)</span></label>
+          <select id="f-page">
+            <option value="">Select page…</option>
+          </select>
+          <button class="toggle-manual" id="btn-addpage-toggle" type="button">+ Add a new page / ad account</button>
+          <div id="addpage-block" style="display:none;margin-top:8px;">
+            <div class="row">
+              <input type="text" id="f-newpage-id" placeholder="Ad account ID (e.g. act_123456789)" style="flex:1;min-width:180px;" />
+              <input type="text" id="f-newpage-label" placeholder="Label (e.g. Cosmetic Cocoon — UAE)" style="flex:1;min-width:180px;" />
+              <button class="btn btn-ghost btn-sm" id="btn-save-newpage" type="button">Add</button>
+            </div>
+            <span id="addpage-status" class="status-msg"></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Date Launched</label>
+          <input type="date" id="f-date" />
+        </div>
+        <div class="field">
+          <label>Submitted By</label>
+          <input type="text" id="f-by" placeholder="Your name" />
+        </div>
+
+        <div class="field full">
+          <label>Concept (Drive link)</label>
+          <input type="text" id="f-concept" placeholder="Google Drive link to the concept/creative file" />
+        </div>
+
+        <div class="field full">
+          <label>Tags</label>
+          <input type="text" id="f-tags" placeholder="e.g. testimonial, pico laser, UGC — comma separated" />
+          <div class="hint">Optional — tag the angle, service, or format so patterns are easier to spot later.</div>
+        </div>
+
+        <div class="field full">
+          <label>Script</label>
+          <textarea id="f-script" placeholder="Paste the script, or a link to it (Drive, Doc, etc.)"></textarea>
+        </div>
+
+        <div class="field full">
+          <label>Pipeline</label>
+          <div class="row">
+            <label class="check-inline"><input type="checkbox" id="f-editing-done" /> Editing done</label>
+            <label class="check-inline"><input type="checkbox" id="f-launched" /> Launched</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-row">
+        <button class="btn btn-primary" id="btn-submit" type="button">Log this creative</button>
+        <span class="status-msg" id="submit-status"></span>
+      </div>
+    </div>
+
+    <p class="about">Concept creator logs the idea + script first — page, Meta ad, and date can wait. Editor and ads team update the same entry later (use Edit on the Tracker card) and check off Editing done / Launched as it moves along.</p>
+  </section>
+
+  <!-- TRACKER PANEL -->
+  <section class="panel" id="panel-track">
+    <div class="filter-bar">
+      <select id="filt-page">
+        <option value="">All pages</option>
+      </select>
+      <select id="filt-status">
+        <option value="">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="winner">Winner</option>
+        <option value="not_winner">Not a winner</option>
+      </select>
+      <input type="text" id="filt-tag" placeholder="Filter by tag…" style="width:150px;padding:8px 10px;font-size:13px;" />
+      <span class="count-note" id="entry-count"></span>
+    </div>
+    <div id="entries-holder"></div>
+  </section>
+
+  <!-- ANALYTICS PANEL -->
+  <section class="panel" id="panel-analytics">
+    <div class="perf-grid" id="analytics-summary" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;"></div>
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Editor</h3>
+      <div id="analytics-editor"></div>
+    </div>
+    <div class="card">
+      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Concept / Script Creator</h3>
+      <div id="analytics-creator"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+let PAGES = {};
+let entries = [];
+let pickedAd = null; // {id, name}
+let editingEntryId = null;
+
+// ---------- API helpers ----------
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error || ('Request failed: '+r.status));
+  return data;
+}
+
+async function loadEntries(){
+  try{ entries = await api('/api/entries'); }
+  catch(e){ entries = []; }
+}
+
+async function loadPages(){
+  try{ PAGES = await api('/api/pages'); }
+  catch(e){ PAGES = {}; }
+  renderPageOptions();
+}
+async function saveCustomPage(id, label){
+  await api('/api/pages', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id,label}) });
+  await loadPages();
+}
+function renderPageOptions(){
+  const logSel = document.getElementById('f-page');
+  const filtSel = document.getElementById('filt-page');
+  const logCurrent = logSel.value;
+  const filtCurrent = filtSel.value;
+  logSel.innerHTML = '<option value="">Select page…</option>';
+  filtSel.innerHTML = '<option value="">All pages</option>';
+  Object.entries(PAGES).forEach(([id,label])=>{
+    logSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`);
+    filtSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`);
+  });
+  if(PAGES[logCurrent]) logSel.value = logCurrent;
+  if(PAGES[filtCurrent]) filtSel.value = filtCurrent;
+}
+
+document.getElementById('btn-addpage-toggle').addEventListener('click', ()=>{
+  const block = document.getElementById('addpage-block');
+  block.style.display = block.style.display==='none' ? 'block' : 'none';
+});
+document.getElementById('btn-save-newpage').addEventListener('click', async ()=>{
+  const idEl = document.getElementById('f-newpage-id');
+  const labelEl = document.getElementById('f-newpage-label');
+  const statusEl = document.getElementById('addpage-status');
+  const id = idEl.value.trim();
+  const label = labelEl.value.trim();
+  if(!id || !label){
+    statusEl.textContent = 'Fill in both the account ID and a label.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+  try{
+    await saveCustomPage(id, label);
+    document.getElementById('f-page').value = id;
+    idEl.value=''; labelEl.value='';
+    statusEl.textContent = 'Added ✓ — selected below.';
+    statusEl.className = 'status-msg ok';
+  }catch(e){
+    statusEl.textContent = "Couldn't save — try again.";
+    statusEl.className = 'status-msg err';
+  }
+});
+
+// ---------- theme (localStorage — this is a real deployed site, not a Claude artifact) ----------
+function applyTheme(name){
+  document.documentElement.setAttribute('data-theme', name);
+  document.querySelectorAll('.swatch').forEach(s=>{
+    s.classList.toggle('active', s.dataset.theme===name);
+  });
+}
+document.querySelectorAll('.swatch').forEach(s=>{
+  s.addEventListener('click', ()=>{
+    applyTheme(s.dataset.theme);
+    try{ localStorage.setItem('cocoon-theme', s.dataset.theme); }catch(e){}
+  });
+});
+applyTheme((function(){ try{ return localStorage.getItem('cocoon-theme') || 'rose'; }catch(e){ return 'rose'; } })());
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='track') renderEntries();
+    if(btn.dataset.tab==='analytics') renderAnalytics();
+  });
+});
+function goToTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+name));
+}
+
+// ---------- Pull ads from Meta (Log tab) ----------
+document.getElementById('btn-fetch-ads').addEventListener('click', async ()=>{
+  const page = document.getElementById('f-page').value;
+  const statusEl = document.getElementById('fetch-ads-status');
+  const resultEl = document.getElementById('ad-picker-result');
+  if(!page){ statusEl.textContent='Pick a page first.'; statusEl.className='status-msg err'; return; }
+  statusEl.innerHTML = '<span class="spinner"></span> Pulling ads…';
+  statusEl.className = 'status-msg';
+  resultEl.style.display='none';
+  try{
+    const data = await api('/api/meta-list-ads', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({page}) });
+    const list = data.ads || [];
+    if(list.length===0){
+      statusEl.textContent = "Couldn't find ads for this page — try manual entry below.";
+      statusEl.className = 'status-msg err';
+      return;
+    }
+    statusEl.textContent = `Found ${list.length} ad(s) — pick one:`;
+    resultEl.innerHTML = '';
+    list.forEach(ad=>{
+      const row = document.createElement('div');
+      row.className='ad-picker-row';
+      row.innerHTML = `<span class="name">${escapeHtml(ad.ad_name||'(untitled)')}</span><span class="id">${escapeHtml(ad.ad_id||'')}</span>`;
+      row.addEventListener('click',()=>{
+        pickedAd = { id: ad.ad_id, name: ad.ad_name };
+        renderPickedChip();
+        resultEl.style.display='none';
+      });
+      resultEl.appendChild(row);
+    });
+    resultEl.style.display='block';
+  }catch(e){
+    statusEl.textContent = "Couldn't reach Meta right now — try manual entry below.";
+    statusEl.className = 'status-msg err';
+  }
+});
+
+function renderPickedChip(){
+  const holder = document.getElementById('picked-chip-holder');
+  if(!pickedAd){ holder.innerHTML=''; return; }
+  holder.innerHTML = `<div class="picked-chip">${escapeHtml(pickedAd.name)} <button type="button" id="clear-picked">✕</button></div>`;
+  document.getElementById('clear-picked').addEventListener('click',()=>{ pickedAd=null; renderPickedChip(); });
+}
+
+document.getElementById('btn-manual-toggle').addEventListener('click',()=>{
+  const block = document.getElementById('manual-name-block');
+  block.style.display = block.style.display==='none' ? 'block' : 'none';
+});
+
+document.getElementById('btn-cancel-edit').addEventListener('click', ()=>{
+  editingEntryId = null;
+  resetForm();
+  document.getElementById('log-heading').textContent = 'Log a Creative';
+  document.getElementById('btn-submit').textContent = 'Log this creative';
+  document.getElementById('btn-cancel-edit').style.display = 'none';
+});
+
+function resetForm(){
+  document.getElementById('f-concept-creator').value='';
+  document.getElementById('f-page').value='';
+  document.getElementById('f-date').value='';
+  document.getElementById('f-editor').value='';
+  document.getElementById('f-by').value='';
+  document.getElementById('f-concept').value='';
+  document.getElementById('f-tags').value='';
+  document.getElementById('f-script').value='';
+  document.getElementById('f-manual-name').value='';
+  document.getElementById('f-editing-done').checked=false;
+  document.getElementById('f-launched').checked=false;
+  pickedAd = null;
+  renderPickedChip();
+}
+
+function populateFormForEdit(entry){
+  editingEntryId = entry.id;
+  document.getElementById('f-concept-creator').value = entry.concept_creator||'';
+  document.getElementById('f-page').value = entry.page||'';
+  document.getElementById('f-date').value = entry.date_launched||'';
+  document.getElementById('f-editor').value = entry.editor||'';
+  document.getElementById('f-by').value = entry.submitted_by||'';
+  document.getElementById('f-concept').value = entry.concept_link||'';
+  document.getElementById('f-tags').value = (entry.tags||[]).join(', ');
+  document.getElementById('f-script').value = entry.script||'';
+  document.getElementById('f-editing-done').checked = !!entry.editing_done;
+  document.getElementById('f-launched').checked = !!entry.launched;
+  if(entry.meta_ad_id){
+    pickedAd = { id: entry.meta_ad_id, name: entry.ad_name };
+    document.getElementById('f-manual-name').value='';
+  }else{
+    pickedAd = null;
+    document.getElementById('f-manual-name').value = entry.ad_name||'';
+    document.getElementById('manual-name-block').style.display='block';
+  }
+  renderPickedChip();
+  document.getElementById('log-heading').textContent = 'Edit Creative';
+  document.getElementById('btn-submit').textContent = 'Save changes';
+  document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+  goToTab('log');
+}
+
+// ---------- Submit (new or edit) ----------
+document.getElementById('btn-submit').addEventListener('click', async ()=>{
+  const conceptCreator = document.getElementById('f-concept-creator').value.trim();
+  const page = document.getElementById('f-page').value;
+  const date = document.getElementById('f-date').value;
+  const by = document.getElementById('f-by').value.trim();
+  const editor = document.getElementById('f-editor').value.trim();
+  const script = document.getElementById('f-script').value.trim();
+  const conceptLink = document.getElementById('f-concept').value.trim();
+  const tagsRaw = document.getElementById('f-tags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+  const manualName = document.getElementById('f-manual-name').value.trim();
+  const editingDone = document.getElementById('f-editing-done').checked;
+  const launched = document.getElementById('f-launched').checked;
+  const statusEl = document.getElementById('submit-status');
+
+  const adName = pickedAd ? pickedAd.name : manualName;
+  if(!conceptCreator || !adName || !by){
+    statusEl.textContent = 'Fill in concept creator, a working title/ad, and your name.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+  if(launched && (!page || !date)){
+    statusEl.textContent = "Set page and date launched before marking it Launched.";
+    statusEl.className = 'status-msg err';
+    return;
+  }
+
+  const payload = {
+    ad_name: adName,
+    meta_ad_id: pickedAd ? pickedAd.id : null,
+    page: page || null,
+    date_launched: date || null,
+    script,
+    concept_link: conceptLink,
+    tags,
+    concept_creator: conceptCreator,
+    editor,
+    submitted_by: by,
+    editing_done: editingDone,
+    launched
+  };
+
+  try{
+    if(editingEntryId){
+      await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: editingEntryId, ...payload }) });
+      statusEl.textContent = 'Updated ✓';
+      statusEl.className = 'status-msg ok';
+      editingEntryId = null;
+      resetForm();
+      document.getElementById('log-heading').textContent = 'Log a Creative';
+      document.getElementById('btn-submit').textContent = 'Log this creative';
+      document.getElementById('btn-cancel-edit').style.display = 'none';
+      goToTab('track');
+      renderEntries();
+    }else{
+      await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...payload, winner_status:'pending', performance:null }) });
+      statusEl.textContent = 'Logged ✓';
+      statusEl.className = 'status-msg ok';
+      resetForm();
+      setTimeout(()=>{ statusEl.textContent=''; },2500);
+    }
+  }catch(e){
+    statusEl.textContent = "Couldn't save — try again.";
+    statusEl.className = 'status-msg err';
+  }
+});
+
+// ---------- Tracker rendering ----------
+document.getElementById('filt-page').addEventListener('change', renderEntries);
+document.getElementById('filt-status').addEventListener('change', renderEntries);
+document.getElementById('filt-tag').addEventListener('input', renderEntries);
+
+async function renderEntries(){
+  await loadEntries();
+  const holder = document.getElementById('entries-holder');
+  const fp = document.getElementById('filt-page').value;
+  const fs = document.getElementById('filt-status').value;
+  const ft = document.getElementById('filt-tag').value.trim().toLowerCase();
+  let list = entries.filter(e=>
+    (!fp || e.page===fp) &&
+    (!fs || e.winner_status===fs) &&
+    (!ft || (e.tags||[]).some(t=>t.toLowerCase().includes(ft)))
+  );
+
+  document.getElementById('entry-count').textContent = `${list.length} creative${list.length===1?'':'s'}`;
+
+  if(list.length===0){
+    holder.innerHTML = `<div class="empty"><div class="big">Nothing logged yet</div>Log your first creative from the Log Creative tab.</div>`;
+    return;
+  }
+
+  holder.innerHTML = '';
+  list.forEach(e=>{
+    const div = document.createElement('div');
+    div.className = 'entry ' + (e.winner_status==='winner'?'winner':e.winner_status==='pending'?'pending':'');
+    const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
+    const perf = e.performance;
+    div.innerHTML = `
+      <div class="entry-head">
+        <div>
+          <div class="entry-title">${escapeHtml(e.ad_name)}</div>
+          <div class="entry-meta">${PAGES[e.page]||e.page||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
+          <div class="pipeline-row">
+            <span class="pipe-badge on">Concept</span>
+            <span class="pipe-badge ${e.editing_done?'on':''}">${e.editing_done?'Editing done':'Editing pending'}</span>
+            <span class="pipe-badge ${e.launched?'on':''}">${e.launched?'Launched':'Not launched'}</span>
+          </div>
+          ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
+          ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+        </div>
+        <span class="badge ${e.winner_status}">${badgeLabel}</span>
+      </div>
+      ${e.script?`<div class="entry-script">${escapeHtml(e.script)}</div>`:''}
+      ${perf?`
+      <div class="perf-grid">
+        <div class="perf-cell"><div class="k">Spend</div><div class="v">${escapeHtml(String(perf.spend ?? '—'))}</div></div>
+        <div class="perf-cell"><div class="k">Impressions</div><div class="v">${escapeHtml(String(perf.impressions ?? '—'))}</div></div>
+        <div class="perf-cell"><div class="k">Clicks</div><div class="v">${escapeHtml(String(perf.clicks ?? '—'))}</div></div>
+        <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(String(perf.ctr ?? '—'))}</div></div>
+      </div>
+      ${(perf.actions&&perf.actions.length)?`<div class="hint">Actions: ${perf.actions.map(a=>escapeHtml(a.action_type+': '+a.value)).join(', ')}</div>`:''}
+      <div class="hint">Pulled ${perf.pulledAt ? new Date(perf.pulledAt).toLocaleString() : ''}</div>
+      `:''}
+      <div class="entry-actions" data-id="${e.id}">
+        <button class="btn btn-ghost btn-sm act-edit">Edit</button>
+        <button class="btn btn-ghost btn-sm act-toggle-editing">${e.editing_done?'Undo editing':'Mark editing done'}</button>
+        <button class="btn btn-ghost btn-sm act-toggle-launch">${e.launched?'Undo launch':'Mark launched'}</button>
+        <button class="btn btn-ghost btn-sm act-pull">${perf?'Refresh performance':'Pull performance'}</button>
+        <button class="btn btn-ghost btn-sm act-winner">Mark winner</button>
+        <button class="btn btn-ghost btn-sm act-notwinner">Not a winner</button>
+        <button class="btn btn-ghost btn-sm act-pending">Reset to pending</button>
+        <button class="btn-danger-text act-delete" type="button">Delete</button>
+      </div>
+      <span class="status-msg act-status" style="display:block;margin-top:6px;"></span>
+    `;
+    holder.appendChild(div);
+
+    const actions = div.querySelector('.entry-actions');
+    const statusMsg = div.querySelector('.act-status');
+
+    actions.querySelector('.act-edit').addEventListener('click',()=>populateFormForEdit(e));
+    actions.querySelector('.act-toggle-editing').addEventListener('click',()=>toggleFlag(e.id,'editing_done',e.editing_done));
+    actions.querySelector('.act-toggle-launch').addEventListener('click', async ()=>{
+      if(!e.launched && (!e.page || !e.date_launched)){
+        statusMsg.textContent = "Set page and date launched first — use Edit.";
+        statusMsg.className = 'status-msg act-status err';
+        return;
+      }
+      toggleFlag(e.id,'launched',e.launched);
+    });
+    actions.querySelector('.act-winner').addEventListener('click',()=>updateStatus(e.id,'winner'));
+    actions.querySelector('.act-notwinner').addEventListener('click',()=>updateStatus(e.id,'not_winner'));
+    actions.querySelector('.act-pending').addEventListener('click',()=>updateStatus(e.id,'pending'));
+    actions.querySelector('.act-delete').addEventListener('click',()=>deleteEntry(e.id));
+    actions.querySelector('.act-pull').addEventListener('click', async ()=>{
+      if(!e.page){
+        statusMsg.textContent = "No page set yet — use Edit to add one first.";
+        statusMsg.className = 'status-msg act-status err';
+        return;
+      }
+      statusMsg.innerHTML = '<span class="spinner"></span> Pulling from Meta…';
+      try{
+        const data = await api('/api/meta-pull', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ page: e.page, adId: e.meta_ad_id, adName: e.ad_name })
+        });
+        if(!data.found){
+          statusMsg.textContent = "Couldn't find matching data — you can still set status manually.";
+          statusMsg.className = 'status-msg act-status err';
+          return;
+        }
+        await api('/api/entries', {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ id: e.id, performance: { ...data, pulledAt: new Date().toISOString() } })
+        });
+        statusMsg.textContent = 'Pulled ✓ — review the numbers, then confirm the status.';
+        statusMsg.className = 'status-msg act-status ok';
+        renderEntries();
+      }catch(err){
+        statusMsg.textContent = "Couldn't reach Meta right now.";
+        statusMsg.className = 'status-msg act-status err';
+      }
+    });
+  });
+}
+
+async function updateStatus(id, status){
+  await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, winner_status: status }) });
+  renderEntries();
+}
+async function toggleFlag(id, field, current){
+  await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, [field]: !current }) });
+  renderEntries();
+}
+async function deleteEntry(id){
+  if(!confirm('Delete this entry?')) return;
+  await api('/api/entries?id='+encodeURIComponent(id), { method:'DELETE' });
+  renderEntries();
+}
+
+// ---------- Analytics ----------
+async function renderAnalytics(){
+  await loadEntries();
+  const total = entries.length;
+  const launched = entries.filter(e=>e.launched).length;
+  const winners = entries.filter(e=>e.winner_status==='winner').length;
+  const notWinners = entries.filter(e=>e.winner_status==='not_winner').length;
+
+  document.getElementById('analytics-summary').innerHTML = `
+    <div class="perf-cell"><div class="k">Total logged</div><div class="v">${total}</div></div>
+    <div class="perf-cell"><div class="k">Launched</div><div class="v">${launched}</div></div>
+    <div class="perf-cell"><div class="k">Winners</div><div class="v">${winners}</div></div>
+    <div class="perf-cell"><div class="k">Not winners</div><div class="v">${notWinners}</div></div>
+  `;
+
+  function leaderboard(field){
+    const map = {};
+    entries.forEach(e=>{
+      const name = (e[field]||'').trim();
+      if(!name) return;
+      if(!map[name]) map[name] = { total:0, winners:0 };
+      map[name].total++;
+      if(e.winner_status==='winner') map[name].winners++;
+    });
+    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
+  }
+
+  function renderLB(holderId, field){
+    const rows = leaderboard(field);
+    const holder = document.getElementById(holderId);
+    if(rows.length===0){ holder.innerHTML = `<div class="hint">Nothing logged yet.</div>`; return; }
+    holder.innerHTML = rows.map(([name,stats])=>`
+      <div class="lb-row">
+        <span class="lb-name">${escapeHtml(name)}</span>
+        <span class="lb-stats">${stats.winners} winner${stats.winners===1?'':'s'} · ${stats.total} logged</span>
+      </div>
+    `).join('');
+  }
+
+  renderLB('analytics-editor','editor');
+  renderLB('analytics-creator','concept_creator');
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// init
+loadPages();
+loadEntries();
+</script>
+</body>
+</html>
