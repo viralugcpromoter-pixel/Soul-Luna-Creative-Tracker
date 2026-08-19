@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { checkAuth } from './_auth.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -17,6 +18,7 @@ const BASE_PAGES = {
 };
 
 export default async function handler(req, res) {
+  if (!checkAuth(req, res)) return;
   try {
     if (req.method === 'GET') {
       const { data, error } = await supabase.from('pages').select('*');
