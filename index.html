@@ -175,9 +175,23 @@
   .history-row{display:flex;gap:10px;padding:4px 0 4px 12px;font-size:12px;}
   .history-time{color:var(--ink-soft);white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:11px;}
   .history-text{color:var(--ink);}
+  .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+  .login-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;max-width:340px;width:100%;text-align:center;}
+  .login-card input{margin-top:4px;}
 </style>
 </head>
 <body>
+<div id="login-overlay" class="login-overlay" style="display:none;">
+  <div class="login-card">
+    <div class="eyebrow" style="font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--accent);">Cosmetic Cocoon</div>
+    <h1 style="font-family:'Fraunces',serif;font-weight:600;font-size:26px;margin:2px 0 4px;">Creative Tracker</h1>
+    <p class="hint" style="margin:0 0 16px;">Admin password required.</p>
+    <input type="password" id="login-password" placeholder="Password" />
+    <button class="btn btn-primary" id="login-submit" style="margin-top:10px;width:100%;">Enter</button>
+    <div class="status-msg err" id="login-status" style="margin-top:8px;min-height:16px;"></div>
+  </div>
+</div>
+
 <div class="wrap">
 
   <header class="top">
@@ -330,10 +344,46 @@ let CUSTOM_PAGE_IDS = [];
 
 // ---------- API helpers ----------
 async function api(path, opts){
+  opts = opts || {};
+  opts.headers = { ...(opts.headers||{}), 'x-admin-token': localStorage.getItem('cocoon-admin-token')||'' };
   const r = await fetch(path, opts);
+  if(r.status === 401){
+    localStorage.removeItem('cocoon-admin-token');
+    showLogin();
+    throw new Error('Unauthorized');
+  }
   const data = await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(data.error || ('Request failed: '+r.status));
   return data;
+}
+
+function showLogin(){
+  document.getElementById('login-overlay').style.display = 'flex';
+}
+function hideLogin(){
+  document.getElementById('login-overlay').style.display = 'none';
+}
+
+document.getElementById('login-submit').addEventListener('click', doLogin);
+document.getElementById('login-password').addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') doLogin(); });
+
+async function doLogin(){
+  const pw = document.getElementById('login-password').value;
+  const statusEl = document.getElementById('login-status');
+  statusEl.textContent = '';
+  try{
+    const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password:pw}) });
+    if(r.ok){
+      localStorage.setItem('cocoon-admin-token', pw);
+      hideLogin();
+      loadPages();
+      loadEntries();
+    }else{
+      statusEl.textContent = 'Wrong password.';
+    }
+  }catch(e){
+    statusEl.textContent = "Couldn't reach server — try again.";
+  }
 }
 
 async function loadEntries(){
@@ -884,8 +934,12 @@ function escapeHtml(str){
 }
 
 // init
-loadPages();
-loadEntries();
+if(localStorage.getItem('cocoon-admin-token')){
+  loadPages();
+  loadEntries();
+}else{
+  showLogin();
+}
 </script>
 </body>
 </html>
