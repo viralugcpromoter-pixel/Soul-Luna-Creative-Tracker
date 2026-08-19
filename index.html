@@ -244,14 +244,6 @@
           <label>Script</label>
           <textarea id="f-script" placeholder="Paste the script, or a link to it (Drive, Doc, etc.)"></textarea>
         </div>
-
-        <div class="field full">
-          <label>Pipeline</label>
-          <div class="row">
-            <label class="check-inline"><input type="checkbox" id="f-editing-done" /> Editing done</label>
-            <label class="check-inline"><input type="checkbox" id="f-launched" /> Launched</label>
-          </div>
-        </div>
       </div>
 
       <div class="submit-row">
@@ -465,8 +457,6 @@ function resetForm(){
   document.getElementById('f-tags').value='';
   document.getElementById('f-script').value='';
   document.getElementById('f-manual-name').value='';
-  document.getElementById('f-editing-done').checked=false;
-  document.getElementById('f-launched').checked=false;
   pickedAd = null;
   renderPickedChip();
 }
@@ -481,8 +471,6 @@ function populateFormForEdit(entry){
   document.getElementById('f-concept').value = entry.concept_link||'';
   document.getElementById('f-tags').value = (entry.tags||[]).join(', ');
   document.getElementById('f-script').value = entry.script||'';
-  document.getElementById('f-editing-done').checked = !!entry.editing_done;
-  document.getElementById('f-launched').checked = !!entry.launched;
   if(entry.meta_ad_id){
     pickedAd = { id: entry.meta_ad_id, name: entry.ad_name };
     document.getElementById('f-manual-name').value='';
@@ -510,18 +498,11 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
   const tagsRaw = document.getElementById('f-tags').value.trim();
   const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
   const manualName = document.getElementById('f-manual-name').value.trim();
-  const editingDone = document.getElementById('f-editing-done').checked;
-  const launched = document.getElementById('f-launched').checked;
   const statusEl = document.getElementById('submit-status');
 
   const adName = pickedAd ? pickedAd.name : manualName;
   if(!conceptCreator || !adName || !by){
     statusEl.textContent = 'Fill in concept creator, a working title/ad, and your name.';
-    statusEl.className = 'status-msg err';
-    return;
-  }
-  if(launched && (!page || !date)){
-    statusEl.textContent = "Set page and date launched before marking it Launched.";
     statusEl.className = 'status-msg err';
     return;
   }
@@ -536,9 +517,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     tags,
     concept_creator: conceptCreator,
     editor,
-    submitted_by: by,
-    editing_done: editingDone,
-    launched
+    submitted_by: by
   };
 
   try{
