@@ -60,12 +60,17 @@
     --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 20px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box;}
+  ::selection{background:var(--accent-soft);color:var(--accent);}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--ink-soft);}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;transition:background-color .25s ease, color .25s ease;}
   .wrap{max-width:960px;margin:0 auto;padding:28px 20px 80px;}
-  header.top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+  header.top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:26px;padding-bottom:20px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
   .brand{display:flex;flex-direction:column;gap:2px;}
-  .brand .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);}
-  h1{font-family:'Fraunces',serif;font-weight:600;font-size:30px;margin:2px 0 0;letter-spacing:-0.01em;}
+  .brand .eyebrow{font-family:'Fraunces',serif;font-style:italic;font-size:13px;letter-spacing:0.04em;color:var(--accent);font-weight:500;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:33px;margin:2px 0 0;letter-spacing:-0.02em;line-height:1.05;}
   .header-controls{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
   .theme-switcher{display:flex;gap:7px;align-items:center;}
   .swatch{width:18px;height:18px;border-radius:50%;background:var(--sw);border:2px solid transparent;padding:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);transition:transform .12s ease, border-color .12s ease;}
@@ -84,7 +89,7 @@
   input[type=text],input[type=date],select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);background:var(--input-bg);}
   input::placeholder,textarea::placeholder{color:var(--ink-soft);opacity:.75;}
   [data-theme="charcoal"] input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.85);}
-  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
   textarea{resize:vertical;min-height:90px;}
   .field{margin-bottom:2px;}
   .hint{font-size:12px;color:var(--ink-soft);margin-top:5px;}
@@ -92,7 +97,9 @@
   .check-inline{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:500;color:var(--ink);cursor:pointer;}
   .check-inline input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
   button{font-family:'Inter',sans-serif;cursor:pointer;}
-  .btn{border:none;border-radius:10px;padding:10px 16px;font-weight:600;font-size:13.5px;}
+  .btn{border:none;border-radius:10px;padding:10px 16px;font-weight:600;font-size:13.5px;transition:transform .1s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary:hover{box-shadow:0 4px 14px rgba(0,0,0,.16);transform:translateY(-1px);}
   .btn-primary{background:var(--emphasis-bg);color:var(--emphasis-text);}
   .btn-primary:disabled{opacity:.5;cursor:default;}
   .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
@@ -112,7 +119,8 @@
   .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
   .filter-bar select{width:auto;padding:8px 10px;font-size:13px;}
   .count-note{font-size:12.5px;color:var(--ink-soft);margin-left:auto;}
-  .entry{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--not-winner);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);transition:background-color .2s ease, border-color .2s ease;}
+  .entry{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--not-winner);border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);transition:background-color .2s ease, border-color .2s ease, transform .15s ease;}
+  .entry:hover{transform:translateY(-2px);}
   .entry.winner{border-left-color:var(--winner);}
   .entry.pending{border-left-color:var(--pending);}
   .entry-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;}
@@ -129,7 +137,7 @@
   @media (max-width:560px){.perf-grid{grid-template-columns:repeat(2,1fr);}}
   .perf-cell{background:var(--bg);border-radius:8px;padding:8px 10px;}
   .perf-cell .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
-  .perf-cell .v{font-family:'IBM Plex Mono',monospace;font-size:14px;margin-top:2px;}
+  .perf-cell .v{font-family:'IBM Plex Mono',monospace;font-size:14px;margin-top:2px;font-variant-numeric:tabular-nums;}
   .entry-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
   .btn-sm{padding:7px 12px;font-size:12.5px;border-radius:8px;}
   .btn-danger-text{background:none;border:none;color:#B03A2E;font-size:12px;font-weight:600;padding:0;margin-left:auto;}
@@ -139,13 +147,27 @@
   .spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin .7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .about{font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin-top:20px;}
-  .pipeline-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-  .pipe-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--not-winner-soft);color:var(--not-winner);}
-  .pipe-badge.on{background:var(--winner-soft);color:var(--winner);}
+  .pipeline-track{display:flex;align-items:center;margin-top:10px;flex-wrap:wrap;}
+  .pipe-step{display:flex;align-items:center;gap:6px;}
+  .pipe-dot{width:9px;height:9px;border-radius:50%;background:var(--surface);border:2px solid var(--not-winner);flex-shrink:0;transition:background-color .2s ease, border-color .2s ease;}
+  .pipe-step.done .pipe-dot{background:var(--winner);border-color:var(--winner);}
+  .pipe-label{font-size:11px;font-weight:600;color:var(--ink-soft);white-space:nowrap;letter-spacing:.02em;}
+  .pipe-step.done .pipe-label{color:var(--ink);}
+  .pipe-line{width:22px;height:2px;background:var(--line);margin:0 7px;transition:background-color .2s ease;}
+  .pipe-line.done{background:var(--winner);}
   .lb-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
   .lb-row:last-child{border-bottom:none;}
   .lb-name{font-weight:600;}
   .lb-stats{color:var(--ink-soft);font-size:12.5px;}
+  .history-block{margin-top:12px;}
+  .history-block summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--accent);list-style:none;}
+  .history-block summary::-webkit-details-marker{display:none;}
+  .history-block summary::before{content:'▸ ';}
+  .history-block[open] summary::before{content:'▾ ';}
+  .history-list{margin-top:8px;padding-left:2px;border-left:2px solid var(--line);}
+  .history-row{display:flex;gap:10px;padding:4px 0 4px 12px;font-size:12px;}
+  .history-time{color:var(--ink-soft);white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+  .history-text{color:var(--ink);}
 </style>
 </head>
 <body>
@@ -274,6 +296,10 @@
   <!-- ANALYTICS PANEL -->
   <section class="panel" id="panel-analytics">
     <div class="perf-grid" id="analytics-summary" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;"></div>
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">Winning Creatives</h3>
+      <div id="analytics-winners"></div>
+    </div>
     <div class="card" style="margin-bottom:16px;">
       <h3 style="font-family:'Fraunces',serif;font-size:16px;margin:0 0 12px;">By Editor</h3>
       <div id="analytics-editor"></div>
@@ -574,10 +600,12 @@ async function renderEntries(){
         <div>
           <div class="entry-title">${escapeHtml(e.ad_name)}</div>
           <div class="entry-meta">${PAGES[e.page]||e.page||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
-          <div class="pipeline-row">
-            <span class="pipe-badge on">Concept</span>
-            <span class="pipe-badge ${e.editing_done?'on':''}">${e.editing_done?'Editing done':'Editing pending'}</span>
-            <span class="pipe-badge ${e.launched?'on':''}">${e.launched?'Launched':'Not launched'}</span>
+          <div class="pipeline-track">
+            <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Concept</span></div>
+            <div class="pipe-line ${e.editing_done?'done':''}"></div>
+            <div class="pipe-step ${e.editing_done?'done':''}"><span class="pipe-dot"></span><span class="pipe-label">Editing</span></div>
+            <div class="pipe-line ${e.launched?'done':''}"></div>
+            <div class="pipe-step ${e.launched?'done':''}"><span class="pipe-dot"></span><span class="pipe-label">Launched</span></div>
           </div>
           ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
           ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
@@ -594,6 +622,14 @@ async function renderEntries(){
       </div>
       ${(perf.actions&&perf.actions.length)?`<div class="hint">Actions: ${perf.actions.map(a=>escapeHtml(a.action_type+': '+a.value)).join(', ')}</div>`:''}
       <div class="hint">Pulled ${perf.pulledAt ? new Date(perf.pulledAt).toLocaleString() : ''}</div>
+      `:''}
+      ${(e.history&&e.history.length)?`
+      <details class="history-block">
+        <summary>History (${e.history.length})</summary>
+        <div class="history-list">
+          ${e.history.slice().reverse().map(h=>`<div class="history-row"><span class="history-time">${new Date(h.at).toLocaleString()}</span><span class="history-text">${escapeHtml(h.text)}</span></div>`).join('')}
+        </div>
+      </details>
       `:''}
       <div class="entry-actions" data-id="${e.id}">
         <button class="btn btn-ghost btn-sm act-edit">Edit</button>
@@ -686,6 +722,23 @@ async function renderAnalytics(){
     <div class="perf-cell"><div class="k">Winners</div><div class="v">${winners}</div></div>
     <div class="perf-cell"><div class="k">Not winners</div><div class="v">${notWinners}</div></div>
   `;
+
+  const winnerEntries = entries.filter(e=>e.winner_status==='winner');
+  const winnersHolder = document.getElementById('analytics-winners');
+  if(winnerEntries.length===0){
+    winnersHolder.innerHTML = `<div class="hint">No winners tagged yet — mark a creative as Winner in the Tracker tab to see it here.</div>`;
+  }else{
+    winnersHolder.innerHTML = winnerEntries.map(e=>{
+      const perf = e.performance;
+      return `
+      <div class="lb-row" style="align-items:flex-start;flex-direction:column;gap:4px;">
+        <div class="lb-name">${escapeHtml(e.ad_name)}</div>
+        <div class="lb-stats">${PAGES[e.page]||e.page||'No page'} · Editor: ${escapeHtml(e.editor||'—')} · Concept: ${escapeHtml(e.concept_creator||'—')}${e.date_launched?' · Launched '+e.date_launched:''}</div>
+        ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:2px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+        ${perf?`<div class="lb-stats">Spend ${escapeHtml(String(perf.spend??'—'))} · Impressions ${escapeHtml(String(perf.impressions??'—'))} · CTR ${escapeHtml(String(perf.ctr??'—'))}</div>`:''}
+      </div>`;
+    }).join('');
+  }
 
   function leaderboard(field){
     const map = {};
