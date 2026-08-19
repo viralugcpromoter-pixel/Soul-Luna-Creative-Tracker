@@ -137,6 +137,8 @@
   .badge.winner{background:var(--winner-soft);color:var(--winner);}
   .badge.pending{background:var(--pending-soft);color:var(--pending);}
   .badge.not_winner{background:var(--not-winner-soft);color:var(--not-winner);}
+  .badge.done{background:var(--winner-soft);color:var(--winner);}
+  .badge-stack{display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
   .entry-script{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;white-space:pre-wrap;margin-top:6px;max-height:120px;overflow-y:auto;color:var(--ink);}
   .perf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;}
   @media (max-width:560px){.perf-grid{grid-template-columns:repeat(2,1fr);}}
@@ -661,7 +663,11 @@ async function renderEntries(){
           ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
           ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
         </div>
-        <span class="badge ${e.winner_status}">${badgeLabel}</span>
+        <div class="badge-stack">
+          ${e.editing_done?'<span class="badge done">Edited</span>':''}
+          ${e.launched?'<span class="badge done">Live</span>':''}
+          <span class="badge ${e.winner_status}">${badgeLabel}</span>
+        </div>
       </div>
       ${e.script?`<div class="entry-script">${escapeHtml(e.script)}</div>`:''}
       ${perf?`
