@@ -843,7 +843,9 @@ async function renderAnalytics(){
       <div class="lb-row" style="align-items:flex-start;flex-direction:column;gap:4px;">
         <div class="lb-name">${escapeHtml(e.ad_name)}</div>
         <div class="lb-stats">${PAGES[e.page]||e.page||'No page'} · Editor: ${escapeHtml(e.editor||'—')} · Concept: ${escapeHtml(e.concept_creator||'—')}${e.date_launched?' · Launched '+e.date_launched:''}</div>
+        ${e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a>`:''}
         ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:2px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+        ${e.script?`<div class="entry-script" style="width:100%;">${escapeHtml(e.script)}</div>`:''}
         ${perf?`<div class="lb-stats">Spend ${escapeHtml(String(perf.spend??'—'))} · Impressions ${escapeHtml(String(perf.impressions??'—'))} · CTR ${escapeHtml(String(perf.ctr??'—'))}</div>`:''}
       </div>`;
     }).join('');
