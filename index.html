@@ -279,6 +279,7 @@
       <button class="tab-btn" data-tab="track">Tracker</button>
       <button class="tab-btn" data-tab="analytics">Analytics</button>
       <button class="tab-btn" data-tab="assets">Assets</button>
+      <button class="tab-btn" data-tab="adklaro">Ad-Klaro Winners</button>
     </nav>
     <div class="theme-switcher" title="Color theme">
       <span class="theme-switcher-label">Theme</span>
@@ -460,6 +461,17 @@
     <div id="assets-holder"></div>
   </section>
 
+  <!-- AD-KLARO WINNERS PANEL -->
+  <section class="panel" id="panel-adklaro">
+    <div class="filter-bar">
+      <select id="adklaro-page">
+        <option value="">All pages</option>
+      </select>
+      <span class="count-note" id="adklaro-count"></span>
+    </div>
+    <div id="adklaro-holder"></div>
+  </section>
+
   </div>
   </main>
 </div>
@@ -577,16 +589,21 @@ function renderCustomPagesList(){
 function renderPageOptions(){
   const logSel = document.getElementById('f-page');
   const filtSel = document.getElementById('filt-page');
+  const adklaroSel = document.getElementById('adklaro-page');
   const logCurrent = logSel.value;
   const filtCurrent = filtSel.value;
+  const adklaroCurrent = adklaroSel.value;
   logSel.innerHTML = '<option value="">Select page…</option>';
   filtSel.innerHTML = '<option value="">All pages</option>';
+  adklaroSel.innerHTML = '<option value="">All pages</option>';
   Object.entries(PAGES).forEach(([id,label])=>{
     logSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`);
     filtSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`);
+    adklaroSel.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`);
   });
   if(PAGES[logCurrent]) logSel.value = logCurrent;
   if(PAGES[filtCurrent]) filtSel.value = filtCurrent;
+  if(PAGES[adklaroCurrent]) adklaroSel.value = adklaroCurrent;
 }
 
 document.getElementById('btn-addpage-toggle').addEventListener('click', ()=>{
@@ -641,6 +658,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(btn.dataset.tab==='track') renderEntries();
     if(btn.dataset.tab==='analytics') renderAnalytics();
     if(btn.dataset.tab==='assets') renderAssets();
+    if(btn.dataset.tab==='adklaro') renderAdklaro();
   });
 });
 
@@ -1262,6 +1280,60 @@ document.getElementById('a-submit').addEventListener('click', async ()=>{
     statusEl.className = 'status-msg err';
   }
 });
+
+// ---------- Ad-Klaro Winners ----------
+document.getElementById('adklaro-page').addEventListener('change', renderAdklaro);
+
+async function renderAdklaro(){
+  const holder = document.getElementById('adklaro-holder');
+  const countEl = document.getElementById('adklaro-count');
+  const page = document.getElementById('adklaro-page').value;
+  holder.innerHTML = `<div class="empty"><span class="spinner"></span> Loading…</div>`;
+  countEl.textContent = '';
+
+  let data;
+  try{
+    data = await api('/api/adklaro-winners' + (page ? '?account='+encodeURIComponent(page) : ''));
+  }catch(e){
+    holder.innerHTML = `<div class="empty"><div class="big">Couldn't reach Ad-Klaro</div>Try again in a bit.</div>`;
+    return;
+  }
+
+  if(!data.configured){
+    holder.innerHTML = `
+      <div class="empty">
+        <div class="big">Hindi pa naka-connect si Ad-Klaro</div>
+        Kailangan pang idagdag ang ADKLARO_API_URL (at ADKLARO_API_KEY kung meron) sa Vercel Environment Variables — hintayin muna ang endpoint/access mula sa co-worker.
+      </div>`;
+    return;
+  }
+  if(data.error){
+    holder.innerHTML = `<div class="empty"><div class="big">May error sa Ad-Klaro connection</div>${escapeHtml(data.error)}</div>`;
+    return;
+  }
+  const creatives = data.creatives || [];
+  countEl.textContent = `${creatives.length} creative${creatives.length===1?'':'s'}`;
+  if(creatives.length===0){
+    holder.innerHTML = `<div class="empty"><div class="big">Wala pang datos</div>Wala pang na-load na creatives sa Ad-Klaro para dito — i-refresh muna nila sa Tali Data.</div>`;
+    return;
+  }
+  holder.innerHTML = creatives.map(c=>{
+    const name = c.ad_name || c.name || c.creative_name || '(untitled)';
+    const status = (c.status || c.classification || 'unknown').toLowerCase();
+    const badgeClass = status==='winner' ? 'winner' : status==='killed' ? 'not_winner' : 'pending';
+    const badgeLabel = status.charAt(0).toUpperCase()+status.slice(1);
+    return `
+    <div class="entry">
+      <div class="entry-head">
+        <div>
+          <div class="entry-title">${escapeHtml(name)}</div>
+          <div class="entry-meta">${escapeHtml(c.account || c.page || '')}${c.spend?' · Spend '+escapeHtml(String(c.spend)):''}${c.results?' · Results '+escapeHtml(String(c.results)):''}</div>
+        </div>
+        <span class="badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
