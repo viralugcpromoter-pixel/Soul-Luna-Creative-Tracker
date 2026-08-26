@@ -259,6 +259,25 @@
   .history-text{color:var(--ink);}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--emphasis-bg);color:var(--emphasis-text);padding:11px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:2000;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .report-view{display:none;max-width:800px;margin:0 auto;padding:40px 30px 80px;background:#FFFFFF;color:#1A1A1A;font-family:'Inter',sans-serif;min-height:100vh;}
+  .report-view.open{display:block;}
+  .report-view h1{font-family:'Fraunces',serif;font-size:26px;margin:0 0 4px;color:#1A1A1A;}
+  .report-view .report-period{color:#666;font-size:13px;margin-bottom:24px;}
+  .report-view .r-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:28px;}
+  .report-view .r-kpi{border:1px solid #E0E0E0;border-radius:8px;padding:10px 12px;}
+  .report-view .r-kpi .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#888;}
+  .report-view .r-kpi .v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#1A1A1A;}
+  .report-view h2{font-family:'Fraunces',serif;font-size:16px;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #1A1A1A;color:#1A1A1A;}
+  .report-view table{width:100%;border-collapse:collapse;font-size:13px;}
+  .report-view th{text-align:left;padding:6px 8px;border-bottom:2px solid #ccc;color:#666;font-size:11px;text-transform:uppercase;letter-spacing:.03em;}
+  .report-view td{padding:7px 8px;border-bottom:1px solid #eee;color:#1A1A1A;}
+  .report-view .r-footer{margin-top:30px;font-size:11px;color:#999;text-align:right;}
+  @media print{
+    .no-print{display:none !important;}
+    body *{visibility:hidden;}
+    .report-view, .report-view *{visibility:visible;}
+    .report-view{position:absolute;top:0;left:0;width:100%;padding:0;}
+  }
   .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
   .login-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;max-width:340px;width:100%;text-align:center;}
   .login-card input{margin-top:4px;}
@@ -419,6 +438,8 @@
       </select>
       <input type="text" id="filt-tag" placeholder="Filter by tag…" style="width:150px;padding:8px 10px;font-size:13px;" />
       <input type="text" id="filt-editor" placeholder="Filter by editor…" style="width:150px;padding:8px 10px;font-size:13px;" />
+      <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;">From<input type="date" id="filt-date-from" style="width:auto;padding:7px 8px;font-size:12.5px;" /></label>
+      <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;">To<input type="date" id="filt-date-to" style="width:auto;padding:7px 8px;font-size:12.5px;" /></label>
       <span class="count-note" id="entry-count"></span>
     </div>
     <div id="entries-holder"></div>
@@ -426,6 +447,10 @@
 
   <!-- ANALYTICS PANEL -->
   <section class="panel" id="panel-analytics">
+    <div class="row" style="justify-content:space-between;margin-bottom:14px;">
+      <input type="month" id="report-month" />
+      <button class="btn btn-primary btn-sm" id="btn-open-report" type="button">📄 Export Monthly Report</button>
+    </div>
     <div class="widget-row">
       <div class="card widget-ring">
         <svg viewBox="0 0 120 120" class="ring-svg">
@@ -489,6 +514,11 @@
       </div>
     </div>
     <p class="about" style="margin-top:0;margin-bottom:16px;">Shared reference library — Drive folders, Canva templates, brand assets. Everyone on the team pulls from here when shooting or editing.</p>
+    <div class="filter-bar">
+      <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;">From<input type="date" id="a-filt-from" style="width:auto;padding:7px 8px;font-size:12.5px;" /></label>
+      <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;">To<input type="date" id="a-filt-to" style="width:auto;padding:7px 8px;font-size:12.5px;" /></label>
+      <span class="count-note" id="assets-count"></span>
+    </div>
     <div id="assets-holder"></div>
   </section>
 
@@ -505,6 +535,14 @@
 
   </div>
   </main>
+</div>
+
+<div id="report-view" class="report-view">
+  <div class="no-print" style="display:flex;gap:10px;margin-bottom:24px;">
+    <button class="btn btn-ghost" id="btn-close-report" type="button">← Back</button>
+    <button class="btn btn-primary" id="btn-print-report" type="button">🖨 Print / Save as PDF</button>
+  </div>
+  <div id="report-content"></div>
 </div>
 
 <script>
@@ -617,8 +655,9 @@ async function removeCustomPage(id){
 }
 function renderCustomPagesList(){
   const holder = document.getElementById('custom-pages-list');
-  if(CUSTOM_PAGE_IDS.length===0){ holder.innerHTML=''; return; }
-  holder.innerHTML = `<div class="hint" style="margin-bottom:6px;">Your added pages:</div>` + CUSTOM_PAGE_IDS.map(id=>`
+  const allIds = Object.keys(PAGES);
+  if(allIds.length===0){ holder.innerHTML=''; return; }
+  holder.innerHTML = `<div class="hint" style="margin-bottom:6px;">Manage pages — i-click ang ✕ para itago ang isang page:</div>` + allIds.map(id=>`
     <div class="tag-chip-removable" style="margin:0 6px 6px 0;">${escapeHtml(PAGES[id]||id)} <button type="button" data-remove-page="${escapeHtml(id)}">✕</button></div>
   `).join('');
   holder.querySelectorAll('[data-remove-page]').forEach(btn=>{
@@ -837,6 +876,8 @@ document.getElementById('filt-page').addEventListener('change', renderEntries);
 document.getElementById('filt-status').addEventListener('change', renderEntries);
 document.getElementById('filt-tag').addEventListener('input', renderEntries);
 document.getElementById('filt-editor').addEventListener('input', renderEntries);
+document.getElementById('filt-date-from').addEventListener('change', renderEntries);
+document.getElementById('filt-date-to').addEventListener('change', renderEntries);
 
 async function renderEntries(){
   const holder = document.getElementById('entries-holder');
@@ -847,13 +888,18 @@ async function renderEntries(){
   const fs = document.getElementById('filt-status').value;
   const ft = document.getElementById('filt-tag').value.trim().toLowerCase();
   const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
-  let list = entries.filter(e=>
-    (!fq || (e.ad_name||'').toLowerCase().includes(fq) || (e.script||'').toLowerCase().includes(fq)) &&
+  const fdFrom = document.getElementById('filt-date-from').value;
+  const fdTo = document.getElementById('filt-date-to').value;
+  let list = entries.filter(e=>{
+    const submittedDate = (e.submitted_at||'').slice(0,10);
+    return (!fq || (e.ad_name||'').toLowerCase().includes(fq) || (e.script||'').toLowerCase().includes(fq)) &&
     (!fp || e.page===fp) &&
     (!fs || e.winner_status===fs) &&
     (!ft || (e.tags||[]).some(t=>t.toLowerCase().includes(ft))) &&
-    (!fe || (e.editor||'').toLowerCase().includes(fe))
-  );
+    (!fe || (e.editor||'').toLowerCase().includes(fe)) &&
+    (!fdFrom || submittedDate>=fdFrom) &&
+    (!fdTo || submittedDate<=fdTo);
+  });
 
   document.getElementById('entry-count').textContent = `${list.length} creative${list.length===1?'':'s'}`;
 
@@ -1173,28 +1219,35 @@ async function renderAnalytics(){
     requestAnimationFrame(tick);
   });
 
+  function titleCase(s){
+    return s.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
+  }
   function leaderboard(field){
     const map = {};
     entries.forEach(e=>{
-      const name = (e[field]||'').trim();
-      if(!name) return;
-      if(!map[name]) map[name] = { total:0, winners:0 };
-      map[name].total++;
-      if(e.winner_status==='winner') map[name].winners++;
+      const raw = (e[field]||'').trim();
+      if(!raw) return;
+      const key = raw.toLowerCase();
+      if(!map[key]) map[key] = { total:0, winners:0, display: titleCase(raw) };
+      map[key].total++;
+      if(e.winner_status==='winner') map[key].winners++;
     });
-    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
+    return Object.entries(map).map(([,s])=>[s.display, s]).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
   }
 
   function leaderboardByTags(){
     const map = {};
     entries.forEach(e=>{
       (e.tags||[]).forEach(t=>{
-        if(!map[t]) map[t] = { total:0, winners:0 };
-        map[t].total++;
-        if(e.winner_status==='winner') map[t].winners++;
+        const raw = t.trim();
+        if(!raw) return;
+        const key = raw.toLowerCase();
+        if(!map[key]) map[key] = { total:0, winners:0, display: raw };
+        map[key].total++;
+        if(e.winner_status==='winner') map[key].winners++;
       });
     });
-    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
+    return Object.entries(map).map(([,s])=>[s.display, s]).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
   }
 
   function leaderboardByPage(){
@@ -1297,12 +1350,19 @@ async function renderAssets(){
   const holder = document.getElementById('assets-holder');
   holder.innerHTML = `<div class="empty"><span class="spinner"></span> Loading…</div>`;
   await loadAssets();
-  if(assets.length===0){
-    holder.innerHTML = `<div class="empty"><div class="big">Walang assets pa</div>Idagdag ang unang Drive o Canva link sa itaas.</div>`;
+  const afFrom = document.getElementById('a-filt-from').value;
+  const afTo = document.getElementById('a-filt-to').value;
+  const filtered = assets.filter(a=>{
+    const d = (a.created_at||'').slice(0,10);
+    return (!afFrom || d>=afFrom) && (!afTo || d<=afTo);
+  });
+  document.getElementById('assets-count').textContent = `${filtered.length} asset${filtered.length===1?'':'s'}`;
+  if(filtered.length===0){
+    holder.innerHTML = `<div class="empty"><div class="big">${assets.length===0?'Walang assets pa':'Walang assets sa hanay ng petsa na ito'}</div>${assets.length===0?'Idagdag ang unang Drive o Canva link sa itaas.':'Subukan mong palawakin ang date range.'}</div>`;
     return;
   }
   const TYPE_LABEL = { gdrive:'Google Drive', canva:'Canva', other:'Other' };
-  holder.innerHTML = assets.map(a=>`
+  holder.innerHTML = filtered.map(a=>`
     <div class="entry" style="border-left-color:var(--accent);">
       <div class="entry-head">
         <div>
@@ -1324,6 +1384,8 @@ async function renderAssets(){
     });
   });
 }
+document.getElementById('a-filt-from').addEventListener('change', renderAssets);
+document.getElementById('a-filt-to').addEventListener('change', renderAssets);
 document.getElementById('a-submit').addEventListener('click', async ()=>{
   const title = document.getElementById('a-title').value.trim();
   const type = document.getElementById('a-type').value;
@@ -1403,6 +1465,107 @@ async function renderAdklaro(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ---------- Monthly Report ----------
+(function(){
+  const now = new Date();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('report-month').value = now.getFullYear()+'-'+mm;
+})();
+
+document.getElementById('btn-open-report').addEventListener('click', async ()=>{
+  await loadEntries();
+  document.getElementById('report-view').classList.add('open');
+  renderReport();
+});
+document.getElementById('btn-close-report').addEventListener('click', ()=>{
+  document.getElementById('report-view').classList.remove('open');
+});
+document.getElementById('btn-print-report').addEventListener('click', ()=>{
+  window.print();
+});
+document.getElementById('report-month').addEventListener('change', renderReport);
+
+function renderReport(){
+  const monthVal = document.getElementById('report-month').value; // "2026-08"
+  const [y,m] = monthVal.split('-').map(Number);
+  const monthName = new Date(y, m-1, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'});
+
+  const inMonth = entries.filter(e=>{
+    const d = new Date(e.submitted_at);
+    return d.getFullYear()===y && (d.getMonth()+1)===m;
+  });
+
+  const total = inMonth.length;
+  const launched = inMonth.filter(e=>e.launched).length;
+  const winners = inMonth.filter(e=>e.winner_status==='winner').length;
+  const notWinners = inMonth.filter(e=>e.winner_status==='not_winner').length;
+  const decided = winners + notWinners;
+  const winRate = decided>0 ? Math.round((winners/decided)*100) : 0;
+
+  function countBy(field, isTag){
+    const map = {};
+    inMonth.forEach(e=>{
+      const vals = isTag ? (e.tags||[]) : [(e[field]||'').trim()].filter(Boolean);
+      vals.forEach(v=>{
+        if(!map[v]) map[v] = { total:0, winners:0 };
+        map[v].total++;
+        if(e.winner_status==='winner') map[v].winners++;
+      });
+    });
+    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
+  }
+  function countByPage(){
+    const map = {};
+    inMonth.forEach(e=>{
+      if(!e.page) return;
+      const label = pageLabel(e.page);
+      if(!map[label]) map[label] = { total:0, winners:0 };
+      map[label].total++;
+      if(e.winner_status==='winner') map[label].winners++;
+    });
+    return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
+  }
+
+  const winnerList = inMonth.filter(e=>e.winner_status==='winner');
+  const byEditor = countBy('editor', false);
+  const byBrand = countByPage();
+  const byTag = countBy(null, true);
+
+  function tableRows(rows){
+    if(rows.length===0) return `<tr><td colspan="3" style="color:#999;">Wala pang data.</td></tr>`;
+    return rows.map(([name,s])=>`<tr><td>${escapeHtml(name)}</td><td>${s.winners}</td><td>${s.total}</td></tr>`).join('');
+  }
+
+  document.getElementById('report-content').innerHTML = `
+    <h1>Cosmetic Cocoon — Creative Report</h1>
+    <div class="report-period">${monthName}</div>
+    <div class="r-kpis">
+      <div class="r-kpi"><div class="k">Total logged</div><div class="v">${total}</div></div>
+      <div class="r-kpi"><div class="k">Launched</div><div class="v">${launched}</div></div>
+      <div class="r-kpi"><div class="k">Winners</div><div class="v">${winners}</div></div>
+      <div class="r-kpi"><div class="k">Not winners</div><div class="v">${notWinners}</div></div>
+      <div class="r-kpi"><div class="k">Win Rate</div><div class="v">${winRate}%</div></div>
+    </div>
+
+    <h2>Winning Creatives</h2>
+    <table>
+      <tr><th>Ad Name</th><th>Page</th><th>Editor</th></tr>
+      ${winnerList.length? winnerList.map(e=>`<tr><td>${escapeHtml(e.ad_name)}</td><td>${escapeHtml(pageLabel(e.page)||'—')}</td><td>${escapeHtml(e.editor||'—')}</td></tr>`).join('') : '<tr><td colspan="3" style="color:#999;">Walang winner sa buwang ito.</td></tr>'}
+    </table>
+
+    <h2>By Editor</h2>
+    <table><tr><th>Editor</th><th>Winners</th><th>Total logged</th></tr>${tableRows(byEditor)}</table>
+
+    <h2>By Brand</h2>
+    <table><tr><th>Brand</th><th>Winners</th><th>Total logged</th></tr>${tableRows(byBrand)}</table>
+
+    <h2>By Creative Type</h2>
+    <table><tr><th>Tag</th><th>Winners</th><th>Total logged</th></tr>${tableRows(byTag)}</table>
+
+    <div class="r-footer">Generated ${new Date().toLocaleString()} · Cosmetic Cocoon Creative Tracker</div>
+  `;
 }
 
 function escapeHtml(str){
