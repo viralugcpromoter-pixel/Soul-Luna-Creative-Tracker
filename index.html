@@ -319,6 +319,7 @@
       <button class="tab-btn" data-tab="analytics">Analytics</button>
       <button class="tab-btn" data-tab="assets">Assets</button>
       <button class="tab-btn" data-tab="adklaro">Ad-Klaro Winners</button>
+      <button class="tab-btn" data-tab="announcements">Announcements</button>
     </nav>
     <div class="theme-switcher" title="Color theme">
       <span class="theme-switcher-label">Theme</span>
@@ -553,6 +554,20 @@
     <div id="adklaro-holder"></div>
   </section>
 
+  <!-- ANNOUNCEMENTS PANEL -->
+  <section class="panel" id="panel-announcements">
+    <div class="card" style="margin-bottom:16px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;">Post an Announcement</h2>
+      <div class="row">
+        <input type="text" id="ann2-input" placeholder="📢 Message for the team…" style="flex:1;min-width:200px;" />
+        <input type="text" id="ann2-by" placeholder="Your name" style="max-width:130px;" />
+        <button class="btn btn-primary" id="ann2-post-btn" type="button">Post</button>
+      </div>
+      <span class="status-msg" id="ann2-status" style="display:block;margin-top:8px;"></span>
+    </div>
+    <div id="announcements-holder"></div>
+  </section>
+
   </div>
   </main>
 </div>
@@ -757,6 +772,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(btn.dataset.tab==='analytics') renderAnalytics();
     if(btn.dataset.tab==='assets') renderAssets();
     if(btn.dataset.tab==='adklaro') renderAdklaro();
+    if(btn.dataset.tab==='announcements') renderAnnouncementsList();
   });
 });
 
@@ -1631,6 +1647,59 @@ function renderReport(){
     <div class="r-footer">Generated ${new Date().toLocaleString()} · Cosmetic Cocoon Creative Tracker</div>
   `;
 }
+
+// ---------- Announcements Tab (full history) ----------
+async function renderAnnouncementsList(){
+  const holder = document.getElementById('announcements-holder');
+  holder.innerHTML = `<div class="empty"><span class="spinner"></span> Loading…</div>`;
+  let list;
+  try{ list = await api('/api/announcements?all=1'); }catch(e){ list = []; }
+  if(list.length===0){
+    holder.innerHTML = `<div class="empty"><div class="big">Wala pang announcement</div>Mag-post gamit ang form sa itaas.</div>`;
+    return;
+  }
+  holder.innerHTML = list.map(a=>`
+    <div class="entry" style="border-left-color:var(--accent);">
+      <div class="entry-head">
+        <div>
+          <div class="entry-title" style="font-size:15px;">${escapeHtml(a.text)}</div>
+          <div class="entry-meta">${a.created_by?escapeHtml(a.created_by):'Team'} · ${new Date(a.created_at).toLocaleString()}</div>
+        </div>
+      </div>
+      <div class="entry-actions">
+        <button class="btn-danger-text act-del-ann" data-id="${a.id}" type="button">Delete</button>
+      </div>
+    </div>
+  `).join('');
+  holder.querySelectorAll('.act-del-ann').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Delete this announcement?')) return;
+      await api('/api/announcements?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
+      renderAnnouncementsList();
+    });
+  });
+}
+document.getElementById('ann2-post-btn').addEventListener('click', async ()=>{
+  const text = document.getElementById('ann2-input').value.trim();
+  const by = document.getElementById('ann2-by').value.trim();
+  const statusEl = document.getElementById('ann2-status');
+  if(!text){
+    statusEl.textContent = 'Type a message first.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+  try{
+    await api('/api/announcements', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text, created_by: by }) });
+    document.getElementById('ann2-input').value = '';
+    localStorage.removeItem('cocoon-ann-dismissed');
+    showToast('📢 Announcement posted');
+    loadAnnouncement();
+    renderAnnouncementsList();
+  }catch(e){
+    statusEl.textContent = "Couldn't post — try again.";
+    statusEl.className = 'status-msg err';
+  }
+});
 
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
