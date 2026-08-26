@@ -232,6 +232,21 @@
   .lb-rank.silver{background:#DCE0E4;color:#5A6068;}
   .lb-rank.bronze{background:#E6C2A0;color:#7A4A1E;}
   .kpi-winrate .v{color:var(--winner);}
+  .widget-row{display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:18px;}
+  @media (max-width:620px){.widget-row{grid-template-columns:1fr;}}
+  .widget-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:20px;}
+  .ring-svg{width:120px;height:120px;transform:rotate(-90deg);}
+  .ring-track{fill:none;stroke:var(--bg);stroke-width:10;}
+  .ring-fill{fill:none;stroke:var(--winner);stroke-width:10;stroke-linecap:round;stroke-dasharray:314;stroke-dashoffset:314;transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);}
+  .ring-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+  .ring-num{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:var(--ink);}
+  .ring-sub{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+  .widget-top{display:flex;flex-direction:column;justify-content:center;}
+  .widget-top .k{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;}
+  .top-name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink);}
+  .top-stats{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+  .top-badges{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .top-badge{background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;}
   .kpi-not .v{color:var(--not-winner);}
   .history-block{margin-top:12px;}
   .history-block summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--accent);list-style:none;}
@@ -411,6 +426,22 @@
 
   <!-- ANALYTICS PANEL -->
   <section class="panel" id="panel-analytics">
+    <div class="widget-row">
+      <div class="card widget-ring">
+        <svg viewBox="0 0 120 120" class="ring-svg">
+          <circle cx="60" cy="60" r="50" class="ring-track"/>
+          <circle cx="60" cy="60" r="50" class="ring-fill" id="ring-fill"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-num" id="ring-num">0%</div>
+          <div class="ring-sub">Win Rate</div>
+        </div>
+      </div>
+      <div class="card widget-top" id="widget-top">
+        <div class="k" style="margin-bottom:8px;">🌟 Top Performer</div>
+        <div class="hint">Wala pang sapat na data.</div>
+      </div>
+    </div>
     <div class="perf-grid" id="analytics-summary" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px;"></div>
     <div class="card" style="margin-bottom:16px;">
       <h3 class="an-h">✎ By Editor</h3>
@@ -482,6 +513,14 @@ let entries = [];
 let pickedAd = null; // {id, name}
 let inlineEditId = null; // entry id currently expanded for inline edit in Tracker
 let expandedIds = new Set(); // entry ids currently expanded (uncollapsed) in Tracker
+
+function pageLabel(pageId){
+  if(!pageId) return null;
+  if(PAGES[pageId]) return PAGES[pageId];
+  if(!pageId.startsWith('act_') && PAGES['act_'+pageId]) return PAGES['act_'+pageId];
+  if(pageId.startsWith('act_') && PAGES[pageId.slice(4)]) return PAGES[pageId.slice(4)];
+  return pageId;
+}
 
 function brandColor(pageId){
   if(!pageId) return null;
@@ -878,7 +917,7 @@ async function renderEntries(){
       <div class="entry-head">
         <div>
           <div class="entry-title">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)} <span class="chev">▸</span></div>
-          <div class="entry-meta">${PAGES[e.page]||e.page||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
+          <div class="entry-meta">${pageLabel(e.page)||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
           <div class="pipeline-track">
             <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Concept</span></div>
             <div class="pipe-line ${e.editing_done?'done':''}"></div>
@@ -1098,6 +1137,22 @@ async function renderAnalytics(){
   const decided = winners + notWinners;
   const winRate = decided>0 ? Math.round((winners/decided)*100) : 0;
 
+  const CIRC = 314;
+  const ringFill = document.getElementById('ring-fill');
+  const ringNum = document.getElementById('ring-num');
+  requestAnimationFrame(()=>{
+    ringFill.style.strokeDashoffset = CIRC - (CIRC * winRate / 100);
+  });
+  (function animateRingNum(){
+    const start = performance.now(); const dur = 900;
+    function tick(now){
+      const p = Math.min((now-start)/dur,1);
+      ringNum.textContent = Math.round(winRate * (1-Math.pow(1-p,3))) + '%';
+      if(p<1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+
   document.getElementById('analytics-summary').innerHTML = `
     <div class="perf-cell"><div class="k">Total logged</div><div class="v countup" data-to="${total}">0</div></div>
     <div class="perf-cell"><div class="k">Launched</div><div class="v countup" data-to="${launched}">0</div></div>
@@ -1146,7 +1201,7 @@ async function renderAnalytics(){
     const map = {};
     entries.forEach(e=>{
       if(!e.page) return;
-      const label = PAGES[e.page] || e.page;
+      const label = pageLabel(e.page);
       if(!map[label]) map[label] = { total:0, winners:0 };
       map[label].total++;
       if(e.winner_status==='winner') map[label].winners++;
@@ -1182,6 +1237,21 @@ async function renderAnalytics(){
   renderLB('analytics-editor','editor');
   renderRows('analytics-tags', leaderboardByTags());
   renderRows('analytics-pages', leaderboardByPage());
+
+  const topWidget = document.getElementById('widget-top');
+  const editorRows = leaderboard('editor');
+  const tagRows = leaderboardByTags();
+  if(editorRows.length===0 || editorRows[0][1].winners===0){
+    topWidget.innerHTML = `<div class="k" style="margin-bottom:8px;">🌟 Top Performer</div><div class="hint">Wala pang sapat na data — mag-mark ng winner para lumabas dito.</div>`;
+  }else{
+    const [name, stats] = editorRows[0];
+    topWidget.innerHTML = `
+      <div class="k">🌟 Top Performer</div>
+      <div class="top-name">${escapeHtml(name)}</div>
+      <div class="top-stats">${stats.winners} winner${stats.winners===1?'':'s'} mula sa ${stats.total} na-log</div>
+      ${tagRows.length?`<div class="top-badges"><span class="top-badge">Best angle: ${escapeHtml(tagRows[0][0])}</span></div>`:''}
+    `;
+  }
 }
 
 // ---------- Announcements ----------
