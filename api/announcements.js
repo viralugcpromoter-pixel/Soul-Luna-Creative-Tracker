@@ -18,11 +18,12 @@ export default async function handler(req, res) {
   if (!checkAuth(req, res)) return;
   try {
     if (req.method === 'GET') {
+      const limit = req.query && req.query.all ? 100 : 5;
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(limit);
       if (error) throw error;
       return res.status(200).json(data);
     }
@@ -36,6 +37,14 @@ export default async function handler(req, res) {
         .select();
       if (error) throw error;
       return res.status(200).json(data[0]);
+    }
+
+    if (req.method === 'DELETE') {
+      const id = (req.query && req.query.id) || (req.body && req.body.id);
+      if (!id) return res.status(400).json({ error: 'Missing id' });
+      const { error } = await supabase.from('announcements').delete().eq('id', id);
+      if (error) throw error;
+      return res.status(200).json({ deleted: true });
     }
 
     res.status(405).json({ error: 'Method not allowed' });
