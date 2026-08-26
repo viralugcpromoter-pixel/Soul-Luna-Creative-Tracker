@@ -232,6 +232,11 @@
   .lb-rank.silver{background:#DCE0E4;color:#5A6068;}
   .lb-rank.bronze{background:#E6C2A0;color:#7A4A1E;}
   .kpi-winrate .v{color:var(--winner);}
+  .report-controls{margin-bottom:18px;}
+  .date-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .preset-btn{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s ease, color .15s ease, border-color .15s ease;}
+  .preset-btn:hover{border-color:var(--accent);}
+  .preset-btn.active{background:var(--emphasis-bg);color:var(--emphasis-text);border-color:var(--emphasis-bg);}
   .widget-row{display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:18px;}
   @media (max-width:620px){.widget-row{grid-template-columns:1fr;}}
   .widget-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:20px;}
@@ -447,9 +452,24 @@
 
   <!-- ANALYTICS PANEL -->
   <section class="panel" id="panel-analytics">
-    <div class="row" style="justify-content:space-between;margin-bottom:14px;">
-      <input type="month" id="report-month" />
-      <button class="btn btn-primary btn-sm" id="btn-open-report" type="button">📄 Export Monthly Report</button>
+    <div class="report-controls">
+      <div class="date-presets" id="date-presets">
+        <button class="preset-btn" data-preset="thismonth" type="button">This Month</button>
+        <button class="preset-btn" data-preset="lastmonth" type="button">Last Month</button>
+        <button class="preset-btn" data-preset="thisyear" type="button">This Year</button>
+        <button class="preset-btn" data-preset="lastyear" type="button">Last Year</button>
+        <button class="preset-btn" data-preset="last6m" type="button">Last 6 Months</button>
+        <button class="preset-btn" data-preset="custom" type="button">Custom</button>
+      </div>
+      <div class="row" id="custom-range-row" style="display:none;">
+        <input type="date" id="report-from" />
+        <span style="color:var(--ink-soft);font-size:12px;">to</span>
+        <input type="date" id="report-to" />
+      </div>
+      <div class="row" style="justify-content:space-between;">
+        <span class="count-note" id="report-range-label"></span>
+        <button class="btn btn-primary btn-sm" id="btn-open-report" type="button">📄 Export Report</button>
+      </div>
     </div>
     <div class="widget-row">
       <div class="card widget-ring">
@@ -1468,10 +1488,52 @@ async function renderAdklaro(){
 }
 
 // ---------- Monthly Report ----------
-(function(){
+function fmtISO(d){ return d.toISOString().slice(0,10); }
+function presetRange(preset){
   const now = new Date();
-  const mm = String(now.getMonth()+1).padStart(2,'0');
-  document.getElementById('report-month').value = now.getFullYear()+'-'+mm;
+  const y = now.getFullYear(), m = now.getMonth();
+  switch(preset){
+    case 'thismonth': return [fmtISO(new Date(y,m,1)), fmtISO(new Date(y,m+1,0))];
+    case 'lastmonth': return [fmtISO(new Date(y,m-1,1)), fmtISO(new Date(y,m,0))];
+    case 'thisyear': return [fmtISO(new Date(y,0,1)), fmtISO(new Date(y,11,31))];
+    case 'lastyear': return [fmtISO(new Date(y-1,0,1)), fmtISO(new Date(y-1,11,31))];
+    case 'last6m': return [fmtISO(new Date(y,m-5,1)), fmtISO(new Date(y,m+1,0))];
+    default: return null;
+  }
+}
+function updateRangeLabel(){
+  const from = document.getElementById('report-from').value;
+  const to = document.getElementById('report-to').value;
+  const label = document.getElementById('report-range-label');
+  if(!from || !to){ label.textContent=''; return; }
+  const opts = {month:'short', day:'numeric', year:'numeric'};
+  label.textContent = new Date(from).toLocaleDateString('en-US',opts) + ' – ' + new Date(to).toLocaleDateString('en-US',opts);
+}
+document.querySelectorAll('.preset-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const preset = btn.dataset.preset;
+    if(preset === 'custom'){
+      document.getElementById('custom-range-row').style.display='flex';
+    }else{
+      document.getElementById('custom-range-row').style.display='none';
+      const [from,to] = presetRange(preset);
+      document.getElementById('report-from').value = from;
+      document.getElementById('report-to').value = to;
+    }
+    updateRangeLabel();
+    if(document.getElementById('report-view').classList.contains('open')) renderReport();
+  });
+});
+document.getElementById('report-from').addEventListener('change', ()=>{ updateRangeLabel(); if(document.getElementById('report-view').classList.contains('open')) renderReport(); });
+document.getElementById('report-to').addEventListener('change', ()=>{ updateRangeLabel(); if(document.getElementById('report-view').classList.contains('open')) renderReport(); });
+(function(){
+  document.querySelector('.preset-btn[data-preset="thismonth"]').classList.add('active');
+  const [from,to] = presetRange('thismonth');
+  document.getElementById('report-from').value = from;
+  document.getElementById('report-to').value = to;
+  updateRangeLabel();
 })();
 
 document.getElementById('btn-open-report').addEventListener('click', async ()=>{
@@ -1485,16 +1547,18 @@ document.getElementById('btn-close-report').addEventListener('click', ()=>{
 document.getElementById('btn-print-report').addEventListener('click', ()=>{
   window.print();
 });
-document.getElementById('report-month').addEventListener('change', renderReport);
 
 function renderReport(){
-  const monthVal = document.getElementById('report-month').value; // "2026-08"
-  const [y,m] = monthVal.split('-').map(Number);
-  const monthName = new Date(y, m-1, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'});
+  const fromVal = document.getElementById('report-from').value;
+  const toVal = document.getElementById('report-to').value;
+  const opts = {month:'long', day:'numeric', year:'numeric'};
+  const monthName = fromVal && toVal
+    ? new Date(fromVal).toLocaleDateString('en-US',opts) + ' – ' + new Date(toVal).toLocaleDateString('en-US',opts)
+    : 'All time';
 
   const inMonth = entries.filter(e=>{
-    const d = new Date(e.submitted_at);
-    return d.getFullYear()===y && (d.getMonth()+1)===m;
+    const d = (e.submitted_at||'').slice(0,10);
+    return (!fromVal || d>=fromVal) && (!toVal || d<=toVal);
   });
 
   const total = inMonth.length;
