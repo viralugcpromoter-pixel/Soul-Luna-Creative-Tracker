@@ -33,9 +33,17 @@ export default async function handler(req, res) {
       if (error) throw error;
       const custom = {};
       (data || []).forEach((p) => { custom[p.id] = p.label; });
+
+      const { data: hiddenData, error: hiddenError } = await supabase.from('hidden_pages').select('id');
+      if (hiddenError) throw hiddenError;
+      const hiddenIds = new Set((hiddenData || []).map((h) => h.id));
+
+      const merged = { ...BASE_PAGES, ...custom };
+      hiddenIds.forEach((id) => { delete merged[id]; });
+
       return res.status(200).json({
-        pages: { ...BASE_PAGES, ...custom },
-        customIds: Object.keys(custom)
+        pages: merged,
+        customIds: Object.keys(custom).filter((id) => !hiddenIds.has(id))
       });
     }
 
@@ -44,15 +52,22 @@ export default async function handler(req, res) {
       if (!id || !label) return res.status(400).json({ error: 'Missing id/label' });
       const { error } = await supabase.from('pages').upsert({ id, label });
       if (error) throw error;
+      // If it was previously hidden, un-hide it since it's being explicitly (re)added.
+      await supabase.from('hidden_pages').delete().eq('id', id);
       return res.status(200).json({ ok: true });
     }
 
     if (req.method === 'DELETE') {
       const id = (req.query && req.query.id) || (req.body && req.body.id);
       if (!id) return res.status(400).json({ error: 'Missing id' });
+
       if (Object.prototype.hasOwnProperty.call(BASE_PAGES, id)) {
-        return res.status(400).json({ error: 'Cannot remove a built-in page' });
+        // Built-in page — it's not a real row, so we hide it instead of deleting.
+        const { error } = await supabase.from('hidden_pages').upsert({ id });
+        if (error) throw error;
+        return res.status(200).json({ hidden: true });
       }
+
       const { error } = await supabase.from('pages').delete().eq('id', id);
       if (error) throw error;
       return res.status(200).json({ deleted: true });
