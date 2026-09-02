@@ -292,6 +292,20 @@
   .ann-close{background:none;border:none;color:var(--ink-soft);font-weight:700;cursor:pointer;font-size:14px;padding:0;flex-shrink:0;}
   .ann-post-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
   .ann-post-row input{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;background:var(--input-bg);color:var(--ink);font-family:'Inter',sans-serif;}
+  .hook-grid{display:flex;flex-direction:column;gap:2px;max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--input-bg);}
+  .hook-opt{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;padding:6px;border-radius:6px;cursor:pointer;line-height:1.4;}
+  .hook-opt:hover{background:var(--accent-soft);}
+  .hook-opt input{margin-top:3px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+  .hook-opt .hn{font-weight:600;color:var(--ink);}
+  .hook-opt .he{color:var(--ink-soft);}
+  .strat-list-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--bg);}
+  .strat-list-row .name{font-weight:600;font-size:13.5px;}
+  .strat-list-row .sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .strat-list-row .acts{display:flex;gap:8px;flex-shrink:0;align-items:center;}
+  .top3-item{display:flex;justify-content:space-between;padding:8px 10px;border-radius:8px;background:var(--accent-soft);margin-bottom:6px;font-size:13px;color:var(--accent);}
+  .top3-item .rank{font-weight:700;margin-right:6px;}
+  .strategy-readout{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.6;margin-top:8px;}
+  .strategy-readout b{color:var(--ink-soft);font-weight:600;}
 </style>
 </head>
 <body>
@@ -315,6 +329,7 @@
     </div>
     <nav class="sidebar-nav">
       <button class="tab-btn active" data-tab="log">Log Creative</button>
+      <button class="tab-btn" data-tab="strategy">Strategy</button>
       <button class="tab-btn" data-tab="track">Tracker</button>
       <button class="tab-btn" data-tab="analytics">Analytics</button>
       <button class="tab-btn" data-tab="assets">Assets</button>
@@ -346,6 +361,84 @@
     <input type="text" id="ann-by" placeholder="Your name" style="max-width:110px;" />
     <button class="btn btn-ghost btn-sm" id="ann-post-btn" type="button">Post</button>
   </div>
+
+  <!-- STRATEGY PANEL -->
+  <section class="panel" id="panel-strategy">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div class="field" style="margin-bottom:0;flex:1;min-width:220px;">
+          <label>Brand</label>
+          <select id="strat-brand-select"></select>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="strat-brand-add-toggle" type="button" style="align-self:flex-end;">+ Add brand</button>
+      </div>
+      <div id="strat-brand-add-block" style="display:none;margin-top:12px;">
+        <div class="row">
+          <input type="text" id="strat-new-brand-name" placeholder="Brand name" style="flex:1;min-width:160px;" />
+          <input type="text" id="strat-new-brand-site" placeholder="Website (optional)" style="flex:1;min-width:160px;" />
+          <button class="btn btn-ghost btn-sm" id="strat-save-brand" type="button">Save</button>
+        </div>
+        <span class="status-msg" id="strat-brand-status"></span>
+      </div>
+      <div class="field full" style="margin-top:14px;margin-bottom:0;">
+        <label>Brand context <span style="font-weight:400;text-transform:none;letter-spacing:0;">(shared — what the brand sells, who it's for)</span></label>
+        <textarea id="strat-brand-desc" placeholder="Ano ibinebenta ng brand, para kanino, ano dapat malaman ng team bago mag-suggest ng creative ideas?"></textarea>
+        <div class="row" style="margin-top:8px;">
+          <button class="btn btn-ghost btn-sm" id="strat-save-brand-desc" type="button">Save description</button>
+          <span class="status-msg" id="strat-brand-desc-status"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:18px;margin:0 0 4px;">Products</h2>
+      <p class="hint" style="margin-top:0;margin-bottom:14px;">Isang beses lang gawin — reusable sa lahat ng creatives ng brand na 'to. Positioning is required, auto-pull sa Log Creative.</p>
+      <div class="form-grid">
+        <div class="field"><label>Product name</label><input type="text" id="strat-p-name" placeholder="e.g. Hair Loss Treatment" /></div>
+        <div class="field"><label>Product details (optional)</label><input type="text" id="strat-p-details" placeholder="Key factual details the team should know" /></div>
+        <div class="field full"><label>Positioning</label><textarea id="strat-p-positioning" placeholder="Ano ang ipinapangako natin + bakit different/believable ang solution?"></textarea></div>
+      </div>
+      <div class="submit-row"><button class="btn btn-primary btn-sm" id="strat-p-save" type="button">+ Add product</button><span class="status-msg" id="strat-p-status"></span></div>
+      <div id="strat-products-list" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:18px;margin:0 0 4px;">Personas</h2>
+      <p class="hint" style="margin-top:0;margin-bottom:14px;">Sino ang audience type na 'to. Idagdag ang Problems pagkatapos i-save.</p>
+      <div class="form-grid">
+        <div class="field"><label>Persona name</label><input type="text" id="strat-per-name" placeholder="e.g. Kevin — dandruff" /></div>
+        <div class="field"><label>Core Desire</label><select id="strat-per-desire"></select></div>
+        <div class="field full"><label>Description (optional)</label><textarea id="strat-per-desc" placeholder="Demographics, situation, priorities, buying context"></textarea></div>
+      </div>
+      <div class="submit-row"><button class="btn btn-primary btn-sm" id="strat-per-save" type="button">+ Add persona</button><span class="status-msg" id="strat-per-status"></span></div>
+      <div id="strat-personas-list" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card" id="strat-problems-card" style="display:none;">
+      <div class="row" style="justify-content:space-between;">
+        <h2 style="font-family:'Fraunces',serif;font-size:18px;margin:0;">Problems — <span id="strat-problems-persona-name"></span></h2>
+        <button class="btn-link" id="strat-close-problems" type="button">← Back</button>
+      </div>
+      <p class="hint" style="margin-top:6px;margin-bottom:14px;">I-score ang bawat problem mula 1–10. Total Score = Intensity × Repeatability × Scale. Auto-rank yung Top 3.</p>
+      <div class="form-grid">
+        <div class="field full"><label>Problem</label><input type="text" id="strat-prob-text" placeholder="Describe the problem…" /></div>
+        <div class="field"><label>Intensity</label><select id="strat-prob-intensity"></select></div>
+        <div class="field"><label>Repeatability</label><select id="strat-prob-repeatability"></select></div>
+        <div class="field"><label>Scale</label><select id="strat-prob-scale"></select></div>
+      </div>
+      <div class="submit-row"><button class="btn btn-primary btn-sm" id="strat-prob-save" type="button">+ Add problem</button><span class="status-msg" id="strat-prob-status"></span></div>
+      <div class="row" style="margin-top:18px;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+        <div style="flex:1;min-width:260px;">
+          <div class="an-h" style="margin-bottom:8px;">All problems</div>
+          <div id="strat-problems-list"></div>
+        </div>
+        <div style="flex:1;min-width:220px;">
+          <div class="an-h" style="margin-bottom:8px;">🏆 Top 3 Problems</div>
+          <div id="strat-top3-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- LOG PANEL -->
   <section class="panel active" id="panel-log">
@@ -427,6 +520,42 @@
     </div>
 
     <p class="about">Concept creator logs the idea + script first — page, Meta ad, and date can wait. Editor and ads team update the same entry later (use Edit on the Tracker card) and check off Editing done / Launched as it moves along.</p>
+
+    <div class="card" style="margin-top:16px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:19px;margin:0 0 4px;">🎯 Creative Strategy</h2>
+      <p class="hint" style="margin-top:0;margin-bottom:14px;">Optional pero highly recommended — galing sa Strategy tab, nagbibigay ng direksyon bago pa man i-edit.</p>
+      <div class="form-grid">
+        <div class="field"><label>Brand</label><select id="f-brand"><option value="">Select brand…</option></select></div>
+        <div class="field"><label>Product</label><select id="f-product"><option value="">Select product…</option></select></div>
+        <div class="field"><label>Persona</label><select id="f-persona"><option value="">Select persona…</option></select></div>
+        <div class="field"><label>Identify the Problem</label><select id="f-problem"><option value="">Select problem…</option></select></div>
+        <div class="field"><label>Desire <span style="font-weight:400;text-transform:none;letter-spacing:0;">(auto)</span></label><input type="text" id="f-desire" readonly /></div>
+        <div class="field"><label>Market Awareness</label><select id="f-awareness"></select></div>
+        <div class="field full" id="f-positioning-hint" style="display:none;margin-bottom:0;">
+          <label>Positioning <span style="font-weight:400;text-transform:none;letter-spacing:0;">(auto-pulled from Product)</span></label>
+          <div class="strategy-readout" id="f-positioning-display"></div>
+        </div>
+        <div class="field"><label>Market Sophistication</label><select id="f-sophistication"></select></div>
+        <div class="field full"><label>Hypothesis <span style="font-weight:400;text-transform:none;letter-spacing:0;">(why are we testing this?)</span></label><textarea id="f-hypothesis" placeholder="e.g. May winning hook tayo dati, gusto nating subukan sa bagong visual."></textarea></div>
+        <div class="field full"><label>Type of Ad</label><select id="f-type-of-ad"><option value="">Pumili muna ng Market Awareness…</option></select></div>
+        <div class="field full">
+          <label>Strengthen Hook Pattern <span style="font-weight:400;text-transform:none;letter-spacing:0;">(pumili ng hanggang 3)</span></label>
+          <div id="f-hook-patterns" class="hook-grid"></div>
+        </div>
+        <div class="field full"><label>Type of Headline</label><select id="f-type-of-headline"><option value="">Pumili muna ng Market Awareness…</option></select></div>
+        <div class="field full">
+          <label>Headline</label>
+          <textarea id="f-headline" placeholder="Add final headline…"></textarea>
+          <div class="row" style="margin-top:6px;"><button class="btn btn-ghost btn-sm" id="btn-ai-headline" type="button">✨ Generate with AI</button><span class="status-msg" id="ai-headline-status"></span></div>
+        </div>
+        <div class="field full">
+          <label>Ad Copy</label>
+          <textarea id="f-ad-copy" placeholder="Add final ad copy…"></textarea>
+          <div class="row" style="margin-top:6px;"><button class="btn btn-ghost btn-sm" id="btn-ai-copy" type="button">✨ Generate with AI</button><span class="status-msg" id="ai-copy-status"></span></div>
+        </div>
+        <div class="field full"><label>Link to Adset</label><input type="text" id="f-adset-link" placeholder="Paste adset URL (once it's live)" /></div>
+      </div>
+    </div>
   </section>
 
   <!-- TRACKER PANEL -->
@@ -497,9 +626,17 @@
       <h3 class="an-h">📍 By Brand</h3>
       <div id="analytics-pages"></div>
     </div>
-    <div class="card">
+    <div class="card" style="margin-bottom:16px;">
       <h3 class="an-h">🏷 By Creative Type</h3>
       <div id="analytics-tags"></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <h3 class="an-h">🎬 By Type of Ad</h3>
+      <div id="analytics-typeofad"></div>
+    </div>
+    <div class="card">
+      <h3 class="an-h">🪝 By Hook Pattern</h3>
+      <div id="analytics-hooks"></div>
     </div>
   </section>
 
@@ -655,6 +792,8 @@ async function doLogin(){
       loadPages();
       loadEntries();
       loadAnnouncement();
+      loadBrands();
+      loadStrategyLibrary().then(onLogBrandChange);
     }else{
       statusEl.textContent = 'Wrong password.';
     }
@@ -768,6 +907,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='strategy') renderStrategyTab();
     if(btn.dataset.tab==='track') renderEntries();
     if(btn.dataset.tab==='analytics') renderAnalytics();
     if(btn.dataset.tab==='assets') renderAssets();
@@ -849,6 +989,433 @@ function wireTagInput(boxEl, initialTags){
 }
 wireTagInput(document.getElementById('f-tags-box'), []);
 
+// =====================================================================
+// STRATEGY SYSTEM (Brand → Product → Persona → Problems → Creative Sprint)
+// =====================================================================
+let BRANDS = {};
+let STRAT_PRODUCTS = [];
+let STRAT_PERSONAS = [];
+let STRAT_PROBLEMS_CACHE = {};
+let stratActiveBrand = null;
+let stratManagingPersonaId = null;
+
+const DESIRES = [
+  ['Recognition','Recognition, respect, fame, exclusivity, prestige, popularity, status'],
+  ['Remuneration','Making or saving money, career advancement, success, financial independence'],
+  ['Rejuvenation','Longevity, health, fitness, energy, vitality'],
+  ['Relaxation','Convenience, leisure, free time, freedom from worry'],
+  ['Revenge','Overcoming or proving something after feeling unsuccessful, rejected, disrespected, unloved, or unattractive'],
+  ['Relief','Freedom from pain, shame, guilt, difficulty, frustration, or other burdens'],
+  ['Results','Proof that the effort or spend paid off — visible, measurable outcomes'],
+];
+
+const AWARENESS = [
+  ['unaware','Unaware — not yet aware of the problem or desire, or won\u2019t honestly admit it'],
+  ['problem_aware','Problem Aware — knows they have a problem, but doesn\u2019t connect solving it with your product'],
+  ['solution_aware','Solution Aware — knows the kind of solution they want, but doesn\u2019t know your product exists'],
+  ['product_aware','Product Aware — knows your product, but isn\u2019t yet convinced they want it'],
+  ['most_aware','Most Aware — wants your product, just needs the right offer, timing, or reason to act'],
+];
+
+const SOPHISTICATION = [
+  ['first','First Stage — Be Simple and Direct'],
+  ['second','Second Stage — Copy the claim that\u2019s working, but ENLARGE it'],
+  ['third','Third Stage — Prospect already heard the claims — introduce a NEW mechanism, emphasize how it works'],
+  ['fourth','Fourth Stage — Elaborate on the successful mechanism: easier, quicker, surer; solve more, promise more'],
+];
+
+const TYPE_OF_AD = {
+  unaware: ['Pattern Interrupt / Curiosity Hook — no problem or product named yet','Entertainment or Story Lead-in'],
+  problem_aware: [
+    'Agitate the Pain of Problem → Introduce Solution for the first time',
+    'Educational Content — what\u2019s causing the pain, what solutions exist, why it matters now',
+    'Quiz','Image w/ Hook Pattern Text Overlay','Video w/ Hook Pattern Text Overlay',
+    'Problem Statistics — validate the struggle',
+    'How-To / Tutorial of the Benefit — no solution introduced yet',
+    'GPAISACA (Grab attention → Problem → Agitate → Interesting → Solution → Advantages → Call to action)',
+  ],
+  solution_aware: [
+    'Compare solution types — position product as best of category',
+    'Mechanism explainer — why this type of solution works',
+    'Objection-handling for this type of solution',
+  ],
+  product_aware: ['Direct comparison vs alternatives','Social proof / testimonial-led','Feature-benefit breakdown of your product specifically'],
+  most_aware: ['Offer / urgency-led — promo, limited slots, deadline','Retarget with a fresh reason to act now'],
+};
+
+const TYPE_OF_HEADLINE = {
+  unaware: ['Curiosity-first, no product or problem named'],
+  problem_aware: [
+    'Problem only, or state both problem and solution immediately',
+    'Promise removal of previously unconquerable limitations',
+    'Combine Problem, Solution, and Removal of Limitations',
+    'Promise to prevent a future problem before it can occur',
+    'Emphasis of a single word — Emotional Sharpening',
+    'Verbal Twist on an old promise',
+  ],
+  solution_aware: ['Name the category of solution, then differentiate','Ask if they\u2019ve tried the common solution type without success'],
+  product_aware: ['Direct product name + core benefit','Us vs. them comparison headline'],
+  most_aware: ['Offer-led — price, promo, or deadline front and center','Simple direct CTA headline'],
+};
+
+const HOOK_PATTERNS = [
+  ['state_promise','State the Promise','Directly communicate the benefit. e.g. "Double Your Energy in Just 7 Days."'],
+  ['specific_numbers','Use Specific Numbers or Facts','Specifics build credibility. e.g. "How 10,000 Women Beat Fatigue\u2014And How You Can Too."'],
+  ['introduce_newness','Introduce Newness','Something never seen before. e.g. "Introducing the World\u2019s First Smart Cupping Device."'],
+  ['bold_claim','Make a Bold Claim','Confident, attention-grabbing. e.g. "Never Feel Sore Again\u2014Guaranteed."'],
+  ['reveal_secret','Reveal a Secret','Product as insider truth. e.g. "The Ancient Recovery Technique Athletes Don\u2019t Want You to Know."'],
+  ['ask_question','Ask a Question','Engage curiosity directly. e.g. "Tired of Waking Up Sore?"'],
+  ['inspire_aspiration','Inspire Aspiration','Tap the desire to improve. e.g. "Recover Like the World\u2019s Top Athletes."'],
+  ['self_identity','Appeal to Self-Identity','See themselves in a select group. e.g. "For Those Who Take Recovery as Seriously as Training."'],
+  ['invoke_curiosity','Invoke Curiosity','Mystery or intrigue. e.g. "Why Are These Marks a Sign of Success?"'],
+  ['state_problem','State the Problem','Acknowledge the pain point directly. e.g. "Struggling with Constant Muscle Pain?"'],
+  ['use_emotion','Use Emotion','Pride, fear, hope, or relief. e.g. "Feel Stronger Than Ever\u2014Starting Today."'],
+  ['command_attention','Command Attention','Action verbs to energize. e.g. "Boost Your Recovery Now!"'],
+  ['challenge_reader','Challenge the Reader','Provocative or contrarian. e.g. "Everything You Know About Pain Relief Is Wrong."'],
+  ['contrast','Use Contrast or Opposites','Unexpected pairing. e.g. "Soothe Pain Without Lifting a Finger."'],
+  ['speed_convenience','Promise Speed or Convenience','How fast results come. e.g. "Feel the Difference in Just 5 Minutes."'],
+  ['power_words','Use Power Words','"Finally," "Discover," "Proven," "Revealed." e.g. "Discover the Secret to Pain-Free Recovery."'],
+  ['how_to','Frame as a How-To','Instructional. e.g. "How to Eliminate Muscle Soreness Forever."'],
+  ['visual_language','Use Visual Language','Vivid mental picture. e.g. "Feel Your Muscles Relax Like Never Before."'],
+  ['safety_comfort','Appeal to Safety or Comfort','Address fear of danger/discomfort. e.g. "Safe, Gentle Relief for Even the Most Sensitive Muscles."'],
+  ['relatable','Make It Relatable','Resonates with their experience. e.g. "We Know Soreness Can Be a Pain\u2014Let\u2019s Fix It."'],
+  ['highlight_results','Highlight Results','Outcomes over features. e.g. "Recover Faster and Feel Better Than Ever."'],
+  ['shock_value','Use Shock Value','Unexpected or controversial. e.g. "Why Your Recovery Routine Is Hurting You."'],
+  ['simplify','Simplify Complexity','Make it easy to understand. e.g. "The Recovery Solution You\u2019ve Been Waiting For."'],
+  ['speak_directly','Speak Directly to the Reader','Use "you." e.g. "You Deserve to Feel Better\u2014We Can Help."'],
+  ['trends','Piggyback on Trends','Reference something popular. e.g. "Why Top Athletes Swear By This Therapy."'],
+  ['nostalgia','Tap into Nostalgia','Longing for the past. e.g. "Rediscover the Ancient Healing Practice Backed by Modern Science."'],
+  ['educate_sell','Educate While Selling','Teach something new. e.g. "What Makes Cupping Therapy the #1 Recovery Trend?"'],
+  ['metaphor','Use Metaphors or Analogies','Explain creatively. e.g. "This Device Works Like a Personal Masseuse\u2014Anytime, Anywhere."'],
+  ['novelty','Appeal to Novelty or Innovation','Cutting-edge angle. e.g. "The Revolutionary Device Changing How We Heal."'],
+  ['common_mistake','Point Out a Common Mistake','e.g. "The #1 Mistake People Make When Recovering."'],
+  ['tap_fear','Tap into Fear','e.g. "What You Don\u2019t Know About This Could Hurt You."'],
+  ['provide_list','Provide a List','e.g. "The Top 5 Tips for Faster Recovery."'],
+  ['announce_discovery','Announce a Discovery','e.g. "Scientists Discover a New Way to Ease Muscle Pain."'],
+];
+
+function labelFor(list, value){
+  const found = list.find(([v])=>v===value);
+  return found ? found[1] : value;
+}
+function scoreOptions(selected){
+  let html='';
+  for(let i=1;i<=10;i++){ html += `<option value="${i}" ${i===selected?'selected':''}>${i}</option>`; }
+  return html;
+}
+
+async function loadBrands(){
+  try{ const list = await api('/api/brands'); BRANDS = {}; list.forEach(b=>BRANDS[b.id]=b); }
+  catch(e){ BRANDS = {}; }
+  renderBrandSelects();
+}
+async function loadStrategyLibrary(){
+  try{ STRAT_PRODUCTS = await api('/api/strategy-products'); }catch(e){ STRAT_PRODUCTS = []; }
+  try{ STRAT_PERSONAS = await api('/api/strategy-personas'); }catch(e){ STRAT_PERSONAS = []; }
+}
+async function loadProblemsFor(personaId){
+  try{ STRAT_PROBLEMS_CACHE[personaId] = await api('/api/strategy-problems?persona_id='+encodeURIComponent(personaId)); }
+  catch(e){ STRAT_PROBLEMS_CACHE[personaId] = []; }
+  return STRAT_PROBLEMS_CACHE[personaId];
+}
+
+function renderBrandSelects(){
+  const ids = Object.keys(BRANDS);
+  const stratSel = document.getElementById('strat-brand-select');
+  const logSel = document.getElementById('f-brand');
+  const stratCurrent = stratSel.value || stratActiveBrand;
+  const logCurrent = logSel.value;
+  stratSel.innerHTML = ids.map(id=>`<option value="${id}">${escapeHtml(BRANDS[id].name)}</option>`).join('');
+  logSel.innerHTML = '<option value="">Select brand…</option>' + ids.map(id=>`<option value="${id}">${escapeHtml(BRANDS[id].name)}</option>`).join('');
+  if(ids.includes(stratCurrent)) stratSel.value = stratCurrent; else if(ids[0]) stratSel.value = ids[0];
+  if(ids.includes(logCurrent)) logSel.value = logCurrent;
+  stratActiveBrand = stratSel.value || null;
+}
+
+async function renderStrategyTab(){
+  if(Object.keys(BRANDS).length===0) await loadBrands();
+  if(STRAT_PRODUCTS.length===0 && STRAT_PERSONAS.length===0) await loadStrategyLibrary();
+  renderBrandSelects();
+  const b = BRANDS[stratActiveBrand];
+  document.getElementById('strat-brand-desc').value = b ? (b.description||'') : '';
+  renderStrategyProducts();
+  renderStrategyPersonas();
+}
+
+document.getElementById('strat-brand-select').addEventListener('change', ()=>{
+  stratActiveBrand = document.getElementById('strat-brand-select').value;
+  document.getElementById('strat-problems-card').style.display='none';
+  renderStrategyTab();
+});
+document.getElementById('strat-brand-add-toggle').addEventListener('click', ()=>{
+  const block = document.getElementById('strat-brand-add-block');
+  block.style.display = block.style.display==='none' ? 'block' : 'none';
+});
+document.getElementById('strat-save-brand').addEventListener('click', async ()=>{
+  const name = document.getElementById('strat-new-brand-name').value.trim();
+  const site = document.getElementById('strat-new-brand-site').value.trim();
+  const statusEl = document.getElementById('strat-brand-status');
+  if(!name){ statusEl.textContent='Type a brand name.'; statusEl.className='status-msg err'; return; }
+  try{
+    const b = await api('/api/brands', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, website: site}) });
+    await loadBrands();
+    stratActiveBrand = b.id;
+    document.getElementById('strat-new-brand-name').value='';
+    document.getElementById('strat-new-brand-site').value='';
+    statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
+    renderStrategyTab();
+  }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
+});
+document.getElementById('strat-save-brand-desc').addEventListener('click', async ()=>{
+  if(!stratActiveBrand) return;
+  const desc = document.getElementById('strat-brand-desc').value.trim();
+  const statusEl = document.getElementById('strat-brand-desc-status');
+  try{
+    await api('/api/brands', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: stratActiveBrand, description: desc}) });
+    await loadBrands();
+    statusEl.textContent='Saved ✓'; statusEl.className='status-msg ok';
+    setTimeout(()=>statusEl.textContent='',2000);
+  }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
+});
+
+function renderStrategyProducts(){
+  const holder = document.getElementById('strat-products-list');
+  const list = STRAT_PRODUCTS.filter(p=>p.brand_id===stratActiveBrand);
+  if(list.length===0){ holder.innerHTML = '<div class="hint">Wala pang product.</div>'; return; }
+  holder.innerHTML = list.map(p=>`
+    <div class="strat-list-row" data-id="${p.id}">
+      <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${escapeHtml((p.positioning||'').slice(0,140))}${(p.positioning||'').length>140?'…':''}</div></div>
+      <div class="acts"><button class="btn-danger-text act-del-product" data-id="${p.id}" type="button">Delete</button></div>
+    </div>`).join('');
+  holder.querySelectorAll('.act-del-product').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Delete this product?')) return;
+      await api('/api/strategy-products?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
+      await loadStrategyLibrary();
+      renderStrategyProducts();
+    });
+  });
+}
+document.getElementById('strat-p-save').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('strat-p-status');
+  if(!stratActiveBrand){ statusEl.textContent='Pumili/gumawa muna ng brand.'; statusEl.className='status-msg err'; return; }
+  const name = document.getElementById('strat-p-name').value.trim();
+  const details = document.getElementById('strat-p-details').value.trim();
+  const positioning = document.getElementById('strat-p-positioning').value.trim();
+  if(!name || !positioning){ statusEl.textContent='Product name at Positioning ang required.'; statusEl.className='status-msg err'; return; }
+  try{
+    await api('/api/strategy-products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({brand_id: stratActiveBrand, name, details, positioning}) });
+    document.getElementById('strat-p-name').value='';
+    document.getElementById('strat-p-details').value='';
+    document.getElementById('strat-p-positioning').value='';
+    statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
+    await loadStrategyLibrary();
+    renderStrategyProducts();
+    setTimeout(()=>statusEl.textContent='',2000);
+  }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
+});
+
+document.getElementById('strat-per-desire').innerHTML = '<option value="">Select desire…</option>' + DESIRES.map(([n])=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+function renderStrategyPersonas(){
+  const holder = document.getElementById('strat-personas-list');
+  const list = STRAT_PERSONAS.filter(p=>p.brand_id===stratActiveBrand);
+  if(list.length===0){ holder.innerHTML = '<div class="hint">Wala pang persona.</div>'; return; }
+  holder.innerHTML = list.map(p=>`
+    <div class="strat-list-row" data-id="${p.id}">
+      <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.desire?('Desire: '+escapeHtml(p.desire)+' · '):''}${escapeHtml((p.description||'').slice(0,120))}${(p.description||'').length>120?'…':''}</div></div>
+      <div class="acts">
+        <button class="btn btn-ghost btn-sm act-manage-problems" data-id="${p.id}" data-name="${escapeHtml(p.name)}" type="button">Manage Problems</button>
+        <button class="btn-danger-text act-del-persona" data-id="${p.id}" type="button">Delete</button>
+      </div>
+    </div>`).join('');
+  holder.querySelectorAll('.act-manage-problems').forEach(btn=>{
+    btn.addEventListener('click', ()=>openProblemsWorkspace(btn.dataset.id, btn.dataset.name));
+  });
+  holder.querySelectorAll('.act-del-persona').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Delete this persona? Madidelete rin lahat ng saved problems nito.')) return;
+      await api('/api/strategy-personas?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
+      await loadStrategyLibrary();
+      renderStrategyPersonas();
+    });
+  });
+}
+document.getElementById('strat-per-save').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('strat-per-status');
+  if(!stratActiveBrand){ statusEl.textContent='Pumili/gumawa muna ng brand.'; statusEl.className='status-msg err'; return; }
+  const name = document.getElementById('strat-per-name').value.trim();
+  const desire = document.getElementById('strat-per-desire').value;
+  const description = document.getElementById('strat-per-desc').value.trim();
+  if(!name){ statusEl.textContent='Persona name required.'; statusEl.className='status-msg err'; return; }
+  try{
+    await api('/api/strategy-personas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({brand_id: stratActiveBrand, name, desire, description}) });
+    document.getElementById('strat-per-name').value='';
+    document.getElementById('strat-per-desire').value='';
+    document.getElementById('strat-per-desc').value='';
+    statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
+    await loadStrategyLibrary();
+    renderStrategyPersonas();
+    setTimeout(()=>statusEl.textContent='',2000);
+  }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
+});
+
+async function openProblemsWorkspace(personaId, personaName){
+  stratManagingPersonaId = personaId;
+  document.getElementById('strat-problems-card').style.display='block';
+  document.getElementById('strat-problems-persona-name').textContent = personaName;
+  document.getElementById('strat-prob-intensity').innerHTML = scoreOptions(1);
+  document.getElementById('strat-prob-repeatability').innerHTML = scoreOptions(1);
+  document.getElementById('strat-prob-scale').innerHTML = scoreOptions(1);
+  await loadProblemsFor(personaId);
+  renderProblemsWorkspace();
+  document.getElementById('strat-problems-card').scrollIntoView({behavior:'smooth', block:'start'});
+}
+document.getElementById('strat-close-problems').addEventListener('click', ()=>{
+  document.getElementById('strat-problems-card').style.display='none';
+  stratManagingPersonaId = null;
+});
+function renderProblemsWorkspace(){
+  const list = STRAT_PROBLEMS_CACHE[stratManagingPersonaId] || [];
+  const holder = document.getElementById('strat-problems-list');
+  if(list.length===0){ holder.innerHTML = '<div class="hint">Wala pang problem.</div>'; }
+  else{
+    holder.innerHTML = list.map(p=>`
+      <div class="strat-list-row" data-id="${p.id}">
+        <div><div class="name">${escapeHtml(p.problem)}</div><div class="sub">Intensity ${p.intensity} · Repeatability ${p.repeatability} · Scale ${p.scale} · Score ${p.total_score}</div></div>
+        <div class="acts"><button class="btn-danger-text act-del-problem" data-id="${p.id}" type="button">Delete</button></div>
+      </div>`).join('');
+    holder.querySelectorAll('.act-del-problem').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('Delete this problem?')) return;
+        await api('/api/strategy-problems?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
+        await loadProblemsFor(stratManagingPersonaId);
+        renderProblemsWorkspace();
+      });
+    });
+  }
+  const top3 = [...list].sort((a,b)=>b.total_score-a.total_score).slice(0,3);
+  const top3Holder = document.getElementById('strat-top3-list');
+  top3Holder.innerHTML = top3.length===0 ? '<div class="hint">Wala pang score.</div>' : top3.map((p,i)=>`
+    <div class="top3-item"><span><span class="rank">#${i+1}</span>${escapeHtml(p.problem)}</span><span>${p.total_score}</span></div>`).join('');
+}
+document.getElementById('strat-prob-save').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('strat-prob-status');
+  const problem = document.getElementById('strat-prob-text').value.trim();
+  if(!problem){ statusEl.textContent='Type a problem first.'; statusEl.className='status-msg err'; return; }
+  const intensity = document.getElementById('strat-prob-intensity').value;
+  const repeatability = document.getElementById('strat-prob-repeatability').value;
+  const scale = document.getElementById('strat-prob-scale').value;
+  try{
+    await api('/api/strategy-problems', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({persona_id: stratManagingPersonaId, problem, intensity, repeatability, scale}) });
+    document.getElementById('strat-prob-text').value='';
+    statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
+    await loadProblemsFor(stratManagingPersonaId);
+    renderProblemsWorkspace();
+    setTimeout(()=>statusEl.textContent='',2000);
+  }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
+});
+
+// ---------- Log form: static option lists + cascading selects ----------
+function populateStaticSelects(){
+  document.getElementById('f-awareness').innerHTML = '<option value="">Select…</option>' + AWARENESS.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
+  document.getElementById('f-sophistication').innerHTML = '<option value="">Select…</option>' + SOPHISTICATION.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
+  const hookHolder = document.getElementById('f-hook-patterns');
+  hookHolder.innerHTML = HOOK_PATTERNS.map(([k,n,d])=>`<label class="hook-opt"><input type="checkbox" value="${k}" class="f-hook-cb" /><span><span class="hn">${escapeHtml(n)}</span> — <span class="he">${escapeHtml(d)}</span></span></label>`).join('');
+  hookHolder.querySelectorAll('.f-hook-cb').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      if(hookHolder.querySelectorAll('.f-hook-cb:checked').length>3){ cb.checked=false; showToast('Hanggang 3 lang ang hook pattern.'); }
+    });
+  });
+}
+populateStaticSelects();
+
+function updateTypeOfAdOptions(){
+  const opts = TYPE_OF_AD[document.getElementById('f-awareness').value] || [];
+  document.getElementById('f-type-of-ad').innerHTML = '<option value="">Select…</option>' + opts.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+}
+function updateTypeOfHeadlineOptions(){
+  const opts = TYPE_OF_HEADLINE[document.getElementById('f-awareness').value] || [];
+  document.getElementById('f-type-of-headline').innerHTML = '<option value="">Select…</option>' + opts.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+}
+document.getElementById('f-awareness').addEventListener('change', ()=>{ updateTypeOfAdOptions(); updateTypeOfHeadlineOptions(); });
+
+document.getElementById('f-brand').addEventListener('change', onLogBrandChange);
+function onLogBrandChange(){
+  const brandId = document.getElementById('f-brand').value;
+  document.getElementById('f-product').innerHTML = '<option value="">Select product…</option>' + STRAT_PRODUCTS.filter(p=>p.brand_id===brandId).map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  document.getElementById('f-persona').innerHTML = '<option value="">Select persona…</option>' + STRAT_PERSONAS.filter(p=>p.brand_id===brandId).map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  document.getElementById('f-desire').value = '';
+  document.getElementById('f-positioning-display').textContent='';
+  document.getElementById('f-positioning-hint').style.display='none';
+  document.getElementById('f-problem').innerHTML = '<option value="">Select problem…</option>';
+}
+document.getElementById('f-product').addEventListener('change', ()=>{
+  const p = STRAT_PRODUCTS.find(x=>x.id===document.getElementById('f-product').value);
+  const hintEl = document.getElementById('f-positioning-hint');
+  if(p && p.positioning){ document.getElementById('f-positioning-display').textContent = p.positioning; hintEl.style.display='block'; }
+  else{ hintEl.style.display='none'; }
+});
+document.getElementById('f-persona').addEventListener('change', async ()=>{
+  const id = document.getElementById('f-persona').value;
+  const p = STRAT_PERSONAS.find(x=>x.id===id);
+  document.getElementById('f-desire').value = p ? (p.desire||'') : '';
+  const probSel = document.getElementById('f-problem');
+  probSel.innerHTML = '<option value="">Select problem…</option>';
+  if(!id) return;
+  const problems = await loadProblemsFor(id);
+  const ranked = [...problems].sort((a,b)=>b.total_score-a.total_score);
+  probSel.innerHTML = '<option value="">Select problem…</option>' + ranked.map((pr,i)=>`<option value="${pr.id}">${i===0?'⭐ ':''}${escapeHtml(pr.problem)} (Score ${pr.total_score})</option>`).join('');
+});
+
+function collectStrategyContext(){
+  const product = STRAT_PRODUCTS.find(p=>p.id===document.getElementById('f-product').value);
+  const persona = STRAT_PERSONAS.find(p=>p.id===document.getElementById('f-persona').value);
+  const problems = STRAT_PROBLEMS_CACHE[document.getElementById('f-persona').value] || [];
+  const problem = problems.find(p=>p.id===document.getElementById('f-problem').value);
+  const hooks = Array.from(document.querySelectorAll('.f-hook-cb:checked')).map(cb=>{
+    const found = HOOK_PATTERNS.find(h=>h[0]===cb.value);
+    return found ? found[1] : cb.value;
+  });
+  return {
+    productName: product ? product.name : '',
+    positioning: product ? product.positioning : '',
+    personaName: persona ? persona.name : '',
+    personaDescription: persona ? persona.description : '',
+    desire: persona ? persona.desire : '',
+    problem: problem ? problem.problem : '',
+    marketAwareness: document.getElementById('f-awareness').selectedOptions[0]?.textContent || '',
+    marketSophistication: document.getElementById('f-sophistication').selectedOptions[0]?.textContent || '',
+    hypothesis: document.getElementById('f-hypothesis').value.trim(),
+    typeOfAd: document.getElementById('f-type-of-ad').value,
+    hookPatterns: hooks,
+    typeOfHeadline: document.getElementById('f-type-of-headline').value,
+  };
+}
+document.getElementById('btn-ai-headline').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('ai-headline-status');
+  const ctx = collectStrategyContext();
+  if(!ctx.positioning || !ctx.problem){ statusEl.textContent='Pumili muna ng Product at Problem.'; statusEl.className='status-msg err'; return; }
+  statusEl.innerHTML='<span class="spinner"></span> Generating…'; statusEl.className='status-msg';
+  try{
+    const data = await api('/api/ai-generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mode:'headline', ...ctx }) });
+    if(data.headlines && data.headlines.length){
+      document.getElementById('f-headline').value = data.headlines.map((h,i)=>`${i+1}. ${h}`).join('\n');
+      statusEl.textContent = 'Generated ✓ — pumili/i-edit sa itaas.'; statusEl.className='status-msg ok';
+    }else{ statusEl.textContent = 'Walang nabalik na headline — subukan ulit.'; statusEl.className='status-msg err'; }
+  }catch(e){ statusEl.textContent = e.message || "Couldn't generate."; statusEl.className='status-msg err'; }
+});
+document.getElementById('btn-ai-copy').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('ai-copy-status');
+  const ctx = collectStrategyContext();
+  if(!ctx.positioning || !ctx.problem){ statusEl.textContent='Pumili muna ng Product at Problem.'; statusEl.className='status-msg err'; return; }
+  statusEl.innerHTML='<span class="spinner"></span> Generating…'; statusEl.className='status-msg';
+  try{
+    const data = await api('/api/ai-generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mode:'ad_copy', ...ctx }) });
+    if(data.ad_copy){ document.getElementById('f-ad-copy').value = data.ad_copy; statusEl.textContent = 'Generated ✓ — i-review/i-edit sa itaas.'; statusEl.className='status-msg ok'; }
+    else{ statusEl.textContent = 'Walang nabalik na copy — subukan ulit.'; statusEl.className='status-msg err'; }
+  }catch(e){ statusEl.textContent = e.message || "Couldn't generate."; statusEl.className='status-msg err'; }
+});
+
 function resetForm(){
   document.getElementById('f-concept-creator').value='';
   document.getElementById('f-page').value='';
@@ -861,6 +1428,20 @@ function resetForm(){
   wireTagInput(document.getElementById('f-tags-box'), []);
   pickedAd = null;
   renderPickedChip();
+
+  document.getElementById('f-brand').value='';
+  onLogBrandChange();
+  document.getElementById('f-awareness').value='';
+  document.getElementById('f-sophistication').value='';
+  document.getElementById('f-hypothesis').value='';
+  updateTypeOfAdOptions();
+  updateTypeOfHeadlineOptions();
+  document.querySelectorAll('.f-hook-cb').forEach(cb=>cb.checked=false);
+  document.getElementById('f-headline').value='';
+  document.getElementById('f-ad-copy').value='';
+  document.getElementById('f-adset-link').value='';
+  document.getElementById('ai-headline-status').textContent='';
+  document.getElementById('ai-copy-status').textContent='';
 }
 
 // ---------- Submit new creative ----------
@@ -880,6 +1461,11 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
   const finalConceptCreator = conceptCreator || 'Unassigned';
   const finalBy = by || conceptCreator || 'Unknown';
 
+  const hookPatterns = Array.from(document.querySelectorAll('.f-hook-cb:checked')).map(cb=>{
+    const found = HOOK_PATTERNS.find(h=>h[0]===cb.value);
+    return found ? found[1] : cb.value;
+  });
+
   const payload = {
     ad_name: adName,
     meta_ad_id: pickedAd ? pickedAd.id : null,
@@ -890,7 +1476,21 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     tags,
     concept_creator: finalConceptCreator,
     editor,
-    submitted_by: finalBy
+    submitted_by: finalBy,
+    brand_id: document.getElementById('f-brand').value || null,
+    product_id: document.getElementById('f-product').value || null,
+    persona_id: document.getElementById('f-persona').value || null,
+    problem_id: document.getElementById('f-problem').value || null,
+    desire: document.getElementById('f-desire').value || null,
+    market_awareness: document.getElementById('f-awareness').value || null,
+    market_sophistication: document.getElementById('f-sophistication').value || null,
+    hypothesis: document.getElementById('f-hypothesis').value.trim(),
+    type_of_ad: document.getElementById('f-type-of-ad').value || null,
+    hook_patterns: hookPatterns,
+    type_of_headline: document.getElementById('f-type-of-headline').value || null,
+    headline: document.getElementById('f-headline').value.trim(),
+    ad_copy: document.getElementById('f-ad-copy').value.trim(),
+    adset_link: document.getElementById('f-adset-link').value.trim()
   };
 
   try{
@@ -972,7 +1572,26 @@ async function renderEntries(){
             concept_link: div.querySelector('.ie-link').value.trim(),
             output_link: div.querySelector('.ie-output').value.trim(),
             script: div.querySelector('.ie-script').value.trim(),
-            tags: div.querySelector('.tag-input-box')._tags || []
+            tags: div.querySelector('.tag-input-box')._tags || [],
+            market_awareness: div.querySelector('.ie-awareness').value || null,
+            market_sophistication: div.querySelector('.ie-sophistication').value || null,
+            hypothesis: div.querySelector('.ie-hypothesis').value.trim(),
+            headline: div.querySelector('.ie-headline').value.trim(),
+            ad_copy: div.querySelector('.ie-adcopy').value.trim(),
+            adset_link: div.querySelector('.ie-adsetlink').value.trim(),
+            performance: {
+              ...(e.performance||{}),
+              review: {
+                ctr: div.querySelector('.ie-rr-ctr').value.trim(),
+                cpc: div.querySelector('.ie-rr-cpc').value.trim(),
+                costPerAtc: div.querySelector('.ie-rr-atc').value.trim(),
+                cpa: div.querySelector('.ie-rr-cpa').value.trim(),
+                roas: div.querySelector('.ie-rr-roas').value.trim(),
+                hookRate: div.querySelector('.ie-rr-hookrate').value.trim(),
+                holdRate: div.querySelector('.ie-rr-holdrate').value.trim(),
+                notes: div.querySelector('.ie-rr-notes').value.trim()
+              }
+            }
           })});
           inlineEditId = null;
           renderEntries();
@@ -1018,8 +1637,30 @@ async function renderEntries(){
       <div class="expand-body">
         ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
         ${e.output_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View output ↗</a></div>`:''}
+        ${e.adset_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View adset ↗</a></div>`:''}
         ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
         ${e.script?`<div class="entry-script">${escapeHtml(e.script)}</div>`:''}
+        ${(e.market_awareness||e.type_of_ad||(e.hook_patterns&&e.hook_patterns.length)||e.headline||e.ad_copy||e.hypothesis)?`
+        <div class="strategy-readout">
+          ${e.market_awareness?`<div><b>Awareness:</b> ${escapeHtml(labelFor(AWARENESS,e.market_awareness))}</div>`:''}
+          ${e.market_sophistication?`<div><b>Sophistication:</b> ${escapeHtml(labelFor(SOPHISTICATION,e.market_sophistication))}</div>`:''}
+          ${e.hypothesis?`<div><b>Hypothesis:</b> ${escapeHtml(e.hypothesis)}</div>`:''}
+          ${e.type_of_ad?`<div><b>Type of Ad:</b> ${escapeHtml(e.type_of_ad)}</div>`:''}
+          ${(e.hook_patterns&&e.hook_patterns.length)?`<div><b>Hooks:</b> ${e.hook_patterns.map(h=>escapeHtml(h)).join(', ')}</div>`:''}
+          ${e.headline?`<div><b>Headline:</b> ${escapeHtml(e.headline)}</div>`:''}
+          ${e.ad_copy?`<div><b>Ad Copy:</b> ${escapeHtml(e.ad_copy)}</div>`:''}
+        </div>`:''}
+        ${(perf&&perf.review)?`
+        <div class="perf-grid" style="margin-top:8px;">
+          <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(perf.review.ctr||'—')}</div></div>
+          <div class="perf-cell"><div class="k">CPC</div><div class="v">${escapeHtml(perf.review.cpc||'—')}</div></div>
+          <div class="perf-cell"><div class="k">CPA</div><div class="v">${escapeHtml(perf.review.cpa||'—')}</div></div>
+          <div class="perf-cell"><div class="k">ROAS</div><div class="v">${escapeHtml(perf.review.roas||'—')}</div></div>
+          <div class="perf-cell"><div class="k">Hook Rate</div><div class="v">${escapeHtml(perf.review.hookRate||'—')}</div></div>
+          <div class="perf-cell"><div class="k">Hold Rate</div><div class="v">${escapeHtml(perf.review.holdRate||'—')}</div></div>
+        </div>
+        ${perf.review.notes?`<div class="hint" style="margin-top:6px;">${escapeHtml(perf.review.notes)}</div>`:''}
+        `:''}
         ${perf?`
         <div class="perf-grid">
           <div class="perf-cell"><div class="k">Spend</div><div class="v">${escapeHtml(String(perf.spend ?? '—'))}</div></div>
@@ -1081,7 +1722,21 @@ async function renderEntries(){
           winner_status: 'pending',
           performance: null,
           editing_done: false,
-          launched: false
+          launched: false,
+          brand_id: e.brand_id || null,
+          product_id: e.product_id || null,
+          persona_id: e.persona_id || null,
+          problem_id: e.problem_id || null,
+          desire: e.desire || null,
+          market_awareness: e.market_awareness || null,
+          market_sophistication: e.market_sophistication || null,
+          hypothesis: e.hypothesis || '',
+          type_of_ad: e.type_of_ad || null,
+          hook_patterns: e.hook_patterns || [],
+          type_of_headline: e.type_of_headline || null,
+          headline: e.headline || '',
+          ad_copy: e.ad_copy || '',
+          adset_link: ''
         })});
         showToast('✓ Duplicated — edit the copy to set it up');
         renderEntries();
@@ -1186,6 +1841,33 @@ function buildInlineEditHTML(e){
         <textarea class="ie-script">${escapeHtml(e.script||'')}</textarea>
       </div>
     </div>
+
+    <div style="margin-top:6px;border-top:1px solid var(--line);padding-top:14px;">
+      <label style="margin-bottom:10px;">🎯 Strategy</label>
+      <div class="form-grid">
+        <div class="field"><label>Market Awareness</label><select class="ie-awareness"><option value="">Select…</option>${AWARENESS.map(([v,l])=>`<option value="${v}" ${e.market_awareness===v?'selected':''}>${escapeHtml(l)}</option>`).join('')}</select></div>
+        <div class="field"><label>Market Sophistication</label><select class="ie-sophistication"><option value="">Select…</option>${SOPHISTICATION.map(([v,l])=>`<option value="${v}" ${e.market_sophistication===v?'selected':''}>${escapeHtml(l)}</option>`).join('')}</select></div>
+        <div class="field full"><label>Hypothesis</label><textarea class="ie-hypothesis">${escapeHtml(e.hypothesis||'')}</textarea></div>
+        <div class="field full"><label>Headline</label><textarea class="ie-headline">${escapeHtml(e.headline||'')}</textarea></div>
+        <div class="field full"><label>Ad Copy</label><textarea class="ie-adcopy">${escapeHtml(e.ad_copy||'')}</textarea></div>
+        <div class="field full"><label>Link to Adset</label><input type="text" class="ie-adsetlink" value="${escapeHtml(e.adset_link||'')}" /></div>
+      </div>
+    </div>
+
+    <div style="margin-top:6px;border-top:1px solid var(--line);padding-top:14px;">
+      <label style="margin-bottom:10px;">📊 Results Review</label>
+      <div class="form-grid">
+        <div class="field"><label>CTR</label><input type="text" class="ie-rr-ctr" value="${escapeHtml((e.performance&&e.performance.review&&e.performance.review.ctr)||'')}" placeholder="e.g. 1.8%" /></div>
+        <div class="field"><label>CPC</label><input type="text" class="ie-rr-cpc" value="${escapeHtml((e.performance&&e.performance.review&&e.performance.review.cpc)||'')}" placeholder="e.g. PHP 12" /></div>
+        <div class="field"><label>Cost Per Add to Cart</label><input type="text" class="ie-rr-atc" value="${escapeHtml((e.performance&&e.performance.review&&e.performance.review.costPerAtc)||'')}" placeholder="e.g. PHP 85" /></div>
+        <div class="field"><label>CPA</label><input type="text" class="ie-rr-cpa" value="${escapeHtml((e.performance&&e.performance.review&&e.performance.review.cpa)||'')}" placeholder="e.g. PHP 420" /></div>
+        <div class="field"><label>ROAS</label><input type="text" class="ie-rr-roas" value="${escapeHtml((e.performance&&e.performance.review&&e.performance.review.roas)||'')}" placeholder="e.g. 2.8x" /></div>
+        <div class="field"><label>Hook Rate</label><input type="text" class="ie-rr-hookrate" value="${escapeHtml((e.performance&&e.performance.review&&e.performance.review.hookRate)||'')}" placeholder="e.g. 32%" /></div>
+        <div class="field"><label>Hold Rate</label><input type="text" class="ie-rr-holdrate" value="${escapeHtml((e.performance&&e.performance.review&&e.performance.review.holdRate)||'')}" placeholder="e.g. 18%" /></div>
+        <div class="field full"><label>Media Buyer Notes</label><textarea class="ie-rr-notes">${escapeHtml((e.performance&&e.performance.review&&e.performance.review.notes)||'')}</textarea></div>
+      </div>
+    </div>
+
     <div class="submit-row">
       <button class="btn btn-primary btn-sm ie-save" type="button">Save changes</button>
       <button class="btn-link ie-cancel" type="button">Cancel</button>
@@ -1323,9 +2005,26 @@ async function renderAnalytics(){
     renderRankedRows(holderId, rows);
   }
 
+  function leaderboardByHooks(){
+    const map = {};
+    entries.forEach(e=>{
+      (e.hook_patterns||[]).forEach(h=>{
+        const raw = (h||'').trim();
+        if(!raw) return;
+        const key = raw.toLowerCase();
+        if(!map[key]) map[key] = { total:0, winners:0, display: raw };
+        map[key].total++;
+        if(e.winner_status==='winner') map[key].winners++;
+      });
+    });
+    return Object.entries(map).map(([,s])=>[s.display, s]).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
+  }
+
   renderLB('analytics-editor','editor');
   renderRows('analytics-tags', leaderboardByTags());
   renderRows('analytics-pages', leaderboardByPage());
+  renderLB('analytics-typeofad','type_of_ad');
+  renderRows('analytics-hooks', leaderboardByHooks());
 
   const topWidget = document.getElementById('widget-top');
   const editorRows = leaderboard('editor');
@@ -1710,6 +2409,8 @@ if(localStorage.getItem('cocoon-admin-token')){
   loadPages();
   loadEntries();
   loadAnnouncement();
+  loadBrands();
+  loadStrategyLibrary().then(onLogBrandChange);
 }else{
   showLogin();
 }
