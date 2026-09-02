@@ -546,12 +546,10 @@
         <div class="field full">
           <label>Headline</label>
           <textarea id="f-headline" placeholder="Add final headline…"></textarea>
-          <div class="row" style="margin-top:6px;"><button class="btn btn-ghost btn-sm" id="btn-ai-headline" type="button">✨ Generate with AI</button><span class="status-msg" id="ai-headline-status"></span></div>
         </div>
         <div class="field full">
           <label>Ad Copy</label>
           <textarea id="f-ad-copy" placeholder="Add final ad copy…"></textarea>
-          <div class="row" style="margin-top:6px;"><button class="btn btn-ghost btn-sm" id="btn-ai-copy" type="button">✨ Generate with AI</button><span class="status-msg" id="ai-copy-status"></span></div>
         </div>
         <div class="field full"><label>Link to Adset</label><input type="text" id="f-adset-link" placeholder="Paste adset URL (once it's live)" /></div>
       </div>
@@ -1367,55 +1365,6 @@ document.getElementById('f-persona').addEventListener('change', async ()=>{
   probSel.innerHTML = '<option value="">Select problem…</option>' + ranked.map((pr,i)=>`<option value="${pr.id}">${i===0?'⭐ ':''}${escapeHtml(pr.problem)} (Score ${pr.total_score})</option>`).join('');
 });
 
-function collectStrategyContext(){
-  const product = STRAT_PRODUCTS.find(p=>p.id===document.getElementById('f-product').value);
-  const persona = STRAT_PERSONAS.find(p=>p.id===document.getElementById('f-persona').value);
-  const problems = STRAT_PROBLEMS_CACHE[document.getElementById('f-persona').value] || [];
-  const problem = problems.find(p=>p.id===document.getElementById('f-problem').value);
-  const hooks = Array.from(document.querySelectorAll('.f-hook-cb:checked')).map(cb=>{
-    const found = HOOK_PATTERNS.find(h=>h[0]===cb.value);
-    return found ? found[1] : cb.value;
-  });
-  return {
-    productName: product ? product.name : '',
-    positioning: product ? product.positioning : '',
-    personaName: persona ? persona.name : '',
-    personaDescription: persona ? persona.description : '',
-    desire: persona ? persona.desire : '',
-    problem: problem ? problem.problem : '',
-    marketAwareness: document.getElementById('f-awareness').selectedOptions[0]?.textContent || '',
-    marketSophistication: document.getElementById('f-sophistication').selectedOptions[0]?.textContent || '',
-    hypothesis: document.getElementById('f-hypothesis').value.trim(),
-    typeOfAd: document.getElementById('f-type-of-ad').value,
-    hookPatterns: hooks,
-    typeOfHeadline: document.getElementById('f-type-of-headline').value,
-  };
-}
-document.getElementById('btn-ai-headline').addEventListener('click', async ()=>{
-  const statusEl = document.getElementById('ai-headline-status');
-  const ctx = collectStrategyContext();
-  if(!ctx.positioning || !ctx.problem){ statusEl.textContent='Pumili muna ng Product at Problem.'; statusEl.className='status-msg err'; return; }
-  statusEl.innerHTML='<span class="spinner"></span> Generating…'; statusEl.className='status-msg';
-  try{
-    const data = await api('/api/ai-generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mode:'headline', ...ctx }) });
-    if(data.headlines && data.headlines.length){
-      document.getElementById('f-headline').value = data.headlines.map((h,i)=>`${i+1}. ${h}`).join('\n');
-      statusEl.textContent = 'Generated ✓ — pumili/i-edit sa itaas.'; statusEl.className='status-msg ok';
-    }else{ statusEl.textContent = 'Walang nabalik na headline — subukan ulit.'; statusEl.className='status-msg err'; }
-  }catch(e){ statusEl.textContent = e.message || "Couldn't generate."; statusEl.className='status-msg err'; }
-});
-document.getElementById('btn-ai-copy').addEventListener('click', async ()=>{
-  const statusEl = document.getElementById('ai-copy-status');
-  const ctx = collectStrategyContext();
-  if(!ctx.positioning || !ctx.problem){ statusEl.textContent='Pumili muna ng Product at Problem.'; statusEl.className='status-msg err'; return; }
-  statusEl.innerHTML='<span class="spinner"></span> Generating…'; statusEl.className='status-msg';
-  try{
-    const data = await api('/api/ai-generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mode:'ad_copy', ...ctx }) });
-    if(data.ad_copy){ document.getElementById('f-ad-copy').value = data.ad_copy; statusEl.textContent = 'Generated ✓ — i-review/i-edit sa itaas.'; statusEl.className='status-msg ok'; }
-    else{ statusEl.textContent = 'Walang nabalik na copy — subukan ulit.'; statusEl.className='status-msg err'; }
-  }catch(e){ statusEl.textContent = e.message || "Couldn't generate."; statusEl.className='status-msg err'; }
-});
-
 function resetForm(){
   document.getElementById('f-concept-creator').value='';
   document.getElementById('f-page').value='';
@@ -1440,8 +1389,6 @@ function resetForm(){
   document.getElementById('f-headline').value='';
   document.getElementById('f-ad-copy').value='';
   document.getElementById('f-adset-link').value='';
-  document.getElementById('ai-headline-status').textContent='';
-  document.getElementById('ai-copy-status').textContent='';
 }
 
 // ---------- Submit new creative ----------
