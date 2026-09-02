@@ -306,6 +306,25 @@
   .top3-item .rank{font-weight:700;margin-right:6px;}
   .strategy-readout{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.6;margin-top:8px;}
   .strategy-readout b{color:var(--ink-soft);font-weight:600;}
+  .wiz-header{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;}
+  .wiz-step{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:0 6px;}
+  .wiz-step.locked{cursor:not-allowed;opacity:.45;}
+  .wiz-circle{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--ink-soft);background:var(--bg);transition:all .15s ease;}
+  .wiz-step.active .wiz-circle{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .wiz-step.done .wiz-circle{border-color:var(--accent);background:var(--accent);color:#fff;}
+  .wiz-label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
+  .wiz-step.active .wiz-label{color:var(--ink);}
+  .wiz-line{width:36px;height:2px;background:var(--line);margin:0 2px 20px;flex-shrink:0;}
+  .wiz-line.done{background:var(--accent);}
+  .wiz-panel{display:none;}
+  .wiz-panel.active{display:block;}
+  .wiz-step-kicker{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
+  .wiz-step-title{font-family:'Fraunces',serif;font-size:21px;margin:0 0 6px;}
+  .wiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px;padding-top:16px;border-top:1px solid var(--line);}
+  .wiz-req{font-size:11px;font-weight:600;color:#B8677A;text-transform:none;letter-spacing:0;}
+  .brief-section{margin-bottom:18px;}
+  .brief-section h4{font-family:'Fraunces',serif;font-size:15px;margin:0 0 8px;}
+  .brief-persona-card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--bg);}
 </style>
 </head>
 <body>
@@ -365,6 +384,25 @@
   <!-- STRATEGY PANEL -->
   <section class="panel" id="panel-strategy">
     <div class="card" style="margin-bottom:16px;">
+      <div class="wiz-header" id="wiz-header">
+        <div class="wiz-step" data-step="1"><div class="wiz-circle">1</div><div class="wiz-label">Brand</div></div>
+        <div class="wiz-line" data-line="1"></div>
+        <div class="wiz-step" data-step="2"><div class="wiz-circle">2</div><div class="wiz-label">Products</div></div>
+        <div class="wiz-line" data-line="2"></div>
+        <div class="wiz-step" data-step="3"><div class="wiz-circle">3</div><div class="wiz-label">Audience</div></div>
+        <div class="wiz-line" data-line="3"></div>
+        <div class="wiz-step" data-step="4"><div class="wiz-circle">4</div><div class="wiz-label">Problems</div></div>
+        <div class="wiz-line" data-line="4"></div>
+        <div class="wiz-step" data-step="5"><div class="wiz-circle">5</div><div class="wiz-label">Creative Brief</div></div>
+      </div>
+      <p class="hint" style="margin-top:12px;margin-bottom:0;text-align:center;">I-click ang kahit anong unlocked na step para balikan/i-edit.</p>
+    </div>
+
+    <!-- STEP 1 — BRAND -->
+    <div class="card wiz-panel" data-wiz-panel="1">
+      <div class="wiz-step-kicker">STEP 1 OF 5 · BRAND</div>
+      <h2 class="wiz-step-title">Set up your brand</h2>
+      <p class="hint" style="margin-top:0;margin-bottom:16px;">Piliin o gumawa ng brand — dito nakabase ang lahat ng Product, Persona, at Problem sa susunod na steps.</p>
       <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <div class="field" style="margin-bottom:0;flex:1;min-width:220px;">
           <label>Brand</label>
@@ -388,39 +426,61 @@
           <span class="status-msg" id="strat-brand-desc-status"></span>
         </div>
       </div>
+      <div class="wiz-nav">
+        <span></span>
+        <button class="btn btn-primary btn-sm" id="wiz-to-2" type="button">Continue to Products →</button>
+      </div>
     </div>
 
-    <div class="card" style="margin-bottom:16px;">
-      <h2 style="font-family:'Fraunces',serif;font-size:18px;margin:0 0 4px;">Products</h2>
-      <p class="hint" style="margin-top:0;margin-bottom:14px;">Isang beses lang gawin — reusable sa lahat ng creatives ng brand na 'to. Positioning is required, auto-pull sa Log Creative.</p>
+    <!-- STEP 2 — PRODUCTS -->
+    <div class="card wiz-panel" data-wiz-panel="2">
+      <div class="wiz-step-kicker">STEP 2 OF 5 · PRODUCTS & POSITIONING</div>
+      <h2 class="wiz-step-title">Define what the brand is selling</h2>
+      <p class="hint" style="margin-top:0;margin-bottom:16px;">Isang beses lang gawin — reusable sa lahat ng creatives ng brand na 'to. Positioning is required, auto-pull sa Log Creative.</p>
       <div class="form-grid">
         <div class="field"><label>Product name</label><input type="text" id="strat-p-name" placeholder="e.g. Hair Loss Treatment" /></div>
         <div class="field"><label>Product details (optional)</label><input type="text" id="strat-p-details" placeholder="Key factual details the team should know" /></div>
         <div class="field full"><label>Positioning</label><textarea id="strat-p-positioning" placeholder="Ano ang ipinapangako natin + bakit different/believable ang solution?"></textarea></div>
       </div>
       <div class="submit-row"><button class="btn btn-primary btn-sm" id="strat-p-save" type="button">+ Add product</button><span class="status-msg" id="strat-p-status"></span></div>
-      <div id="strat-products-list" style="margin-top:14px;"></div>
+      <div style="margin-top:14px;">
+        <div class="an-h" style="margin-bottom:8px;">Saved Products <span id="strat-products-req" class="wiz-req"></span></div>
+        <div id="strat-products-list"></div>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-link" id="wiz-to-1-b" type="button">← Back to Brand</button>
+        <button class="btn btn-primary btn-sm" id="wiz-to-3" type="button">Continue to Audience →</button>
+      </div>
     </div>
 
-    <div class="card" style="margin-bottom:16px;">
-      <h2 style="font-family:'Fraunces',serif;font-size:18px;margin:0 0 4px;">Personas</h2>
-      <p class="hint" style="margin-top:0;margin-bottom:14px;">Sino ang audience type na 'to. Idagdag ang Problems pagkatapos i-save.</p>
+    <!-- STEP 3 — AUDIENCE -->
+    <div class="card wiz-panel" data-wiz-panel="3">
+      <div class="wiz-step-kicker">STEP 3 OF 5 · AUDIENCE</div>
+      <h2 class="wiz-step-title">Define who you are creating for</h2>
+      <p class="hint" style="margin-top:0;margin-bottom:16px;">Idagdag ang bawat importanteng customer type. Pagkatapos i-save, i-click "Manage Problems" para pumunta sa Step 4.</p>
       <div class="form-grid">
         <div class="field"><label>Persona name</label><input type="text" id="strat-per-name" placeholder="e.g. Kevin — dandruff" /></div>
         <div class="field"><label>Core Desire</label><select id="strat-per-desire"></select></div>
         <div class="field full"><label>Description (optional)</label><textarea id="strat-per-desc" placeholder="Demographics, situation, priorities, buying context"></textarea></div>
       </div>
       <div class="submit-row"><button class="btn btn-primary btn-sm" id="strat-per-save" type="button">+ Add persona</button><span class="status-msg" id="strat-per-status"></span></div>
-      <div id="strat-personas-list" style="margin-top:14px;"></div>
+      <div style="margin-top:14px;">
+        <div class="an-h" style="margin-bottom:8px;">Personas <span id="strat-personas-req" class="wiz-req"></span></div>
+        <div id="strat-personas-list"></div>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-link" id="wiz-to-2-b" type="button">← Back to Products</button>
+        <button class="btn btn-primary btn-sm" id="wiz-to-4" type="button">Continue to Problems →</button>
+      </div>
     </div>
 
-    <div class="card" id="strat-problems-card" style="display:none;">
-      <div class="row" style="justify-content:space-between;">
-        <h2 style="font-family:'Fraunces',serif;font-size:18px;margin:0;">Problems — <span id="strat-problems-persona-name"></span></h2>
-        <button class="btn-link" id="strat-close-problems" type="button">← Back</button>
-      </div>
-      <p class="hint" style="margin-top:6px;margin-bottom:14px;">I-score ang bawat problem mula 1–10. Total Score = Intensity × Repeatability × Scale. Auto-rank yung Top 3.</p>
-      <div class="form-grid">
+    <!-- STEP 4 — PROBLEMS -->
+    <div class="card wiz-panel" data-wiz-panel="4">
+      <div class="wiz-step-kicker">STEP 4 OF 5 · PROBLEM WORKSPACE</div>
+      <h2 class="wiz-step-title">Score each persona's problems</h2>
+      <p class="hint" style="margin-top:0;margin-bottom:16px;">I-score ang bawat problem mula 1–10. Total Score = Intensity × Repeatability × Scale. Auto-rank yung Top 3.</p>
+      <div class="field" style="max-width:340px;"><label>Editing problems for</label><select id="strat-prob-persona-select"></select></div>
+      <div class="form-grid" style="margin-top:14px;">
         <div class="field full"><label>Problem</label><input type="text" id="strat-prob-text" placeholder="Describe the problem…" /></div>
         <div class="field"><label>Intensity</label><select id="strat-prob-intensity"></select></div>
         <div class="field"><label>Repeatability</label><select id="strat-prob-repeatability"></select></div>
@@ -436,6 +496,22 @@
           <div class="an-h" style="margin-bottom:8px;">🏆 Top 3 Problems</div>
           <div id="strat-top3-list"></div>
         </div>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-link" id="wiz-to-3-b" type="button">← Back to Audience</button>
+        <button class="btn btn-primary btn-sm" id="wiz-to-5" type="button">Continue to Creative Brief →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5 — CREATIVE BRIEF -->
+    <div class="card wiz-panel" data-wiz-panel="5">
+      <div class="wiz-step-kicker">STEP 5 OF 5 · CREATIVE BRIEF</div>
+      <h2 class="wiz-step-title">Ready na ang buong strategy</h2>
+      <p class="hint" style="margin-top:0;margin-bottom:16px;">Buod ng na-set up mo — ito na yung babasahin ng team pag nag-log ng creative para dito.</p>
+      <div id="strat-brief-holder"></div>
+      <div class="wiz-nav">
+        <button class="btn-link" id="wiz-to-4-b" type="button">← Back to Problems</button>
+        <button class="btn btn-primary btn-sm" id="wiz-go-log" type="button">Simulan ang Log Creative →</button>
       </div>
     </div>
   </section>
@@ -996,6 +1072,7 @@ let STRAT_PERSONAS = [];
 let STRAT_PROBLEMS_CACHE = {};
 let stratActiveBrand = null;
 let stratManagingPersonaId = null;
+let stratStep = 1;
 
 const DESIRES = [
   ['Recognition','Recognition, respect, fame, exclusivity, prestige, popularity, status'],
@@ -1130,6 +1207,54 @@ function renderBrandSelects(){
   stratActiveBrand = stratSel.value || null;
 }
 
+function computeStepUnlocks(){
+  const hasBrand = !!stratActiveBrand;
+  const hasProduct = STRAT_PRODUCTS.some(p=>p.brand_id===stratActiveBrand);
+  const hasPersona = STRAT_PERSONAS.some(p=>p.brand_id===stratActiveBrand);
+  return { 1:true, 2:hasBrand, 3:hasBrand&&hasProduct, 4:hasBrand&&hasPersona, 5:hasBrand&&hasPersona };
+}
+function renderWizardHeader(){
+  const unlocks = computeStepUnlocks();
+  document.querySelectorAll('.wiz-step').forEach(el=>{
+    const n = parseInt(el.dataset.step,10);
+    el.classList.toggle('active', n===stratStep);
+    el.classList.toggle('done', unlocks[n] && n<stratStep);
+    el.classList.toggle('locked', !unlocks[n]);
+  });
+  document.querySelectorAll('.wiz-line').forEach(el=>{
+    const n = parseInt(el.dataset.line,10);
+    el.classList.toggle('done', unlocks[n+1]);
+  });
+  document.getElementById('strat-products-req').textContent = unlocks[3] ? '' : 'At least 1 required';
+  document.getElementById('strat-personas-req').textContent = unlocks[4] ? '' : 'At least 1 required';
+}
+function goToStep(n){
+  const unlocks = computeStepUnlocks();
+  if(!unlocks[n]) return;
+  stratStep = n;
+  document.querySelectorAll('.wiz-panel').forEach(p=>p.classList.toggle('active', parseInt(p.dataset.wizPanel,10)===n));
+  renderWizardHeader();
+  if(n===4) renderProblemPersonaSelect();
+  if(n===5) renderCreativeBrief();
+  document.getElementById('panel-strategy').scrollIntoView({behavior:'smooth', block:'start'});
+}
+document.querySelectorAll('.wiz-step').forEach(el=>{
+  el.addEventListener('click', ()=>goToStep(parseInt(el.dataset.step,10)));
+});
+document.getElementById('wiz-to-2').addEventListener('click', ()=>goToStep(2));
+document.getElementById('wiz-to-1-b').addEventListener('click', ()=>goToStep(1));
+document.getElementById('wiz-to-3').addEventListener('click', ()=>goToStep(3));
+document.getElementById('wiz-to-2-b').addEventListener('click', ()=>goToStep(2));
+document.getElementById('wiz-to-4').addEventListener('click', ()=>goToStep(4));
+document.getElementById('wiz-to-3-b').addEventListener('click', ()=>goToStep(3));
+document.getElementById('wiz-to-5').addEventListener('click', ()=>goToStep(5));
+document.getElementById('wiz-to-4-b').addEventListener('click', ()=>goToStep(4));
+document.getElementById('wiz-go-log').addEventListener('click', ()=>{
+  document.querySelector('.tab-btn[data-tab="log"]').click();
+  document.getElementById('f-brand').value = stratActiveBrand || '';
+  onLogBrandChange();
+});
+
 async function renderStrategyTab(){
   if(Object.keys(BRANDS).length===0) await loadBrands();
   if(STRAT_PRODUCTS.length===0 && STRAT_PERSONAS.length===0) await loadStrategyLibrary();
@@ -1138,11 +1263,15 @@ async function renderStrategyTab(){
   document.getElementById('strat-brand-desc').value = b ? (b.description||'') : '';
   renderStrategyProducts();
   renderStrategyPersonas();
+  document.querySelectorAll('.wiz-panel').forEach(p=>p.classList.toggle('active', parseInt(p.dataset.wizPanel,10)===stratStep));
+  renderWizardHeader();
+  if(stratStep===4) renderProblemPersonaSelect();
+  if(stratStep===5) renderCreativeBrief();
 }
 
 document.getElementById('strat-brand-select').addEventListener('change', ()=>{
   stratActiveBrand = document.getElementById('strat-brand-select').value;
-  document.getElementById('strat-problems-card').style.display='none';
+  stratStep = 1;
   renderStrategyTab();
 });
 document.getElementById('strat-brand-add-toggle').addEventListener('click', ()=>{
@@ -1191,6 +1320,7 @@ function renderStrategyProducts(){
       await api('/api/strategy?resource=products&id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
       await loadStrategyLibrary();
       renderStrategyProducts();
+      renderWizardHeader();
     });
   });
 }
@@ -1209,6 +1339,7 @@ document.getElementById('strat-p-save').addEventListener('click', async ()=>{
     statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
     await loadStrategyLibrary();
     renderStrategyProducts();
+    renderWizardHeader();
     setTimeout(()=>statusEl.textContent='',2000);
   }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
 });
@@ -1227,7 +1358,7 @@ function renderStrategyPersonas(){
       </div>
     </div>`).join('');
   holder.querySelectorAll('.act-manage-problems').forEach(btn=>{
-    btn.addEventListener('click', ()=>openProblemsWorkspace(btn.dataset.id, btn.dataset.name));
+    btn.addEventListener('click', ()=>{ stratManagingPersonaId = btn.dataset.id; goToStep(4); });
   });
   holder.querySelectorAll('.act-del-persona').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
@@ -1235,6 +1366,7 @@ function renderStrategyPersonas(){
       await api('/api/strategy?resource=personas&id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
       await loadStrategyLibrary();
       renderStrategyPersonas();
+      renderWizardHeader();
     });
   });
 }
@@ -1253,24 +1385,29 @@ document.getElementById('strat-per-save').addEventListener('click', async ()=>{
     statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
     await loadStrategyLibrary();
     renderStrategyPersonas();
+    renderWizardHeader();
     setTimeout(()=>statusEl.textContent='',2000);
   }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
 });
 
-async function openProblemsWorkspace(personaId, personaName){
-  stratManagingPersonaId = personaId;
-  document.getElementById('strat-problems-card').style.display='block';
-  document.getElementById('strat-problems-persona-name').textContent = personaName;
+async function renderProblemPersonaSelect(){
+  const sel = document.getElementById('strat-prob-persona-select');
+  const list = STRAT_PERSONAS.filter(p=>p.brand_id===stratActiveBrand);
+  const current = stratManagingPersonaId && list.some(p=>p.id===stratManagingPersonaId) ? stratManagingPersonaId : (list[0]?list[0].id:null);
+  sel.innerHTML = list.map(p=>`<option value="${p.id}" ${p.id===current?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  stratManagingPersonaId = current;
   document.getElementById('strat-prob-intensity').innerHTML = scoreOptions(1);
   document.getElementById('strat-prob-repeatability').innerHTML = scoreOptions(1);
   document.getElementById('strat-prob-scale').innerHTML = scoreOptions(1);
-  await loadProblemsFor(personaId);
-  renderProblemsWorkspace();
-  document.getElementById('strat-problems-card').scrollIntoView({behavior:'smooth', block:'start'});
+  if(stratManagingPersonaId){
+    await loadProblemsFor(stratManagingPersonaId);
+    renderProblemsWorkspace();
+  }
 }
-document.getElementById('strat-close-problems').addEventListener('click', ()=>{
-  document.getElementById('strat-problems-card').style.display='none';
-  stratManagingPersonaId = null;
+document.getElementById('strat-prob-persona-select').addEventListener('change', async ()=>{
+  stratManagingPersonaId = document.getElementById('strat-prob-persona-select').value;
+  await loadProblemsFor(stratManagingPersonaId);
+  renderProblemsWorkspace();
 });
 function renderProblemsWorkspace(){
   const list = STRAT_PROBLEMS_CACHE[stratManagingPersonaId] || [];
@@ -1313,7 +1450,32 @@ document.getElementById('strat-prob-save').addEventListener('click', async ()=>{
   }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
 });
 
-// ---------- Log form: static option lists + cascading selects ----------
+async function renderCreativeBrief(){
+  const holder = document.getElementById('strat-brief-holder');
+  const b = BRANDS[stratActiveBrand];
+  const products = STRAT_PRODUCTS.filter(p=>p.brand_id===stratActiveBrand);
+  const personas = STRAT_PERSONAS.filter(p=>p.brand_id===stratActiveBrand);
+  for(const p of personas){ if(!STRAT_PROBLEMS_CACHE[p.id]) await loadProblemsFor(p.id); }
+
+  let html = `<div class="brief-section"><h4>${escapeHtml(b?b.name:'')}</h4>${b&&b.description?`<div class="strategy-readout">${escapeHtml(b.description)}</div>`:'<div class="hint">Walang brand description pa.</div>'}</div>`;
+
+  html += `<div class="brief-section"><h4>Products (${products.length})</h4>`;
+  html += products.length===0 ? '<div class="hint">Wala pang product.</div>' : products.map(p=>`
+    <div class="brief-persona-card"><div class="name">${escapeHtml(p.name)}</div><div class="sub" style="margin-top:4px;">${escapeHtml(p.positioning||'')}</div></div>`).join('');
+  html += `</div>`;
+
+  html += `<div class="brief-section"><h4>Personas & Top Problems (${personas.length})</h4>`;
+  html += personas.length===0 ? '<div class="hint">Wala pang persona.</div>' : personas.map(p=>{
+    const top3 = [...(STRAT_PROBLEMS_CACHE[p.id]||[])].sort((a,b)=>b.total_score-a.total_score).slice(0,3);
+    return `<div class="brief-persona-card">
+      <div class="name">${escapeHtml(p.name)}${p.desire?` <span style="font-weight:400;color:var(--ink-soft);">— ${escapeHtml(p.desire)}</span>`:''}</div>
+      ${top3.length?top3.map((pr,i)=>`<div class="top3-item" style="margin-top:8px;"><span><span class="rank">#${i+1}</span>${escapeHtml(pr.problem)}</span><span>${pr.total_score}</span></div>`).join(''):'<div class="hint" style="margin-top:6px;">Wala pang scored problem.</div>'}
+    </div>`;
+  }).join('');
+  html += `</div>`;
+
+  holder.innerHTML = html;
+}
 function populateStaticSelects(){
   document.getElementById('f-awareness').innerHTML = '<option value="">Select…</option>' + AWARENESS.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
   document.getElementById('f-sophistication').innerHTML = '<option value="">Select…</option>' + SOPHISTICATION.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
