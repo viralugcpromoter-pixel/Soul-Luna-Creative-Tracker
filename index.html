@@ -1103,16 +1103,16 @@ function scoreOptions(selected){
 }
 
 async function loadBrands(){
-  try{ const list = await api('/api/brands'); BRANDS = {}; list.forEach(b=>BRANDS[b.id]=b); }
+  try{ const list = await api('/api/strategy?resource=brands'); BRANDS = {}; list.forEach(b=>BRANDS[b.id]=b); }
   catch(e){ BRANDS = {}; }
   renderBrandSelects();
 }
 async function loadStrategyLibrary(){
-  try{ STRAT_PRODUCTS = await api('/api/strategy-products'); }catch(e){ STRAT_PRODUCTS = []; }
-  try{ STRAT_PERSONAS = await api('/api/strategy-personas'); }catch(e){ STRAT_PERSONAS = []; }
+  try{ STRAT_PRODUCTS = await api('/api/strategy?resource=products'); }catch(e){ STRAT_PRODUCTS = []; }
+  try{ STRAT_PERSONAS = await api('/api/strategy?resource=personas'); }catch(e){ STRAT_PERSONAS = []; }
 }
 async function loadProblemsFor(personaId){
-  try{ STRAT_PROBLEMS_CACHE[personaId] = await api('/api/strategy-problems?persona_id='+encodeURIComponent(personaId)); }
+  try{ STRAT_PROBLEMS_CACHE[personaId] = await api('/api/strategy?resource=problems&persona_id='+encodeURIComponent(personaId)); }
   catch(e){ STRAT_PROBLEMS_CACHE[personaId] = []; }
   return STRAT_PROBLEMS_CACHE[personaId];
 }
@@ -1155,7 +1155,7 @@ document.getElementById('strat-save-brand').addEventListener('click', async ()=>
   const statusEl = document.getElementById('strat-brand-status');
   if(!name){ statusEl.textContent='Type a brand name.'; statusEl.className='status-msg err'; return; }
   try{
-    const b = await api('/api/brands', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, website: site}) });
+    const b = await api('/api/strategy?resource=brands', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, website: site}) });
     await loadBrands();
     stratActiveBrand = b.id;
     document.getElementById('strat-new-brand-name').value='';
@@ -1169,7 +1169,7 @@ document.getElementById('strat-save-brand-desc').addEventListener('click', async
   const desc = document.getElementById('strat-brand-desc').value.trim();
   const statusEl = document.getElementById('strat-brand-desc-status');
   try{
-    await api('/api/brands', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: stratActiveBrand, description: desc}) });
+    await api('/api/strategy?resource=brands', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: stratActiveBrand, description: desc}) });
     await loadBrands();
     statusEl.textContent='Saved ✓'; statusEl.className='status-msg ok';
     setTimeout(()=>statusEl.textContent='',2000);
@@ -1188,7 +1188,7 @@ function renderStrategyProducts(){
   holder.querySelectorAll('.act-del-product').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       if(!confirm('Delete this product?')) return;
-      await api('/api/strategy-products?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
+      await api('/api/strategy?resource=products&id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
       await loadStrategyLibrary();
       renderStrategyProducts();
     });
@@ -1202,7 +1202,7 @@ document.getElementById('strat-p-save').addEventListener('click', async ()=>{
   const positioning = document.getElementById('strat-p-positioning').value.trim();
   if(!name || !positioning){ statusEl.textContent='Product name at Positioning ang required.'; statusEl.className='status-msg err'; return; }
   try{
-    await api('/api/strategy-products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({brand_id: stratActiveBrand, name, details, positioning}) });
+    await api('/api/strategy?resource=products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({brand_id: stratActiveBrand, name, details, positioning}) });
     document.getElementById('strat-p-name').value='';
     document.getElementById('strat-p-details').value='';
     document.getElementById('strat-p-positioning').value='';
@@ -1232,7 +1232,7 @@ function renderStrategyPersonas(){
   holder.querySelectorAll('.act-del-persona').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       if(!confirm('Delete this persona? Madidelete rin lahat ng saved problems nito.')) return;
-      await api('/api/strategy-personas?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
+      await api('/api/strategy?resource=personas&id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
       await loadStrategyLibrary();
       renderStrategyPersonas();
     });
@@ -1246,7 +1246,7 @@ document.getElementById('strat-per-save').addEventListener('click', async ()=>{
   const description = document.getElementById('strat-per-desc').value.trim();
   if(!name){ statusEl.textContent='Persona name required.'; statusEl.className='status-msg err'; return; }
   try{
-    await api('/api/strategy-personas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({brand_id: stratActiveBrand, name, desire, description}) });
+    await api('/api/strategy?resource=personas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({brand_id: stratActiveBrand, name, desire, description}) });
     document.getElementById('strat-per-name').value='';
     document.getElementById('strat-per-desire').value='';
     document.getElementById('strat-per-desc').value='';
@@ -1285,7 +1285,7 @@ function renderProblemsWorkspace(){
     holder.querySelectorAll('.act-del-problem').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         if(!confirm('Delete this problem?')) return;
-        await api('/api/strategy-problems?id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
+        await api('/api/strategy?resource=problems&id='+encodeURIComponent(btn.dataset.id), { method:'DELETE' });
         await loadProblemsFor(stratManagingPersonaId);
         renderProblemsWorkspace();
       });
@@ -1304,7 +1304,7 @@ document.getElementById('strat-prob-save').addEventListener('click', async ()=>{
   const repeatability = document.getElementById('strat-prob-repeatability').value;
   const scale = document.getElementById('strat-prob-scale').value;
   try{
-    await api('/api/strategy-problems', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({persona_id: stratManagingPersonaId, problem, intensity, repeatability, scale}) });
+    await api('/api/strategy?resource=problems', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({persona_id: stratManagingPersonaId, problem, intensity, repeatability, scale}) });
     document.getElementById('strat-prob-text').value='';
     statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
     await loadProblemsFor(stratManagingPersonaId);
