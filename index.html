@@ -2465,15 +2465,26 @@ function csvEscape(val){
 function downloadCurrentListAsCSV(){
   const rows = window.__currentTrackerList || [];
   if(rows.length===0){ showToast('Walang makikitang entries sa kasalukuyang filter.'); return; }
-  const headers = ['Ad Name','Status','Awareness','Sophistication','Problem Angle','Desire','Type of Ad','Hook Patterns','Type of Headline','Headline','Ad Copy','Format','Sizing','Creative Variations','Tags','Page','Editor','Launched','CTR','CPC','CPA','ROAS','Hook Rate','Hold Rate','Concept Link','Output Link','Adset Link','Ads Manager Link'];
+  const headers = [
+    'Ad Name','Status','Editing Done','Launched','Concept Creator','Submitted By','Editor','Page','Meta Ad ID','Date Launched',
+    'Awareness','Sophistication','Problem Angle','Desire','Hypothesis',
+    'Type of Ad','Hook Patterns','Type of Headline','Headline','Ad Copy','Script',
+    'Format','Sizing','Creative Variations','Tags',
+    'CTR (Review)','CPC (Review)','Cost Per ATC (Review)','CPA (Review)','ROAS (Review)','Hook Rate (Review)','Hold Rate (Review)','Media Buyer Notes',
+    'Meta Spend','Meta Impressions','Meta Clicks','Meta CTR',
+    'Concept Link','Output Link','Adset Link','Ads Manager Link'
+  ];
   const lines = [headers.map(csvEscape).join(',')];
   rows.forEach(e=>{
-    const perf = e.performance;
+    const perf = e.performance || {};
+    const rev = perf.review || {};
     lines.push([
-      e.ad_name, e.winner_status, e.market_awareness?labelFor(AWARENESS,e.market_awareness):'', e.market_sophistication?labelFor(SOPHISTICATION,e.market_sophistication):'',
-      e.problem_text, e.desire, e.type_of_ad, (e.hook_patterns||[]).join('; '), e.type_of_headline, e.headline, e.ad_copy,
-      e.format, e.sizing, e.creative_variations, (e.tags||[]).join('; '), pageLabel(e.page), e.editor, e.date_launched,
-      perf&&perf.review?perf.review.ctr:'', perf&&perf.review?perf.review.cpc:'', perf&&perf.review?perf.review.cpa:'', perf&&perf.review?perf.review.roas:'', perf&&perf.review?perf.review.hookRate:'', perf&&perf.review?perf.review.holdRate:'',
+      e.ad_name, e.winner_status, e.editing_done?'Yes':'No', e.launched?'Yes':'No', e.concept_creator, e.submitted_by, e.editor, pageLabel(e.page), e.meta_ad_id, e.date_launched,
+      e.market_awareness?labelFor(AWARENESS,e.market_awareness):'', e.market_sophistication?labelFor(SOPHISTICATION,e.market_sophistication):'', e.problem_text, e.desire, e.hypothesis,
+      e.type_of_ad, (e.hook_patterns||[]).join('; '), e.type_of_headline, e.headline, e.ad_copy, e.script,
+      e.format, e.sizing, e.creative_variations, (e.tags||[]).join('; '),
+      rev.ctr, rev.cpc, rev.costPerAtc, rev.cpa, rev.roas, rev.hookRate, rev.holdRate, rev.notes,
+      perf.spend, perf.impressions, perf.clicks, perf.ctr,
       e.concept_link, e.output_link, e.adset_link, e.ads_manager_link
     ].map(csvEscape).join(','));
   });
