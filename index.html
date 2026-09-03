@@ -225,6 +225,8 @@
   details.an-collapsible[open] summary.an-h{border-bottom-left-radius:0;border-bottom-right-radius:0;box-shadow:none;}
   details.an-collapsible > div{background:var(--surface);border:1px solid var(--line);border-top:none;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);padding:0 22px 16px;}
   .lb-row-wrap{position:relative;margin-bottom:2px;}
+  .lb-row-wrap.lb-clickable{cursor:pointer;border-radius:6px;transition:background-color .12s ease;}
+  .lb-row-wrap.lb-clickable:hover{background:var(--accent-soft);}
   .lb-bar{position:absolute;left:0;top:0;bottom:0;background:var(--accent-soft);border-radius:8px;z-index:0;transition:width .5s cubic-bezier(.4,0,.2,1);}
   .lb-row{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line);font-size:13.5px;}
   .lb-row:last-child{border-bottom:none;}
@@ -341,10 +343,12 @@
   .script-preview .sp-hint{font-size:11.5px;color:var(--accent);margin-top:3px;}
   .detail-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;z-index:1100;padding:20px;}
   .detail-modal-overlay.open{display:flex;}
-  .detail-modal-box{background:var(--surface);border-radius:14px;max-width:640px;width:100%;max-height:82vh;overflow-y:auto;padding:24px 26px;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.35);}
+  .detail-modal-box{background:var(--surface);border-radius:14px;max-width:760px;width:100%;max-height:85vh;overflow-y:auto;padding:20px 24px;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.35);font-size:12.5px;line-height:1.55;}
+  .detail-modal-box .entry-script{font-size:12.5px;}
+  .detail-modal-box .strategy-readout{font-size:12.5px;}
   .detail-modal-close{position:absolute;top:14px;right:16px;cursor:pointer;font-size:22px;line-height:1;background:none;border:none;color:var(--ink-soft);padding:4px;}
   .detail-modal-close:hover{color:var(--ink);}
-  .detail-modal-box h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;padding-right:24px;}
+  .detail-modal-box h3{font-family:'Fraunces',serif;font-size:17px;margin:0 0 12px;padding-right:24px;}
   .tracker-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);}
   .tracker-table{width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap;}
   .tracker-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface);white-space:nowrap;}
@@ -365,6 +369,11 @@
   .tt-pipe{display:flex;gap:3px;}
   .tt-pipe-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
   .tt-pipe-dot.done{background:var(--winner);}
+  .tt-stage{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
+  .tt-stage-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .tt-stage-dot.concept{background:var(--ink-soft);}
+  .tt-stage-dot.editing{background:var(--pending);}
+  .tt-stage-dot.launched{background:var(--winner);}
 </style>
 </head>
 <body>
@@ -678,6 +687,7 @@
           <textarea id="f-ad-copy" placeholder="Add final ad copy…"></textarea>
         </div>
         <div class="field full"><label>Link to Adset</label><input type="text" id="f-adset-link" placeholder="Paste adset URL (once it's live)" /></div>
+        <div class="field full"><label>Link to Ads Manager</label><input type="text" id="f-ads-manager-link" placeholder="Paste Ads Manager URL (once it's live)" /></div>
       </div>
     </div>
   </section>
@@ -917,6 +927,7 @@ function renderDetailModalReadView(e){
     ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
     ${e.output_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View output ↗</a></div>`:''}
     ${e.adset_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View adset ↗</a></div>`:''}
+    ${e.ads_manager_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View in Ads Manager ↗</a></div>`:''}
     ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:8px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
     ${e.script?`<div class="entry-script" style="max-height:none;overflow-y:visible;margin-top:10px;">${escapeHtml(e.script)}</div>`:''}
     ${hasStrategy?`
@@ -931,17 +942,19 @@ function renderDetailModalReadView(e){
       ${e.headline?`<div><b>Headline:</b> ${escapeHtml(e.headline)}</div>`:''}
       ${e.ad_copy?`<div><b>Ad Copy:</b> ${escapeHtml(e.ad_copy)}</div>`:''}
     </div>`:''}
-    ${(perf&&perf.review)?`
-    <div class="perf-grid" style="margin-top:12px;">
-      <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(perf.review.ctr||'—')}</div></div>
-      <div class="perf-cell"><div class="k">CPC</div><div class="v">${escapeHtml(perf.review.cpc||'—')}</div></div>
-      <div class="perf-cell"><div class="k">CPA</div><div class="v">${escapeHtml(perf.review.cpa||'—')}</div></div>
-      <div class="perf-cell"><div class="k">ROAS</div><div class="v">${escapeHtml(perf.review.roas||'—')}</div></div>
-      <div class="perf-cell"><div class="k">Hook Rate</div><div class="v">${escapeHtml(perf.review.hookRate||'—')}</div></div>
-      <div class="perf-cell"><div class="k">Hold Rate</div><div class="v">${escapeHtml(perf.review.holdRate||'—')}</div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
+      <div class="an-h" style="margin:0;">📊 Results Review</div>
+      <span class="btn-link act-edit-results" style="cursor:pointer;">✎ Edit</span>
     </div>
-    ${perf.review.notes?`<div class="hint" style="margin-top:6px;">${escapeHtml(perf.review.notes)}</div>`:''}
-    `:''}
+    <div class="perf-grid" style="margin-top:8px;">
+      <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml((perf&&perf.review&&perf.review.ctr)||'—')}</div></div>
+      <div class="perf-cell"><div class="k">CPC</div><div class="v">${escapeHtml((perf&&perf.review&&perf.review.cpc)||'—')}</div></div>
+      <div class="perf-cell"><div class="k">CPA</div><div class="v">${escapeHtml((perf&&perf.review&&perf.review.cpa)||'—')}</div></div>
+      <div class="perf-cell"><div class="k">ROAS</div><div class="v">${escapeHtml((perf&&perf.review&&perf.review.roas)||'—')}</div></div>
+      <div class="perf-cell"><div class="k">Hook Rate</div><div class="v">${escapeHtml((perf&&perf.review&&perf.review.hookRate)||'—')}</div></div>
+      <div class="perf-cell"><div class="k">Hold Rate</div><div class="v">${escapeHtml((perf&&perf.review&&perf.review.holdRate)||'—')}</div></div>
+    </div>
+    ${(perf&&perf.review&&perf.review.notes)?`<div class="hint" style="margin-top:6px;">${escapeHtml(perf.review.notes)}</div>`:''}
     ${perf?`
     <div class="perf-grid" style="margin-top:8px;">
       <div class="perf-cell"><div class="k">Spend</div><div class="v">${escapeHtml(String(perf.spend ?? '—'))}</div></div>
@@ -975,13 +988,17 @@ function renderDetailModalReadView(e){
   `;
 }
 
-function openDetailModal(id){
+async function openDetailModal(id){
   const e = entries.find(x=>x.id===id);
   if(!e) return;
   const content = document.getElementById('detail-modal-content');
 
   if(inlineEditId === id){
+    if(Object.keys(BRANDS).length===0) await loadBrands();
+    if(STRAT_PRODUCTS.length===0 && STRAT_PERSONAS.length===0) await loadStrategyLibrary();
+    if(e.persona_id && !STRAT_PROBLEMS_CACHE[e.persona_id]) await loadProblemsFor(e.persona_id);
     content.innerHTML = buildInlineEditHTML(e);
+    wireInlineEditStrategySelects(content, e);
     wireTagInput(content.querySelector('.tag-input-box'), e.tags||[]);
     const ieStatus = content.querySelector('.ie-status');
     content.querySelector('.ie-save').addEventListener('click', async ()=>{
@@ -1001,12 +1018,19 @@ function openDetailModal(id){
           output_link: content.querySelector('.ie-output').value.trim(),
           script: content.querySelector('.ie-script').value.trim(),
           tags: content.querySelector('.tag-input-box')._tags || [],
+          brand_id: content.querySelector('.ie-brand').value || null,
+          product_id: content.querySelector('.ie-product').value || null,
+          persona_id: content.querySelector('.ie-persona').value || null,
+          problem_id: content.querySelector('.ie-problem').value || null,
+          problem_text: (STRAT_PROBLEMS_CACHE[content.querySelector('.ie-persona').value]||[]).find(p=>p.id===content.querySelector('.ie-problem').value)?.problem || null,
+          desire: (STRAT_PERSONAS.find(p=>p.id===content.querySelector('.ie-persona').value)||{}).desire || null,
           market_awareness: content.querySelector('.ie-awareness').value || null,
           market_sophistication: content.querySelector('.ie-sophistication').value || null,
           hypothesis: content.querySelector('.ie-hypothesis').value.trim(),
           headline: content.querySelector('.ie-headline').value.trim(),
           ad_copy: content.querySelector('.ie-adcopy').value.trim(),
           adset_link: content.querySelector('.ie-adsetlink').value.trim(),
+          ads_manager_link: content.querySelector('.ie-adsmanagerlink').value.trim(),
           performance: {
             ...(e.performance||{}),
             review: {
@@ -1041,6 +1065,7 @@ function openDetailModal(id){
   const statusMsg = content.querySelector('.act-status');
 
   content.querySelector('.act-edit').addEventListener('click', ()=>{ inlineEditId = id; openDetailModal(id); });
+  content.querySelector('.act-edit-results').addEventListener('click', ()=>{ inlineEditId = id; openDetailModal(id); });
   content.querySelector('.act-dup').addEventListener('click', async ()=>{
     try{
       await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
@@ -1052,7 +1077,7 @@ function openDetailModal(id){
         problem_id: e.problem_id || null, problem_text: e.problem_text || null, desire: e.desire || null,
         market_awareness: e.market_awareness || null, market_sophistication: e.market_sophistication || null,
         hypothesis: e.hypothesis || '', type_of_ad: e.type_of_ad || null, hook_patterns: e.hook_patterns || [],
-        type_of_headline: e.type_of_headline || null, headline: e.headline || '', ad_copy: e.ad_copy || '', adset_link: ''
+        type_of_headline: e.type_of_headline || null, headline: e.headline || '', ad_copy: e.ad_copy || '', adset_link: '', ads_manager_link: ''
       })});
       showToast('✓ Duplicated — edit the copy to set it up');
       closeDetailModal();
@@ -2016,6 +2041,7 @@ function resetForm(){
   document.getElementById('f-headline').value='';
   document.getElementById('f-ad-copy').value='';
   document.getElementById('f-adset-link').value='';
+  document.getElementById('f-ads-manager-link').value='';
 }
 
 // ---------- Submit new creative ----------
@@ -2065,7 +2091,8 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     type_of_headline: document.getElementById('f-type-of-headline').value || null,
     headline: document.getElementById('f-headline').value.trim(),
     ad_copy: document.getElementById('f-ad-copy').value.trim(),
-    adset_link: document.getElementById('f-adset-link').value.trim()
+    adset_link: document.getElementById('f-adset-link').value.trim(),
+    ads_manager_link: document.getElementById('f-ads-manager-link').value.trim()
   };
 
   try{
@@ -2167,13 +2194,13 @@ async function renderEntries(){
     const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
     const badgeClass = needsReview ? 'review' : e.winner_status;
     const finalBadgeLabel = needsReview ? '⚠ Needs review' : badgeLabel;
-    const pipeDone = [true, !!e.editing_done, !!e.launched];
+    const stage = e.launched ? {label:'Launched', cls:'launched'} : (e.editing_done ? {label:'Editing', cls:'editing'} : {label:'Concept', cls:'concept'});
     const awarenessShort = e.market_awareness ? labelFor(AWARENESS,e.market_awareness).split(' — ')[0] : '';
     return `
       <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
         <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
         <td><span class="tt-badge ${badgeClass}">${finalBadgeLabel}</span></td>
-        <td><div class="tt-pipe" title="Concept → Editing → Launched">${pipeDone.map(done=>`<span class="tt-pipe-dot ${done?'done':''}"></span>`).join('')}</div></td>
+        <td><span class="tt-stage"><span class="tt-stage-dot ${stage.cls}"></span>${stage.label}</span></td>
         <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
         <td>${escapeHtml(e.editor||'—')}</td>
         <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
@@ -2197,6 +2224,37 @@ async function renderEntries(){
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>`;
+}
+
+function wireInlineEditStrategySelects(container, e){
+  const brandSel = container.querySelector('.ie-brand');
+  const productSel = container.querySelector('.ie-product');
+  const personaSel = container.querySelector('.ie-persona');
+  const problemSel = container.querySelector('.ie-problem');
+
+  function populateProductsPersonas(brandId){
+    productSel.innerHTML = '<option value="">Select product…</option>' + STRAT_PRODUCTS.filter(p=>p.brand_id===brandId).map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    personaSel.innerHTML = '<option value="">Select persona…</option>' + STRAT_PERSONAS.filter(p=>p.brand_id===brandId).map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  }
+  populateProductsPersonas(e.brand_id||'');
+  if(e.product_id) productSel.value = e.product_id;
+  if(e.persona_id) personaSel.value = e.persona_id;
+  if(e.persona_id && STRAT_PROBLEMS_CACHE[e.persona_id]){
+    const ranked = [...STRAT_PROBLEMS_CACHE[e.persona_id]].sort((a,b)=>b.total_score-a.total_score);
+    problemSel.innerHTML = '<option value="">Select problem…</option>' + ranked.map((pr,i)=>`<option value="${pr.id}" ${e.problem_id===pr.id?'selected':''}>${i===0?'⭐ ':''}${escapeHtml(pr.problem)} (Score ${pr.total_score})</option>`).join('');
+  }
+
+  brandSel.addEventListener('change', ()=>{
+    populateProductsPersonas(brandSel.value);
+    problemSel.innerHTML = '<option value="">Select problem…</option>';
+  });
+  personaSel.addEventListener('change', async ()=>{
+    problemSel.innerHTML = '<option value="">Select problem…</option>';
+    if(!personaSel.value) return;
+    const problems = await loadProblemsFor(personaSel.value);
+    const ranked = [...problems].sort((a,b)=>b.total_score-a.total_score);
+    problemSel.innerHTML = '<option value="">Select problem…</option>' + ranked.map((pr,i)=>`<option value="${pr.id}">${i===0?'⭐ ':''}${escapeHtml(pr.problem)} (Score ${pr.total_score})</option>`).join('');
+  });
 }
 
 function buildInlineEditHTML(e){
@@ -2251,12 +2309,17 @@ function buildInlineEditHTML(e){
     <div style="margin-top:6px;border-top:1px solid var(--line);padding-top:14px;">
       <label style="margin-bottom:10px;">🎯 Strategy</label>
       <div class="form-grid">
+        <div class="field"><label>Brand</label><select class="ie-brand"><option value="">Select brand…</option>${Object.entries(BRANDS).map(([id,b])=>`<option value="${escapeHtml(id)}" ${e.brand_id===id?'selected':''}>${escapeHtml(b.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>Product</label><select class="ie-product"><option value="">Select product…</option></select></div>
+        <div class="field"><label>Persona</label><select class="ie-persona"><option value="">Select persona…</option></select></div>
+        <div class="field"><label>Identify the Problem</label><select class="ie-problem"><option value="">Select problem…</option></select></div>
         <div class="field"><label>Market Awareness</label><select class="ie-awareness"><option value="">Select…</option>${AWARENESS.map(([v,l])=>`<option value="${v}" ${e.market_awareness===v?'selected':''}>${escapeHtml(l)}</option>`).join('')}</select></div>
         <div class="field"><label>Market Sophistication</label><select class="ie-sophistication"><option value="">Select…</option>${SOPHISTICATION.map(([v,l])=>`<option value="${v}" ${e.market_sophistication===v?'selected':''}>${escapeHtml(l)}</option>`).join('')}</select></div>
         <div class="field full"><label>Hypothesis</label><textarea class="ie-hypothesis">${escapeHtml(e.hypothesis||'')}</textarea></div>
         <div class="field full"><label>Headline</label><textarea class="ie-headline">${escapeHtml(e.headline||'')}</textarea></div>
         <div class="field full"><label>Ad Copy</label><textarea class="ie-adcopy">${escapeHtml(e.ad_copy||'')}</textarea></div>
         <div class="field full"><label>Link to Adset</label><input type="text" class="ie-adsetlink" value="${escapeHtml(e.adset_link||'')}" /></div>
+        <div class="field full"><label>Link to Ads Manager</label><input type="text" class="ie-adsmanagerlink" value="${escapeHtml(e.ads_manager_link||'')}" placeholder="Paste Ads Manager URL for this ad" /></div>
       </div>
     </div>
 
@@ -2386,29 +2449,52 @@ async function renderAnalytics(){
     return Object.entries(map).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
   }
 
-  function renderLB(holderId, field){
+  function renderLB(holderId, field, filterField){
     const rows = leaderboard(field);
-    renderRankedRows(holderId, rows);
+    renderRankedRows(holderId, rows, filterField);
   }
 
-  function renderRankedRows(holderId, rows){
+  function renderRankedRows(holderId, rows, filterField){
     const holder = document.getElementById(holderId);
     if(rows.length===0){ holder.innerHTML = `<div class="hint">Nothing logged yet.</div>`; return; }
-    const maxTotal = Math.max(...rows.map(([,s])=>s.total), 1);
+    const sorted = [...rows].sort((a,b)=>{
+      const rateA = a[1].total ? a[1].winners/a[1].total : 0;
+      const rateB = b[1].total ? b[1].winners/b[1].total : 0;
+      return rateB - rateA || b[1].winners - a[1].winners || b[1].total - a[1].total;
+    });
+    const maxTotal = Math.max(...sorted.map(([,s])=>s.total), 1);
     const rankClass = ['gold','silver','bronze'];
-    holder.innerHTML = rows.map(([name,stats],i)=>`
-      <div class="lb-row-wrap">
+    holder.innerHTML = sorted.map(([name,stats],i)=>{
+      const rate = stats.total ? Math.round(stats.winners/stats.total*100) : 0;
+      return `
+      <div class="lb-row-wrap ${filterField?'lb-clickable':''}" ${filterField?`data-filter-field="${filterField}" data-filter-value="${escapeHtml(name)}"`:''}>
         <div class="lb-bar" style="width:${(stats.total/maxTotal*100).toFixed(0)}%"></div>
         <div class="lb-row">
           <span class="lb-name"><span class="lb-rank ${rankClass[i]||''}">${i+1}</span>${escapeHtml(name)}</span>
-          <span class="lb-stats">${stats.winners} winner${stats.winners===1?'':'s'} · ${stats.total} logged</span>
+          <span class="lb-stats"><b>${rate}% win rate</b> · ${stats.winners}/${stats.total} logged</span>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
+    if(filterField){
+      holder.querySelectorAll('.lb-clickable').forEach(row=>{
+        row.addEventListener('click', ()=>{
+          document.querySelector(`.tab-btn[data-tab="track"]`).click();
+          const field = row.dataset.filterField;
+          const value = row.dataset.filterValue;
+          if(field==='tag') document.getElementById('filt-tag').value = value;
+          if(field==='editor') document.getElementById('filt-editor').value = value;
+          if(field==='page'){
+            const opt = Array.from(document.getElementById('filt-page').options).find(o=>o.textContent===value);
+            if(opt) document.getElementById('filt-page').value = opt.value;
+          }
+          renderEntries();
+        });
+      });
+    }
   }
 
-  function renderRows(holderId, rows){
-    renderRankedRows(holderId, rows);
+  function renderRows(holderId, rows, filterField){
+    renderRankedRows(holderId, rows, filterField);
   }
 
   function leaderboardByHooks(){
@@ -2426,9 +2512,9 @@ async function renderAnalytics(){
     return Object.entries(map).map(([,s])=>[s.display, s]).sort((a,b)=> b[1].winners - a[1].winners || b[1].total - a[1].total);
   }
 
-  renderLB('analytics-editor','editor');
-  renderRows('analytics-tags', leaderboardByTags());
-  renderRows('analytics-pages', leaderboardByPage());
+  renderLB('analytics-editor','editor','editor');
+  renderRows('analytics-tags', leaderboardByTags(), 'tag');
+  renderRows('analytics-pages', leaderboardByPage(), 'page');
   renderLB('analytics-typeofad','type_of_ad');
   renderRows('analytics-hooks', leaderboardByHooks());
 
