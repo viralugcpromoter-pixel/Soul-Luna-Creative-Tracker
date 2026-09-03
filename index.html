@@ -462,6 +462,8 @@
       <div class="form-grid">
         <div class="field"><label>Persona name</label><input type="text" id="strat-per-name" placeholder="e.g. Kevin — dandruff" /></div>
         <div class="field"><label>Core Desire</label><select id="strat-per-desire"></select></div>
+        <div class="field"><label>Market Awareness</label><select id="strat-per-awareness"></select></div>
+        <div class="field"><label>Market Sophistication</label><select id="strat-per-sophistication"></select></div>
         <div class="field full"><label>Description (optional)</label><textarea id="strat-per-desc" placeholder="Demographics, situation, priorities, buying context"></textarea></div>
       </div>
       <div class="submit-row"><button class="btn btn-primary btn-sm" id="strat-per-save" type="button">+ Add persona</button><span class="status-msg" id="strat-per-status"></span></div>
@@ -509,6 +511,7 @@
       <div class="wiz-step-kicker">STEP 5 OF 5 · CREATIVE BRIEF</div>
       <h2 class="wiz-step-title">Ready na ang buong strategy</h2>
       <p class="hint" style="margin-top:0;margin-bottom:16px;">Buod ng na-set up mo — ito na yung babasahin ng team pag nag-log ng creative para dito.</p>
+      <div class="field" style="max-width:360px;"><label>Script Structure <span style="font-weight:400;text-transform:none;letter-spacing:0;">(gagamitin sa Copy Script Prompt)</span></label><select id="strat-brief-structure"></select></div>
       <div id="strat-brief-holder"></div>
       <div class="wiz-nav">
         <button class="btn-link" id="wiz-to-4-b" type="button">← Back to Problems</button>
@@ -1074,6 +1077,9 @@ let STRAT_PROBLEMS_CACHE = {};
 let stratActiveBrand = null;
 let stratManagingPersonaId = null;
 let stratStep = 1;
+let editingProductId = null;
+let editingPersonaId = null;
+let editingProblemId = null;
 
 const DESIRES = [
   ['Recognition','Recognition, respect, fame, exclusivity, prestige, popularity, status'],
@@ -1108,7 +1114,7 @@ const TYPE_OF_AD = {
     'Quiz','Image w/ Hook Pattern Text Overlay','Video w/ Hook Pattern Text Overlay',
     'Problem Statistics — validate the struggle',
     'How-To / Tutorial of the Benefit — no solution introduced yet',
-    'GPAISACA (Grab attention → Problem → Agitate → Interesting → Solution → Advantages → Call to action)',
+    'GPAISACA — Hook → Problem → Agitate → Invalidate Other Solutions → Solution → Action → Credibility → Action → Outro',
   ],
   solution_aware: [
     'Compare solution types — position product as best of category',
@@ -1168,6 +1174,20 @@ const HOOK_PATTERNS = [
   ['tap_fear','Tap into Fear','e.g. "What You Don\u2019t Know About This Could Hurt You."'],
   ['provide_list','Provide a List','e.g. "The Top 5 Tips for Faster Recovery."'],
   ['announce_discovery','Announce a Discovery','e.g. "Scientists Discover a New Way to Ease Muscle Pain."'],
+];
+
+const SCRIPT_STRUCTURES = [
+  ['gpaisaca', 'GPAISACA', [
+    'HOOK — Great Hook (Visual, Text, and Caption hook — dapat pang-stop-scroll)',
+    'PROBLEM — I-discuss ang problema ng customers',
+    'AGITATE — Ano ang consequence kung hindi ma-solve ang problema',
+    'INVALIDATE OTHER SOLUTIONS — Bakit hindi gumagana ang ibang existing na paraan/solusyon',
+    'SOLUTION — Ipakita ang offer bilang solusyon',
+    'ACTION — Call to action, may urgency at scarcity',
+    'CREDIBILITY — Ipakita ang social proof / credibility ng product',
+    'ACTION — Ulitin ang CTA na may urgency at scarcity',
+    'OUTRO (optional) — Closing line o parting shot'
+  ]],
 ];
 
 function labelFor(list, value){
@@ -1318,11 +1338,41 @@ function renderStrategyProducts(){
   const holder = document.getElementById('strat-products-list');
   const list = STRAT_PRODUCTS.filter(p=>p.brand_id===stratActiveBrand);
   if(list.length===0){ holder.innerHTML = '<div class="hint">Wala pang product.</div>'; return; }
-  holder.innerHTML = list.map(p=>`
-    <div class="strat-list-row" data-id="${p.id}">
+  holder.innerHTML = list.map(p=>{
+    if(p.id===editingProductId){
+      return `<div class="strat-list-row" data-id="${p.id}" style="flex-direction:column;align-items:stretch;">
+        <div class="form-grid" style="margin-bottom:10px;">
+          <div class="field"><label>Product name</label><input type="text" class="edit-p-name" value="${escapeHtml(p.name)}" /></div>
+          <div class="field"><label>Details</label><input type="text" class="edit-p-details" value="${escapeHtml(p.details||'')}" /></div>
+          <div class="field full"><label>Positioning</label><textarea class="edit-p-positioning">${escapeHtml(p.positioning||'')}</textarea></div>
+        </div>
+        <div class="row"><button class="btn btn-primary btn-sm act-save-product" data-id="${p.id}" type="button">Save</button><button class="btn-link act-cancel-product" type="button">Cancel</button></div>
+      </div>`;
+    }
+    return `<div class="strat-list-row" data-id="${p.id}">
       <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${escapeHtml((p.positioning||'').slice(0,140))}${(p.positioning||'').length>140?'…':''}</div></div>
-      <div class="acts"><button class="btn-danger-text act-del-product" data-id="${p.id}" type="button">Delete</button></div>
-    </div>`).join('');
+      <div class="acts"><button class="btn-link act-edit-product" data-id="${p.id}" type="button">Edit</button><button class="btn-danger-text act-del-product" data-id="${p.id}" type="button">Delete</button></div>
+    </div>`;
+  }).join('');
+  holder.querySelectorAll('.act-edit-product').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ editingProductId = btn.dataset.id; renderStrategyProducts(); });
+  });
+  holder.querySelectorAll('.act-cancel-product').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ editingProductId = null; renderStrategyProducts(); });
+  });
+  holder.querySelectorAll('.act-save-product').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const row = btn.closest('.strat-list-row');
+      const name = row.querySelector('.edit-p-name').value.trim();
+      const details = row.querySelector('.edit-p-details').value.trim();
+      const positioning = row.querySelector('.edit-p-positioning').value.trim();
+      if(!name || !positioning) return;
+      await api('/api/strategy?resource=products', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: btn.dataset.id, name, details, positioning}) });
+      editingProductId = null;
+      await loadStrategyLibrary();
+      renderStrategyProducts();
+    });
+  });
   holder.querySelectorAll('.act-del-product').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       if(!confirm('Delete this product?')) return;
@@ -1354,20 +1404,60 @@ document.getElementById('strat-p-save').addEventListener('click', async ()=>{
 });
 
 document.getElementById('strat-per-desire').innerHTML = '<option value="">Select desire…</option>' + DESIRES.map(([n])=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+document.getElementById('strat-per-awareness').innerHTML = '<option value="">Select…</option>' + AWARENESS.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
+document.getElementById('strat-per-sophistication').innerHTML = '<option value="">Select…</option>' + SOPHISTICATION.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
 function renderStrategyPersonas(){
   const holder = document.getElementById('strat-personas-list');
   const list = STRAT_PERSONAS.filter(p=>p.brand_id===stratActiveBrand);
   if(list.length===0){ holder.innerHTML = '<div class="hint">Wala pang persona.</div>'; return; }
-  holder.innerHTML = list.map(p=>`
-    <div class="strat-list-row" data-id="${p.id}">
-      <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.desire?('Desire: '+escapeHtml(p.desire)+' · '):''}${escapeHtml((p.description||'').slice(0,120))}${(p.description||'').length>120?'…':''}</div></div>
+  holder.innerHTML = list.map(p=>{
+    if(p.id===editingPersonaId){
+      const desireOpts = DESIRES.map(([n])=>`<option value="${escapeHtml(n)}" ${p.desire===n?'selected':''}>${escapeHtml(n)}</option>`).join('');
+      const awarenessOpts = AWARENESS.map(([v,l])=>`<option value="${v}" ${p.market_awareness===v?'selected':''}>${escapeHtml(l)}</option>`).join('');
+      const sophisticationOpts = SOPHISTICATION.map(([v,l])=>`<option value="${v}" ${p.market_sophistication===v?'selected':''}>${escapeHtml(l)}</option>`).join('');
+      return `<div class="strat-list-row" data-id="${p.id}" style="flex-direction:column;align-items:stretch;">
+        <div class="form-grid" style="margin-bottom:10px;">
+          <div class="field"><label>Persona name</label><input type="text" class="edit-per-name" value="${escapeHtml(p.name)}" /></div>
+          <div class="field"><label>Core Desire</label><select class="edit-per-desire"><option value="">Select desire…</option>${desireOpts}</select></div>
+          <div class="field"><label>Market Awareness</label><select class="edit-per-awareness"><option value="">Select…</option>${awarenessOpts}</select></div>
+          <div class="field"><label>Market Sophistication</label><select class="edit-per-sophistication"><option value="">Select…</option>${sophisticationOpts}</select></div>
+          <div class="field full"><label>Description</label><textarea class="edit-per-desc">${escapeHtml(p.description||'')}</textarea></div>
+        </div>
+        <div class="row"><button class="btn btn-primary btn-sm act-save-persona" data-id="${p.id}" type="button">Save</button><button class="btn-link act-cancel-persona" type="button">Cancel</button></div>
+      </div>`;
+    }
+    return `<div class="strat-list-row" data-id="${p.id}">
+      <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.desire?('Desire: '+escapeHtml(p.desire)+' · '):''}${p.market_awareness?(labelFor(AWARENESS,p.market_awareness).split(' — ')[0]+' · '):''}${escapeHtml((p.description||'').slice(0,100))}${(p.description||'').length>100?'…':''}</div></div>
       <div class="acts">
         <button class="btn btn-ghost btn-sm act-manage-problems" data-id="${p.id}" data-name="${escapeHtml(p.name)}" type="button">Manage Problems</button>
+        <button class="btn-link act-edit-persona" data-id="${p.id}" type="button">Edit</button>
         <button class="btn-danger-text act-del-persona" data-id="${p.id}" type="button">Delete</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   holder.querySelectorAll('.act-manage-problems').forEach(btn=>{
     btn.addEventListener('click', ()=>{ stratManagingPersonaId = btn.dataset.id; goToStep(4); });
+  });
+  holder.querySelectorAll('.act-edit-persona').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ editingPersonaId = btn.dataset.id; renderStrategyPersonas(); });
+  });
+  holder.querySelectorAll('.act-cancel-persona').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ editingPersonaId = null; renderStrategyPersonas(); });
+  });
+  holder.querySelectorAll('.act-save-persona').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const row = btn.closest('.strat-list-row');
+      const name = row.querySelector('.edit-per-name').value.trim();
+      const desire = row.querySelector('.edit-per-desire').value;
+      const market_awareness = row.querySelector('.edit-per-awareness').value;
+      const market_sophistication = row.querySelector('.edit-per-sophistication').value;
+      const description = row.querySelector('.edit-per-desc').value.trim();
+      if(!name) return;
+      await api('/api/strategy?resource=personas', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: btn.dataset.id, name, desire, market_awareness, market_sophistication, description}) });
+      editingPersonaId = null;
+      await loadStrategyLibrary();
+      renderStrategyPersonas();
+    });
   });
   holder.querySelectorAll('.act-del-persona').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
@@ -1384,12 +1474,16 @@ document.getElementById('strat-per-save').addEventListener('click', async ()=>{
   if(!stratActiveBrand){ statusEl.textContent='Pumili/gumawa muna ng brand.'; statusEl.className='status-msg err'; return; }
   const name = document.getElementById('strat-per-name').value.trim();
   const desire = document.getElementById('strat-per-desire').value;
+  const market_awareness = document.getElementById('strat-per-awareness').value;
+  const market_sophistication = document.getElementById('strat-per-sophistication').value;
   const description = document.getElementById('strat-per-desc').value.trim();
   if(!name){ statusEl.textContent='Persona name required.'; statusEl.className='status-msg err'; return; }
   try{
-    await api('/api/strategy?resource=personas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({brand_id: stratActiveBrand, name, desire, description}) });
+    await api('/api/strategy?resource=personas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({brand_id: stratActiveBrand, name, desire, description, market_awareness, market_sophistication}) });
     document.getElementById('strat-per-name').value='';
     document.getElementById('strat-per-desire').value='';
+    document.getElementById('strat-per-awareness').value='';
+    document.getElementById('strat-per-sophistication').value='';
     document.getElementById('strat-per-desc').value='';
     statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
     await loadStrategyLibrary();
@@ -1423,11 +1517,43 @@ function renderProblemsWorkspace(){
   const holder = document.getElementById('strat-problems-list');
   if(list.length===0){ holder.innerHTML = '<div class="hint">Wala pang problem.</div>'; }
   else{
-    holder.innerHTML = list.map(p=>`
-      <div class="strat-list-row" data-id="${p.id}">
+    holder.innerHTML = list.map(p=>{
+      if(p.id===editingProblemId){
+        return `<div class="strat-list-row" data-id="${p.id}" style="flex-direction:column;align-items:stretch;">
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div class="field full"><label>Problem</label><input type="text" class="edit-prob-text" value="${escapeHtml(p.problem)}" /></div>
+            <div class="field"><label>Intensity</label><select class="edit-prob-intensity">${scoreOptions(p.intensity)}</select></div>
+            <div class="field"><label>Repeatability</label><select class="edit-prob-repeatability">${scoreOptions(p.repeatability)}</select></div>
+            <div class="field"><label>Scale</label><select class="edit-prob-scale">${scoreOptions(p.scale)}</select></div>
+          </div>
+          <div class="row"><button class="btn btn-primary btn-sm act-save-problem" data-id="${p.id}" type="button">Save</button><button class="btn-link act-cancel-problem" type="button">Cancel</button></div>
+        </div>`;
+      }
+      return `<div class="strat-list-row" data-id="${p.id}">
         <div><div class="name">${escapeHtml(p.problem)}</div><div class="sub">Intensity ${p.intensity} · Repeatability ${p.repeatability} · Scale ${p.scale} · Score ${p.total_score}</div></div>
-        <div class="acts"><button class="btn-danger-text act-del-problem" data-id="${p.id}" type="button">Delete</button></div>
-      </div>`).join('');
+        <div class="acts"><button class="btn-link act-edit-problem" data-id="${p.id}" type="button">Edit</button><button class="btn-danger-text act-del-problem" data-id="${p.id}" type="button">Delete</button></div>
+      </div>`;
+    }).join('');
+    holder.querySelectorAll('.act-edit-problem').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ editingProblemId = btn.dataset.id; renderProblemsWorkspace(); });
+    });
+    holder.querySelectorAll('.act-cancel-problem').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ editingProblemId = null; renderProblemsWorkspace(); });
+    });
+    holder.querySelectorAll('.act-save-problem').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const row = btn.closest('.strat-list-row');
+        const problem = row.querySelector('.edit-prob-text').value.trim();
+        const intensity = row.querySelector('.edit-prob-intensity').value;
+        const repeatability = row.querySelector('.edit-prob-repeatability').value;
+        const scale = row.querySelector('.edit-prob-scale').value;
+        if(!problem) return;
+        await api('/api/strategy?resource=problems', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: btn.dataset.id, problem, intensity, repeatability, scale}) });
+        editingProblemId = null;
+        await loadProblemsFor(stratManagingPersonaId);
+        renderProblemsWorkspace();
+      });
+    });
     holder.querySelectorAll('.act-del-problem').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         if(!confirm('Delete this problem?')) return;
@@ -1461,6 +1587,10 @@ document.getElementById('strat-prob-save').addEventListener('click', async ()=>{
 
 async function renderCreativeBrief(){
   const holder = document.getElementById('strat-brief-holder');
+  const structureSel = document.getElementById('strat-brief-structure');
+  if(!structureSel.options.length){
+    structureSel.innerHTML = SCRIPT_STRUCTURES.map(([k,n])=>`<option value="${k}">${escapeHtml(n)}</option>`).join('');
+  }
   const b = BRANDS[stratActiveBrand];
   const products = STRAT_PRODUCTS.filter(p=>p.brand_id===stratActiveBrand);
   const personas = STRAT_PERSONAS.filter(p=>p.brand_id===stratActiveBrand);
@@ -1477,13 +1607,77 @@ async function renderCreativeBrief(){
   html += personas.length===0 ? '<div class="hint">Wala pang persona.</div>' : personas.map(p=>{
     const top3 = [...(STRAT_PROBLEMS_CACHE[p.id]||[])].sort((a,b)=>b.total_score-a.total_score).slice(0,3);
     return `<div class="brief-persona-card">
-      <div class="name">${escapeHtml(p.name)}${p.desire?` <span style="font-weight:400;color:var(--ink-soft);">— ${escapeHtml(p.desire)}</span>`:''}</div>
+      <div class="row" style="justify-content:space-between;align-items:flex-start;">
+        <div class="name">${escapeHtml(p.name)}${p.desire?` <span style="font-weight:400;color:var(--ink-soft);">— ${escapeHtml(p.desire)}</span>`:''}</div>
+        <button class="btn btn-ghost btn-sm act-copy-prompt" data-id="${p.id}" type="button">📋 Copy Script Prompt</button>
+      </div>
       ${top3.length?top3.map((pr,i)=>`<div class="top3-item" style="margin-top:8px;"><span><span class="rank">#${i+1}</span>${escapeHtml(pr.problem)}</span><span>${pr.total_score}</span></div>`).join(''):'<div class="hint" style="margin-top:6px;">Wala pang scored problem.</div>'}
+      <span class="status-msg copy-prompt-status" data-for="${p.id}"></span>
     </div>`;
   }).join('');
   html += `</div>`;
 
   holder.innerHTML = html;
+  holder.querySelectorAll('.act-copy-prompt').forEach(btn=>{
+    btn.addEventListener('click', ()=>copyScriptPrompt(btn.dataset.id));
+  });
+}
+
+function buildScriptPrompt(personaId, structureKey){
+  const b = BRANDS[stratActiveBrand];
+  const products = STRAT_PRODUCTS.filter(p=>p.brand_id===stratActiveBrand);
+  const persona = STRAT_PERSONAS.find(p=>p.id===personaId);
+  const top3 = [...(STRAT_PROBLEMS_CACHE[personaId]||[])].sort((a,b)=>b.total_score-a.total_score).slice(0,3);
+  const structure = SCRIPT_STRUCTURES.find(s=>s[0]===structureKey) || SCRIPT_STRUCTURES[0];
+
+  let txt = `Ikaw ay isang creative strategist at copywriter para sa Facebook video ads ng isang aesthetics/wellness clinic sa Pilipinas. Taglish ang gamitin mo — natural, parang totoong tao ang nagsasalita, hindi corporate o robotic ang tono.\n\n`;
+  txt += `BRAND: ${b?b.name:''}\n`;
+  if(b && b.description) txt += `${b.description}\n`;
+  txt += `\n`;
+  if(products.length){
+    txt += `PRODUCT/S:\n`;
+    products.forEach(p=>{ txt += `- ${p.name}${p.details?` (${p.details})`:''}: ${p.positioning||''}\n`; });
+    txt += `\n`;
+  }
+  txt += `TARGET PERSONA: ${persona?persona.name:''}\n`;
+  if(persona && persona.description) txt += `${persona.description}\n`;
+  if(persona && persona.desire) txt += `Core Desire: ${persona.desire}\n`;
+  if(persona && persona.market_awareness) txt += `Market Awareness: ${labelFor(AWARENESS, persona.market_awareness)}\n`;
+  if(persona && persona.market_sophistication) txt += `Market Sophistication: ${labelFor(SOPHISTICATION, persona.market_sophistication)}\n`;
+  txt += `\n`;
+  if(top3.length){
+    txt += `TOP PROBLEMS (ranked, Intensity × Repeatability × Scale):\n`;
+    top3.forEach((pr,i)=>{ txt += `${i+1}. ${pr.problem} (Score: ${pr.total_score})\n`; });
+    txt += `\n`;
+  }
+  txt += `HOOK PATTERNS YOU CAN USE (pumili ng 1-2 na pinaka-bagay sa Market Awareness at Problem sa itaas):\n`;
+  HOOK_PATTERNS.forEach(([,n,d])=>{ txt += `- ${n}: ${d}\n`; });
+  txt += `\n`;
+  txt += `SCRIPT STRUCTURE TO FOLLOW — ${structure[1]}:\n`;
+  structure[2].forEach((step,i)=>{ txt += `${i+1}. ${step}\n`; });
+  txt += `\n`;
+  txt += `TASK:\nGumawa ka ng creative concept at buong video ad script na sumusunod nang eksakto sa Script Structure sa itaas, segment by segment, naka-target sa persona at problem na nasa itaas. I-adjust ang tono base sa Market Awareness at Sophistication stage nila (kung mas Unaware, mas dahan-dahan mag-intro ng problema bago ang solusyon; kung mas Most Aware, pwede nang direktang mag-offer). Isama rin ang:\n`;
+  txt += `- Aling Hook Pattern(s) sa listahan sa itaas ang ginamit mo sa HOOK segment, at bakit\n`;
+  txt += `- Suggested visual direction bawat segment (kunwari b-roll, on-cam, text overlay)\n\n`;
+  txt += `Ilagay yung script na parang kausap mo mismo yung persona sa itaas — gamitin yung mismong wika at tono na gagamitin nila.`;
+  return txt;
+}
+
+async function copyScriptPrompt(personaId){
+  const statusEl = document.querySelector(`.copy-prompt-status[data-for="${personaId}"]`);
+  const structureKey = document.getElementById('strat-brief-structure').value;
+  const txt = buildScriptPrompt(personaId, structureKey);
+  try{
+    await navigator.clipboard.writeText(txt);
+    if(statusEl){ statusEl.textContent = 'Nakopya ✓ — i-paste sa ChatGPT.'; statusEl.className = 'status-msg ok copy-prompt-status'; statusEl.dataset.for = personaId; setTimeout(()=>{ statusEl.textContent=''; },3000); }
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); if(statusEl){ statusEl.textContent = 'Nakopya ✓'; statusEl.className='status-msg ok copy-prompt-status'; statusEl.dataset.for=personaId; } }
+    catch(e2){ if(statusEl){ statusEl.textContent = "Hindi na-copy — subukan ulit."; statusEl.className='status-msg err copy-prompt-status'; statusEl.dataset.for=personaId; } }
+    document.body.removeChild(ta);
+  }
 }
 function populateStaticSelects(){
   document.getElementById('f-awareness').innerHTML = '<option value="">Select…</option>' + AWARENESS.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
