@@ -586,6 +586,11 @@
       <h2 class="wiz-step-title">Ready na ang buong strategy</h2>
       <p class="hint" style="margin-top:0;margin-bottom:16px;">Buod ng na-set up mo — ito na yung babasahin ng team pag nag-log ng creative para dito.</p>
       <div class="field" style="max-width:360px;"><label>Script Structure <span style="font-weight:400;text-transform:none;letter-spacing:0;">(gagamitin sa Copy Script Prompt)</span></label><select id="strat-brief-structure"></select></div>
+      <div class="form-grid" style="margin-top:10px;">
+        <div class="field"><label>Market Awareness <span style="font-weight:400;text-transform:none;letter-spacing:0;">(override, optional)</span></label><select id="strat-brief-awareness"><option value="">Gamitin ang saved value ng persona</option></select></div>
+        <div class="field"><label>Market Sophistication <span style="font-weight:400;text-transform:none;letter-spacing:0;">(override, optional)</span></label><select id="strat-brief-sophistication"><option value="">Gamitin ang saved value ng persona</option></select></div>
+        <div class="field"><label>Desire <span style="font-weight:400;text-transform:none;letter-spacing:0;">(override, optional)</span></label><select id="strat-brief-desire"><option value="">Gamitin ang saved value ng persona</option></select></div>
+      </div>
       <div id="strat-brief-holder"></div>
       <div class="wiz-nav">
         <button class="btn-link" id="wiz-to-4-b" type="button">← Back to Problems</button>
@@ -2067,6 +2072,18 @@ async function renderCreativeBrief(){
   if(!structureSel.options.length){
     structureSel.innerHTML = SCRIPT_STRUCTURES.map(([k,n])=>`<option value="${k}">${escapeHtml(n)}</option>`).join('');
   }
+  const awarenessOverrideSel = document.getElementById('strat-brief-awareness');
+  if(!awarenessOverrideSel.options.length || awarenessOverrideSel.options.length===1){
+    awarenessOverrideSel.innerHTML = '<option value="">Gamitin ang saved value ng persona</option>' + AWARENESS.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
+  }
+  const sophisticationOverrideSel = document.getElementById('strat-brief-sophistication');
+  if(!sophisticationOverrideSel.options.length || sophisticationOverrideSel.options.length===1){
+    sophisticationOverrideSel.innerHTML = '<option value="">Gamitin ang saved value ng persona</option>' + SOPHISTICATION.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');
+  }
+  const desireOverrideSel = document.getElementById('strat-brief-desire');
+  if(!desireOverrideSel.options.length || desireOverrideSel.options.length===1){
+    desireOverrideSel.innerHTML = '<option value="">Gamitin ang saved value ng persona</option>' + DESIRES.map(([n])=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  }
   const b = BRANDS[stratActiveBrand];
   const products = STRAT_PRODUCTS.filter(p=>p.brand_id===stratActiveBrand);
   const personas = STRAT_PERSONAS.filter(p=>p.brand_id===stratActiveBrand);
@@ -2099,12 +2116,16 @@ async function renderCreativeBrief(){
   });
 }
 
-function buildScriptPrompt(personaId, structureKey){
+function buildScriptPrompt(personaId, structureKey, overrides){
+  overrides = overrides || {};
   const b = BRANDS[stratActiveBrand];
   const products = STRAT_PRODUCTS.filter(p=>p.brand_id===stratActiveBrand);
   const persona = STRAT_PERSONAS.find(p=>p.id===personaId);
   const top3 = [...(STRAT_PROBLEMS_CACHE[personaId]||[])].sort((a,b)=>b.total_score-a.total_score).slice(0,3);
   const structure = SCRIPT_STRUCTURES.find(s=>s[0]===structureKey) || SCRIPT_STRUCTURES[0];
+  const effectiveDesire = overrides.desire || (persona && persona.desire) || '';
+  const effectiveAwareness = overrides.awareness || (persona && persona.market_awareness) || '';
+  const effectiveSophistication = overrides.sophistication || (persona && persona.market_sophistication) || '';
 
   let txt = `Ikaw ay isang creative strategist at copywriter para sa Facebook video ads ng isang aesthetics/wellness clinic sa Pilipinas. Taglish ang gamitin mo — natural, parang totoong tao ang nagsasalita, hindi corporate o robotic ang tono.\n\n`;
   txt += `BRAND: ${b?b.name:''}\n`;
@@ -2117,9 +2138,9 @@ function buildScriptPrompt(personaId, structureKey){
   }
   txt += `TARGET PERSONA: ${persona?persona.name:''}\n`;
   if(persona && persona.description) txt += `${persona.description}\n`;
-  if(persona && persona.desire) txt += `Core Desire: ${persona.desire}\n`;
-  if(persona && persona.market_awareness) txt += `Market Awareness: ${labelFor(AWARENESS, persona.market_awareness)}\n`;
-  if(persona && persona.market_sophistication) txt += `Market Sophistication: ${labelFor(SOPHISTICATION, persona.market_sophistication)}\n`;
+  if(effectiveDesire) txt += `Core Desire: ${effectiveDesire}\n`;
+  if(effectiveAwareness) txt += `Market Awareness: ${labelFor(AWARENESS, effectiveAwareness)}\n`;
+  if(effectiveSophistication) txt += `Market Sophistication: ${labelFor(SOPHISTICATION, effectiveSophistication)}\n`;
   txt += `\n`;
   if(top3.length){
     txt += `TOP PROBLEMS (ranked, Intensity × Repeatability × Scale):\n`;
@@ -2142,7 +2163,12 @@ function buildScriptPrompt(personaId, structureKey){
 async function copyScriptPrompt(personaId){
   const statusEl = document.querySelector(`.copy-prompt-status[data-for="${personaId}"]`);
   const structureKey = document.getElementById('strat-brief-structure').value;
-  const txt = buildScriptPrompt(personaId, structureKey);
+  const overrides = {
+    awareness: document.getElementById('strat-brief-awareness').value,
+    sophistication: document.getElementById('strat-brief-sophistication').value,
+    desire: document.getElementById('strat-brief-desire').value
+  };
+  const txt = buildScriptPrompt(personaId, structureKey, overrides);
   try{
     await navigator.clipboard.writeText(txt);
     if(statusEl){ statusEl.textContent = 'Nakopya ✓ — i-paste sa ChatGPT.'; statusEl.className = 'status-msg ok copy-prompt-status'; statusEl.dataset.for = personaId; setTimeout(()=>{ statusEl.textContent=''; },3000); }
