@@ -390,6 +390,16 @@
   </div>
 </div>
 
+<datalist id="sizing-presets">
+  <option value="9:16 (Vertical / Stories / Reels)">
+  <option value="4:5 (Portrait / Feed)">
+  <option value="1:1 (Square)">
+  <option value="16:9 (Landscape / Horizontal)">
+  <option value="1.91:1 (Landscape / Link Ad)">
+  <option value="4:3 (Standard)">
+  <option value="3:4 (Portrait)">
+  <option value="2:3 (Portrait)">
+</datalist>
 <div id="detail-modal-overlay" class="detail-modal-overlay">
   <div class="detail-modal-box">
     <button class="detail-modal-close" id="detail-modal-close" type="button" aria-label="Close">×</button>
@@ -698,7 +708,7 @@
         <div class="field full"><label>Hypothesis <span style="font-weight:400;text-transform:none;letter-spacing:0;">(why are we testing this?)</span></label><textarea id="f-hypothesis" placeholder="e.g. May winning hook tayo dati, gusto nating subukan sa bagong visual."></textarea></div>
         <div class="field full"><label>Type of Ad</label><select id="f-type-of-ad"><option value="">Pumili muna ng Market Awareness…</option></select></div>
         <div class="field"><label>Format</label><select id="f-format"><option value="">Select…</option><option value="Video">Video</option><option value="Image">Image</option><option value="Carousel">Carousel</option><option value="Static">Static</option></select></div>
-        <div class="field"><label>Sizing</label><select id="f-sizing"><option value="">Select…</option><option value="9:16">9:16 (Vertical / Stories / Reels)</option><option value="4:5">4:5 (Portrait / Feed)</option><option value="1:1">1:1 (Square)</option><option value="16:9">16:9 (Horizontal / Landscape)</option></select></div>
+        <div class="field"><label>Sizing</label><input type="text" id="f-sizing" list="sizing-presets" placeholder="Pumili o mag-type ng kahit anong size" /></div>
         <div class="field"><label>Creative Variations</label><input type="number" id="f-creative-variations" min="1" placeholder="e.g. 3" /></div>
         <div class="field full">
           <label>Strengthen Hook Pattern <span style="font-weight:400;text-transform:none;letter-spacing:0;">(pumili ng hanggang 3)</span></label>
@@ -2538,7 +2548,7 @@ function buildInlineEditHTML(e){
         <div class="field full"><label>Link to Adset</label><input type="text" class="ie-adsetlink" value="${escapeHtml(e.adset_link||'')}" /></div>
         <div class="field full"><label>Link to Ads Manager</label><input type="text" class="ie-adsmanagerlink" value="${escapeHtml(e.ads_manager_link||'')}" placeholder="Paste Ads Manager URL for this ad" /></div>
         <div class="field"><label>Format</label><select class="ie-format"><option value="">Select…</option>${['Video','Image','Carousel','Static'].map(f=>`<option value="${f}" ${e.format===f?'selected':''}>${f}</option>`).join('')}</select></div>
-        <div class="field"><label>Sizing</label><select class="ie-sizing"><option value="">Select…</option>${[['9:16','9:16 (Vertical / Stories / Reels)'],['4:5','4:5 (Portrait / Feed)'],['1:1','1:1 (Square)'],['16:9','16:9 (Horizontal / Landscape)']].map(([v,l])=>`<option value="${v}" ${e.sizing===v?'selected':''}>${escapeHtml(l)}</option>`).join('')}</select></div>
+        <div class="field"><label>Sizing</label><input type="text" class="ie-sizing" list="sizing-presets" value="${escapeHtml(e.sizing||'')}" placeholder="Pumili o mag-type ng kahit anong size" /></div>
         <div class="field"><label>Creative Variations</label><input type="number" class="ie-creative-variations" min="1" value="${e.creative_variations||''}" placeholder="e.g. 3" /></div>
       </div>
     </div>
