@@ -123,11 +123,11 @@ async function handlePersonas(req, res) {
     return res.status(200).json(data);
   }
   if (req.method === 'POST') {
-    const { brand_id, name, description, desire } = req.body || {};
+    const { brand_id, name, description, desire, market_awareness, market_sophistication } = req.body || {};
     if (!brand_id || !name) return res.status(400).json({ error: 'Missing brand_id/name' });
     const { data, error } = await supabase
       .from('strategy_personas')
-      .insert([{ brand_id, name, description: description || null, desire: desire || null }])
+      .insert([{ brand_id, name, description: description || null, desire: desire || null, market_awareness: market_awareness || null, market_sophistication: market_sophistication || null }])
       .select();
     if (error) throw error;
     return res.status(200).json(data[0]);
