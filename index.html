@@ -673,6 +673,9 @@
         <div class="field"><label>Market Sophistication</label><select id="f-sophistication"></select></div>
         <div class="field full"><label>Hypothesis <span style="font-weight:400;text-transform:none;letter-spacing:0;">(why are we testing this?)</span></label><textarea id="f-hypothesis" placeholder="e.g. May winning hook tayo dati, gusto nating subukan sa bagong visual."></textarea></div>
         <div class="field full"><label>Type of Ad</label><select id="f-type-of-ad"><option value="">Pumili muna ng Market Awareness…</option></select></div>
+        <div class="field"><label>Format</label><select id="f-format"><option value="">Select…</option><option value="Video">Video</option><option value="Image">Image</option><option value="Carousel">Carousel</option><option value="Static">Static</option></select></div>
+        <div class="field"><label>Sizing</label><select id="f-sizing"><option value="">Select…</option><option value="9:16">9:16 (Vertical / Stories / Reels)</option><option value="4:5">4:5 (Portrait / Feed)</option><option value="1:1">1:1 (Square)</option><option value="16:9">16:9 (Horizontal / Landscape)</option></select></div>
+        <div class="field"><label>Creative Variations</label><input type="number" id="f-creative-variations" min="1" placeholder="e.g. 3" /></div>
         <div class="field full">
           <label>Strengthen Hook Pattern <span style="font-weight:400;text-transform:none;letter-spacing:0;">(pumili ng hanggang 3)</span></label>
           <div id="f-hook-patterns" class="hook-grid"></div>
@@ -920,7 +923,7 @@ document.getElementById('login-password').addEventListener('keydown', (ev)=>{ if
 // ---------- Details modal (full entry: script, strategy, links, tags, performance, history, actions) ----------
 function renderDetailModalReadView(e){
   const perf = e.performance;
-  const hasStrategy = e.market_awareness || e.type_of_ad || (e.hook_patterns&&e.hook_patterns.length) || e.headline || e.ad_copy || e.hypothesis || e.problem_text || e.desire;
+  const hasStrategy = e.market_awareness || e.type_of_ad || (e.hook_patterns&&e.hook_patterns.length) || e.headline || e.ad_copy || e.hypothesis || e.problem_text || e.desire || e.format || e.sizing || e.creative_variations;
   return `
     <h3>${escapeHtml(e.ad_name||'Details')}</h3>
     <div class="entry-meta" style="margin-bottom:10px;">${pageLabel(e.page)||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
@@ -938,6 +941,7 @@ function renderDetailModalReadView(e){
       ${e.market_sophistication?`<div><b>Sophistication:</b> ${escapeHtml(labelFor(SOPHISTICATION,e.market_sophistication))}</div>`:''}
       ${e.hypothesis?`<div><b>Hypothesis:</b> ${escapeHtml(e.hypothesis)}</div>`:''}
       ${e.type_of_ad?`<div><b>Type of Ad:</b> ${escapeHtml(e.type_of_ad)}</div>`:''}
+      ${(e.format||e.sizing||e.creative_variations)?`<div><b>Production:</b> ${[e.format,e.sizing,e.creative_variations?`${e.creative_variations} variations`:''].filter(Boolean).map(escapeHtml).join(' · ')}</div>`:''}
       ${(e.hook_patterns&&e.hook_patterns.length)?`<div><b>Hooks:</b> ${e.hook_patterns.map(h=>escapeHtml(h)).join(', ')}</div>`:''}
       ${e.headline?`<div><b>Headline:</b> ${escapeHtml(e.headline)}</div>`:''}
       ${e.ad_copy?`<div><b>Ad Copy:</b> ${escapeHtml(e.ad_copy)}</div>`:''}
@@ -1031,6 +1035,9 @@ async function openDetailModal(id){
           ad_copy: content.querySelector('.ie-adcopy').value.trim(),
           adset_link: content.querySelector('.ie-adsetlink').value.trim(),
           ads_manager_link: content.querySelector('.ie-adsmanagerlink').value.trim(),
+          format: content.querySelector('.ie-format').value || null,
+          sizing: content.querySelector('.ie-sizing').value || null,
+          creative_variations: content.querySelector('.ie-creative-variations').value ? parseInt(content.querySelector('.ie-creative-variations').value, 10) : null,
           performance: {
             ...(e.performance||{}),
             review: {
@@ -1077,7 +1084,8 @@ async function openDetailModal(id){
         problem_id: e.problem_id || null, problem_text: e.problem_text || null, desire: e.desire || null,
         market_awareness: e.market_awareness || null, market_sophistication: e.market_sophistication || null,
         hypothesis: e.hypothesis || '', type_of_ad: e.type_of_ad || null, hook_patterns: e.hook_patterns || [],
-        type_of_headline: e.type_of_headline || null, headline: e.headline || '', ad_copy: e.ad_copy || '', adset_link: '', ads_manager_link: ''
+        type_of_headline: e.type_of_headline || null, headline: e.headline || '', ad_copy: e.ad_copy || '', adset_link: '', ads_manager_link: '',
+        format: e.format || null, sizing: e.sizing || null, creative_variations: e.creative_variations || null
       })});
       showToast('✓ Duplicated — edit the copy to set it up');
       closeDetailModal();
@@ -2041,6 +2049,9 @@ function resetForm(){
   document.getElementById('f-headline').value='';
   document.getElementById('f-ad-copy').value='';
   document.getElementById('f-adset-link').value='';
+  document.getElementById('f-format').value='';
+  document.getElementById('f-sizing').value='';
+  document.getElementById('f-creative-variations').value='';
   document.getElementById('f-ads-manager-link').value='';
 }
 
@@ -2092,7 +2103,10 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     headline: document.getElementById('f-headline').value.trim(),
     ad_copy: document.getElementById('f-ad-copy').value.trim(),
     adset_link: document.getElementById('f-adset-link').value.trim(),
-    ads_manager_link: document.getElementById('f-ads-manager-link').value.trim()
+    ads_manager_link: document.getElementById('f-ads-manager-link').value.trim(),
+    format: document.getElementById('f-format').value || null,
+    sizing: document.getElementById('f-sizing').value || null,
+    creative_variations: document.getElementById('f-creative-variations').value ? parseInt(document.getElementById('f-creative-variations').value, 10) : null
   };
 
   try{
@@ -2316,6 +2330,9 @@ function buildInlineEditHTML(e){
         <div class="field full"><label>Ad Copy</label><textarea class="ie-adcopy">${escapeHtml(e.ad_copy||'')}</textarea></div>
         <div class="field full"><label>Link to Adset</label><input type="text" class="ie-adsetlink" value="${escapeHtml(e.adset_link||'')}" /></div>
         <div class="field full"><label>Link to Ads Manager</label><input type="text" class="ie-adsmanagerlink" value="${escapeHtml(e.ads_manager_link||'')}" placeholder="Paste Ads Manager URL for this ad" /></div>
+        <div class="field"><label>Format</label><select class="ie-format"><option value="">Select…</option>${['Video','Image','Carousel','Static'].map(f=>`<option value="${f}" ${e.format===f?'selected':''}>${f}</option>`).join('')}</select></div>
+        <div class="field"><label>Sizing</label><select class="ie-sizing"><option value="">Select…</option>${[['9:16','9:16 (Vertical / Stories / Reels)'],['4:5','4:5 (Portrait / Feed)'],['1:1','1:1 (Square)'],['16:9','16:9 (Horizontal / Landscape)']].map(([v,l])=>`<option value="${v}" ${e.sizing===v?'selected':''}>${escapeHtml(l)}</option>`).join('')}</select></div>
+        <div class="field"><label>Creative Variations</label><input type="number" class="ie-creative-variations" min="1" value="${e.creative_variations||''}" placeholder="e.g. 3" /></div>
       </div>
     </div>
 
