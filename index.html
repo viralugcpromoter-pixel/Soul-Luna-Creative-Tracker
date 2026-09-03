@@ -302,6 +302,7 @@
   .hook-opt .hn{font-weight:600;color:var(--ink);}
   .hook-opt .he{color:var(--ink-soft);}
   .strat-list-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--bg);}
+  .strat-list-row.strat-selected{border-color:var(--accent);border-width:2px;background:var(--accent-soft);}
   .strat-list-row .name{font-weight:600;font-size:13.5px;}
   .strat-list-row .sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
   .strat-list-row .acts{display:flex;gap:8px;flex-shrink:0;align-items:center;}
@@ -1390,6 +1391,7 @@ let STRAT_PROBLEMS_CACHE = {};
 let stratActiveBrand = null;
 let stratManagingPersonaId = null;
 let stratStep = 1;
+let stratSelectedProductId = null;
 let editingProductId = null;
 let editingPersonaId = null;
 let editingProblemId = null;
@@ -1592,10 +1594,18 @@ document.getElementById('wiz-to-4').addEventListener('click', ()=>goToStep(4));
 document.getElementById('wiz-to-3-b').addEventListener('click', ()=>goToStep(3));
 document.getElementById('wiz-to-5').addEventListener('click', ()=>goToStep(5));
 document.getElementById('wiz-to-4-b').addEventListener('click', ()=>goToStep(4));
-document.getElementById('wiz-go-log').addEventListener('click', ()=>{
+document.getElementById('wiz-go-log').addEventListener('click', async ()=>{
   document.querySelector('.tab-btn[data-tab="log"]').click();
   document.getElementById('f-brand').value = stratActiveBrand || '';
   onLogBrandChange();
+  if(stratSelectedProductId){
+    document.getElementById('f-product').value = stratSelectedProductId;
+    document.getElementById('f-product').dispatchEvent(new Event('change'));
+  }
+  if(stratManagingPersonaId){
+    document.getElementById('f-persona').value = stratManagingPersonaId;
+    document.getElementById('f-persona').dispatchEvent(new Event('change'));
+  }
 });
 
 let stratInitialized = false;
@@ -1606,20 +1616,25 @@ async function renderStrategyTab(){
 
   if(!stratInitialized){
     stratInitialized = true;
-    const savedBrand = localStorage.getItem('strat-active-brand');
-    if(savedBrand && BRANDS[savedBrand]) stratActiveBrand = savedBrand;
-    const savedStep = parseInt(localStorage.getItem('strat-step'), 10);
-    if(savedStep>=1 && savedStep<=5) stratStep = savedStep;
-    const savedPersona = localStorage.getItem('strat-managing-persona');
-    if(savedPersona && STRAT_PERSONAS.some(p=>p.id===savedPersona)) stratManagingPersonaId = savedPersona;
+    try{
+      const savedBrand = localStorage.getItem('strat-active-brand');
+      if(savedBrand && BRANDS[savedBrand]) stratActiveBrand = savedBrand;
+      const savedStep = parseInt(localStorage.getItem('strat-step'), 10);
+      if(savedStep>=1 && savedStep<=5) stratStep = savedStep;
+      const savedPersona = localStorage.getItem('strat-managing-persona');
+      if(savedPersona && STRAT_PERSONAS.some(p=>p.id===savedPersona)) stratManagingPersonaId = savedPersona;
+      const savedProduct = localStorage.getItem('strat-selected-product');
+      if(savedProduct && STRAT_PRODUCTS.some(p=>p.id===savedProduct)) stratSelectedProductId = savedProduct;
+    }catch(err){ console.warn('Strategy resume failed:', err); }
   }
+
+  document.querySelectorAll('.wiz-panel').forEach(p=>p.classList.toggle('active', parseInt(p.dataset.wizPanel,10)===stratStep));
 
   renderBrandSelects();
   const b = BRANDS[stratActiveBrand];
   document.getElementById('strat-brand-desc').value = b ? (b.description||'') : '';
   renderStrategyProducts();
   renderStrategyPersonas();
-  document.querySelectorAll('.wiz-panel').forEach(p=>p.classList.toggle('active', parseInt(p.dataset.wizPanel,10)===stratStep));
   renderWizardHeader();
   if(stratStep===4) renderProblemPersonaSelect();
   if(stratStep===5) renderCreativeBrief();
@@ -1628,9 +1643,12 @@ async function renderStrategyTab(){
 document.getElementById('strat-brand-select').addEventListener('change', ()=>{
   stratActiveBrand = document.getElementById('strat-brand-select').value;
   stratStep = 1;
+  stratManagingPersonaId = null;
+  stratSelectedProductId = null;
   localStorage.setItem('strat-active-brand', stratActiveBrand);
   localStorage.setItem('strat-step', '1');
   localStorage.removeItem('strat-managing-persona');
+  localStorage.removeItem('strat-selected-product');
   renderStrategyTab();
 });
 document.getElementById('strat-brand-add-toggle').addEventListener('click', ()=>{
@@ -1679,11 +1697,23 @@ function renderStrategyProducts(){
         <div class="row"><button class="btn btn-primary btn-sm act-save-product" data-id="${p.id}" type="button">Save</button><button class="btn-link act-cancel-product" type="button">Cancel</button></div>
       </div>`;
     }
-    return `<div class="strat-list-row" data-id="${p.id}">
-      <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${escapeHtml((p.positioning||'').slice(0,140))}${(p.positioning||'').length>140?'…':''}</div></div>
-      <div class="acts"><button class="btn-link act-edit-product" data-id="${p.id}" type="button">Edit</button><button class="btn-danger-text act-del-product" data-id="${p.id}" type="button">Delete</button></div>
+    const isSelected = p.id===stratSelectedProductId;
+    return `<div class="strat-list-row ${isSelected?'strat-selected':''}" data-id="${p.id}">
+      <div><div class="name">${isSelected?'✓ ':''}${escapeHtml(p.name)}</div><div class="sub">${escapeHtml((p.positioning||'').slice(0,140))}${(p.positioning||'').length>140?'…':''}</div></div>
+      <div class="acts">
+        <button class="btn ${isSelected?'btn-primary':'btn-ghost'} btn-sm act-select-product" data-id="${p.id}" type="button">${isSelected?'✓ Selected':'Use this product'}</button>
+        <button class="btn-link act-edit-product" data-id="${p.id}" type="button">Edit</button>
+        <button class="btn-danger-text act-del-product" data-id="${p.id}" type="button">Delete</button>
+      </div>
     </div>`;
   }).join('');
+  holder.querySelectorAll('.act-select-product').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      stratSelectedProductId = (stratSelectedProductId===btn.dataset.id) ? null : btn.dataset.id;
+      if(stratSelectedProductId) localStorage.setItem('strat-selected-product', stratSelectedProductId); else localStorage.removeItem('strat-selected-product');
+      renderStrategyProducts();
+    });
+  });
   holder.querySelectorAll('.act-edit-product').forEach(btn=>{
     btn.addEventListener('click', ()=>{ editingProductId = btn.dataset.id; renderStrategyProducts(); });
   });
@@ -1756,10 +1786,11 @@ function renderStrategyPersonas(){
         <div class="row"><button class="btn btn-primary btn-sm act-save-persona" data-id="${p.id}" type="button">Save</button><button class="btn-link act-cancel-persona" type="button">Cancel</button></div>
       </div>`;
     }
-    return `<div class="strat-list-row" data-id="${p.id}">
-      <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.desire?('Desire: '+escapeHtml(p.desire)+' · '):''}${p.market_awareness?(labelFor(AWARENESS,p.market_awareness).split(' — ')[0]+' · '):''}${escapeHtml((p.description||'').slice(0,100))}${(p.description||'').length>100?'…':''}</div></div>
+    const isSelected = p.id===stratManagingPersonaId;
+    return `<div class="strat-list-row ${isSelected?'strat-selected':''}" data-id="${p.id}">
+      <div><div class="name">${isSelected?'✓ ':''}${escapeHtml(p.name)}</div><div class="sub">${p.desire?('Desire: '+escapeHtml(p.desire)+' · '):''}${p.market_awareness?(labelFor(AWARENESS,p.market_awareness).split(' — ')[0]+' · '):''}${escapeHtml((p.description||'').slice(0,100))}${(p.description||'').length>100?'…':''}</div></div>
       <div class="acts">
-        <button class="btn btn-ghost btn-sm act-manage-problems" data-id="${p.id}" data-name="${escapeHtml(p.name)}" type="button">Manage Problems</button>
+        <button class="btn ${isSelected?'btn-primary':'btn-ghost'} btn-sm act-manage-problems" data-id="${p.id}" data-name="${escapeHtml(p.name)}" type="button">${isSelected?'✓ Selected — Manage Problems':'Use this persona'}</button>
         <button class="btn-link act-edit-persona" data-id="${p.id}" type="button">Edit</button>
         <button class="btn-danger-text act-del-persona" data-id="${p.id}" type="button">Delete</button>
       </div>
