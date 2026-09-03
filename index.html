@@ -370,8 +370,8 @@
   .tt-pipe{display:flex;gap:3px;}
   .tt-pipe-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
   .tt-pipe-dot.done{background:var(--winner);}
-  .tt-link-icon{display:inline-block;font-size:15px;text-decoration:none;padding:2px 3px;border-radius:5px;transition:background-color .12s ease;}
-  .tt-link-icon:hover{background:var(--accent-soft);}
+  .tt-link-chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);text-decoration:none;color:var(--ink-soft);margin:1px 3px 1px 0;white-space:nowrap;transition:all .12s ease;}
+  .tt-link-chip:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
   .tt-stage{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
   .tt-stage-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
   .tt-stage-dot.concept{background:var(--ink-soft);}
@@ -2552,11 +2552,11 @@ async function renderEntries(){
         <td>${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>
         <td>${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>
         <td>${[
-          e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" title="Concept" class="tt-link-icon" onclick="event.stopPropagation()">📄</a>`:'',
-          e.output_link?`<a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" title="Output" class="tt-link-icon" onclick="event.stopPropagation()">🎬</a>`:'',
-          e.adset_link?`<a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" title="Adset" class="tt-link-icon" onclick="event.stopPropagation()">📊</a>`:'',
-          e.ads_manager_link?`<a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" title="Ads Manager" class="tt-link-icon" onclick="event.stopPropagation()">📈</a>`:''
-        ].filter(Boolean).join(' ') || '—'}</td>
+          e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📄 Concept</a>`:'',
+          e.output_link?`<a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">🎬 Output</a>`:'',
+          e.adset_link?`<a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📊 Adset</a>`:'',
+          e.ads_manager_link?`<a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr</a>`:''
+        ].filter(Boolean).join('') || '—'}</td>
         <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
         <td>${escapeHtml(e.editor||'—')}</td>
         <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
