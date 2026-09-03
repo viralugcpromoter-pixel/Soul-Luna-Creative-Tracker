@@ -158,12 +158,13 @@
   .entry:hover{transform:translateY(-2px);}
   .entry.winner{border-left-color:var(--winner);}
   .entry.pending{border-left-color:var(--pending);}
-  .entry-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .entry-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:nowrap;align-items:flex-start;}
+  .entry-info{flex:1 1 auto;min-width:0;}
   .entry-title{font-family:'Fraunces',serif;font-size:17px;font-weight:600;}
   .entry-meta{font-size:12px;color:var(--ink-soft);margin-top:3px;}
   .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
   .tag-chip{background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;}
-  .badge{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:4px 10px;border-radius:999px;white-space:nowrap;height:fit-content;}
+  .badge{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:4px 10px;border-radius:999px;white-space:nowrap;height:fit-content;flex-shrink:0;}
   .badge.winner{background:var(--winner-soft);color:var(--winner);}
   .badge.pending{background:var(--pending-soft);color:var(--pending);}
   .badge.not_winner{background:var(--not-winner-soft);color:var(--not-winner);}
@@ -179,7 +180,7 @@
   .entry-title .chev{transition:transform .25s cubic-bezier(.4,0,.2,1);}
   .brand-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
   .btn-dup{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);}
-  .badge-stack{display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
+  .badge-stack{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0;}
   .entry-script{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;white-space:pre-wrap;margin-top:6px;max-height:120px;overflow-y:auto;color:var(--ink);}
   .perf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;}
   @media (max-width:560px){.perf-grid{grid-template-columns:repeat(2,1fr);}}
@@ -326,8 +327,9 @@
   .brief-section{margin-bottom:18px;}
   .brief-section h4{font-family:'Fraunces',serif;font-size:15px;margin:0 0 8px;}
   .brief-persona-card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--bg);}
-  .quick-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-  .qf-chip{padding:6px 13px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;font-weight:600;cursor:pointer;background:var(--card-bg,var(--bg));color:var(--ink-soft);transition:all .15s ease;font-family:'Inter',sans-serif;}
+  .quick-filter-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .quick-filter-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .qf-chip{padding:8px 10px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;font-weight:600;cursor:pointer;background:var(--card-bg,var(--bg));color:var(--ink-soft);transition:all .15s ease;font-family:'Inter',sans-serif;text-align:center;}
   .qf-chip:hover{border-color:var(--accent);}
   .qf-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
   .qf-chip .count{opacity:.8;margin-left:3px;font-weight:700;}
@@ -643,7 +645,9 @@
 
   <!-- TRACKER PANEL -->
   <section class="panel" id="panel-track">
-    <div class="quick-filter-bar" id="quick-filter-bar"></div>
+    <div class="quick-filter-box">
+      <div class="quick-filter-bar" id="quick-filter-bar"></div>
+    </div>
     <div class="filter-bar">
       <input type="text" id="filt-search" placeholder="Search ad name or script…" style="width:200px;padding:8px 10px;font-size:13px;" />
       <select id="filt-page">
@@ -1973,7 +1977,7 @@ async function renderEntries(){
     const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
     div.innerHTML = `
       <div class="entry-head">
-        <div>
+        <div class="entry-info">
           <div class="entry-title">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)} <span class="chev">▸</span></div>
           <div class="entry-meta">${pageLabel(e.page)||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
           <div class="pipeline-track">
@@ -2549,7 +2553,7 @@ async function renderAdklaro(){
     return `
     <div class="entry">
       <div class="entry-head">
-        <div>
+        <div class="entry-info">
           <div class="entry-title">${escapeHtml(name)}</div>
           <div class="entry-meta">${escapeHtml(c.account || c.page || '')}${c.spend?' · Spend '+escapeHtml(String(c.spend)):''}${c.results?' · Results '+escapeHtml(String(c.results)):''}</div>
         </div>
