@@ -1574,6 +1574,7 @@ function goToStep(n){
   const unlocks = computeStepUnlocks();
   if(!unlocks[n]) return;
   stratStep = n;
+  localStorage.setItem('strat-step', String(n));
   document.querySelectorAll('.wiz-panel').forEach(p=>p.classList.toggle('active', parseInt(p.dataset.wizPanel,10)===n));
   renderWizardHeader();
   if(n===4) renderProblemPersonaSelect();
@@ -1597,9 +1598,22 @@ document.getElementById('wiz-go-log').addEventListener('click', ()=>{
   onLogBrandChange();
 });
 
+let stratInitialized = false;
+
 async function renderStrategyTab(){
   if(Object.keys(BRANDS).length===0) await loadBrands();
   if(STRAT_PRODUCTS.length===0 && STRAT_PERSONAS.length===0) await loadStrategyLibrary();
+
+  if(!stratInitialized){
+    stratInitialized = true;
+    const savedBrand = localStorage.getItem('strat-active-brand');
+    if(savedBrand && BRANDS[savedBrand]) stratActiveBrand = savedBrand;
+    const savedStep = parseInt(localStorage.getItem('strat-step'), 10);
+    if(savedStep>=1 && savedStep<=5) stratStep = savedStep;
+    const savedPersona = localStorage.getItem('strat-managing-persona');
+    if(savedPersona && STRAT_PERSONAS.some(p=>p.id===savedPersona)) stratManagingPersonaId = savedPersona;
+  }
+
   renderBrandSelects();
   const b = BRANDS[stratActiveBrand];
   document.getElementById('strat-brand-desc').value = b ? (b.description||'') : '';
@@ -1614,6 +1628,9 @@ async function renderStrategyTab(){
 document.getElementById('strat-brand-select').addEventListener('change', ()=>{
   stratActiveBrand = document.getElementById('strat-brand-select').value;
   stratStep = 1;
+  localStorage.setItem('strat-active-brand', stratActiveBrand);
+  localStorage.setItem('strat-step', '1');
+  localStorage.removeItem('strat-managing-persona');
   renderStrategyTab();
 });
 document.getElementById('strat-brand-add-toggle').addEventListener('click', ()=>{
@@ -1749,7 +1766,7 @@ function renderStrategyPersonas(){
     </div>`;
   }).join('');
   holder.querySelectorAll('.act-manage-problems').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ stratManagingPersonaId = btn.dataset.id; goToStep(4); });
+    btn.addEventListener('click', ()=>{ stratManagingPersonaId = btn.dataset.id; localStorage.setItem('strat-managing-persona', stratManagingPersonaId); goToStep(4); });
   });
   holder.querySelectorAll('.act-edit-persona').forEach(btn=>{
     btn.addEventListener('click', ()=>{ editingPersonaId = btn.dataset.id; renderStrategyPersonas(); });
@@ -1812,6 +1829,7 @@ async function renderProblemPersonaSelect(){
   const current = stratManagingPersonaId && list.some(p=>p.id===stratManagingPersonaId) ? stratManagingPersonaId : (list[0]?list[0].id:null);
   sel.innerHTML = list.map(p=>`<option value="${p.id}" ${p.id===current?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
   stratManagingPersonaId = current;
+  if(current) localStorage.setItem('strat-managing-persona', current); else localStorage.removeItem('strat-managing-persona');
   document.getElementById('strat-prob-intensity').innerHTML = scoreOptions(1);
   document.getElementById('strat-prob-repeatability').innerHTML = scoreOptions(1);
   document.getElementById('strat-prob-scale').innerHTML = scoreOptions(1);
@@ -1822,6 +1840,7 @@ async function renderProblemPersonaSelect(){
 }
 document.getElementById('strat-prob-persona-select').addEventListener('change', async ()=>{
   stratManagingPersonaId = document.getElementById('strat-prob-persona-select').value;
+  localStorage.setItem('strat-managing-persona', stratManagingPersonaId);
   await loadProblemsFor(stratManagingPersonaId);
   renderProblemsWorkspace();
 });
