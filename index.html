@@ -326,6 +326,11 @@
   .brief-section{margin-bottom:18px;}
   .brief-section h4{font-family:'Fraunces',serif;font-size:15px;margin:0 0 8px;}
   .brief-persona-card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--bg);}
+  .quick-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .qf-chip{padding:6px 13px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;font-weight:600;cursor:pointer;background:var(--card-bg,var(--bg));color:var(--ink-soft);transition:all .15s ease;font-family:'Inter',sans-serif;}
+  .qf-chip:hover{border-color:var(--accent);}
+  .qf-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .qf-chip .count{opacity:.8;margin-left:3px;font-weight:700;}
 </style>
 </head>
 <body>
@@ -638,6 +643,7 @@
 
   <!-- TRACKER PANEL -->
   <section class="panel" id="panel-track">
+    <div class="quick-filter-bar" id="quick-filter-bar"></div>
     <div class="filter-bar">
       <input type="text" id="filt-search" placeholder="Search ad name or script…" style="width:200px;padding:8px 10px;font-size:13px;" />
       <select id="filt-page">
@@ -1827,6 +1833,43 @@ document.getElementById('filt-editor').addEventListener('input', renderEntries);
 document.getElementById('filt-date-from').addEventListener('change', renderEntries);
 document.getElementById('filt-date-to').addEventListener('change', renderEntries);
 
+let activeQuickFilter = '';
+const QUICK_FILTERS = [
+  ['', 'All'],
+  ['needs_editing', 'Needs Editing'],
+  ['needs_review', 'Needs Review'],
+  ['live', 'Live'],
+  ['winner', 'Winners'],
+  ['not_winner', 'Not a Winner'],
+  ['pending', 'Pending'],
+];
+function matchesQuickFilter(e, key){
+  const daysLaunched = e.launched ? daysSince(e.date_launched) : null;
+  const needsReview = e.launched && e.winner_status==='pending' && daysLaunched!==null && daysLaunched>=7;
+  switch(key){
+    case 'needs_editing': return !e.editing_done;
+    case 'needs_review': return needsReview;
+    case 'live': return !!e.launched;
+    case 'winner': return e.winner_status==='winner';
+    case 'not_winner': return e.winner_status==='not_winner';
+    case 'pending': return e.winner_status==='pending';
+    default: return true;
+  }
+}
+function renderQuickFilterBar(list){
+  const bar = document.getElementById('quick-filter-bar');
+  bar.innerHTML = QUICK_FILTERS.map(([key,label])=>{
+    const count = key==='' ? list.length : list.filter(e=>matchesQuickFilter(e,key)).length;
+    return `<button type="button" class="qf-chip ${activeQuickFilter===key?'active':''}" data-key="${key}">${escapeHtml(label)} <span class="count">${count}</span></button>`;
+  }).join('');
+  bar.querySelectorAll('.qf-chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeQuickFilter = (activeQuickFilter===btn.dataset.key) ? '' : btn.dataset.key;
+      renderEntries();
+    });
+  });
+}
+
 async function renderEntries(){
   const holder = document.getElementById('entries-holder');
   if(entries.length===0) holder.innerHTML = `<div class="empty"><span class="spinner"></span> Loading…</div>`;
@@ -1838,7 +1881,7 @@ async function renderEntries(){
   const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
   const fdFrom = document.getElementById('filt-date-from').value;
   const fdTo = document.getElementById('filt-date-to').value;
-  let list = entries.filter(e=>{
+  const preQuickList = entries.filter(e=>{
     const submittedDate = (e.submitted_at||'').slice(0,10);
     return (!fq || (e.ad_name||'').toLowerCase().includes(fq) || (e.script||'').toLowerCase().includes(fq)) &&
     (!fp || e.page===fp) &&
@@ -1848,6 +1891,8 @@ async function renderEntries(){
     (!fdFrom || submittedDate>=fdFrom) &&
     (!fdTo || submittedDate<=fdTo);
   });
+  renderQuickFilterBar(preQuickList);
+  let list = activeQuickFilter ? preQuickList.filter(e=>matchesQuickFilter(e, activeQuickFilter)) : preQuickList;
 
   document.getElementById('entry-count').textContent = `${list.length} creative${list.length===1?'':'s'}`;
 
