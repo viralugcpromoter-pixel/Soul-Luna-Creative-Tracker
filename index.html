@@ -2120,12 +2120,8 @@ document.getElementById('filt-date-to').addEventListener('change', renderEntries
 let activeQuickFilter = '';
 const QUICK_FILTERS = [
   ['', 'All'],
-  ['needs_editing', 'Needs Editing'],
-  ['needs_review', 'Needs Review'],
-  ['live', 'Live'],
   ['winner', 'Winners'],
   ['not_winner', 'Not a Winner'],
-  ['pending', 'Pending'],
 ];
 function matchesQuickFilter(e, key){
   const daysLaunched = e.launched ? daysSince(e.date_launched) : null;
@@ -2200,17 +2196,17 @@ async function renderEntries(){
       <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
         <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
         <td><span class="tt-badge ${badgeClass}">${finalBadgeLabel}</span></td>
-        <td><span class="tt-stage"><span class="tt-stage-dot ${stage.cls}"></span>${stage.label}</span></td>
-        <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
-        <td>${escapeHtml(e.editor||'—')}</td>
-        <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
         <td>${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
         <td>${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
         <td>${e.desire?escapeHtml(e.desire):'—'}</td>
         <td>${e.type_of_ad?`<span class="tt-truncate" title="${escapeHtml(e.type_of_ad)}">${escapeHtml(e.type_of_ad)}</span>`:'—'}</td>
+        <td>${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>
         <td>${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>
         <td>${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>
-        <td>${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>
+        <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
+        <td>${escapeHtml(e.editor||'—')}</td>
+        <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
+        <td><span class="tt-stage"><span class="tt-stage-dot ${stage.cls}"></span>${stage.label}</span></td>
       </tr>`;
   }).join('');
 
@@ -2218,8 +2214,8 @@ async function renderEntries(){
     <div class="tracker-table-wrap">
       <table class="tracker-table">
         <thead><tr>
-          <th>Ad name</th><th>Status</th><th>Pipeline</th><th>Page</th><th>Editor</th><th>Launched</th>
-          <th>Awareness</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>CTR</th><th>ROAS</th><th>Tags</th>
+          <th>Ad name</th><th>Status</th><th>Awareness</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>Tags</th>
+          <th>CTR</th><th>ROAS</th><th>Page</th><th>Editor</th><th>Launched</th><th>Pipeline</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
