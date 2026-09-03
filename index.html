@@ -2543,6 +2543,9 @@ async function renderEntries(){
         <td>${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
         <td>${e.desire?escapeHtml(e.desire):'—'}</td>
         <td>${e.type_of_ad?`<span class="tt-truncate" title="${escapeHtml(e.type_of_ad)}">${escapeHtml(e.type_of_ad)}</span>`:'—'}</td>
+        <td>${(e.hook_patterns&&e.hook_patterns.length)?`<span class="tt-truncate" title="${escapeHtml(e.hook_patterns.join(', '))}">${escapeHtml(e.hook_patterns.join(', '))}</span>`:'—'}</td>
+        <td>${e.type_of_headline?`<span class="tt-truncate" title="${escapeHtml(e.type_of_headline)}">${escapeHtml(e.type_of_headline)}</span>`:'—'}</td>
+        <td>${e.sizing?escapeHtml(e.sizing):'—'}</td>
         <td>${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>
         <td>${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>
         <td>${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>
@@ -2557,7 +2560,7 @@ async function renderEntries(){
     <div class="tracker-table-wrap">
       <table class="tracker-table">
         <thead><tr>
-          <th>Ad name</th><th>Status</th><th>Awareness</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>Tags</th>
+          <th>Ad name</th><th>Status</th><th>Awareness</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>Hook Pattern</th><th>Type of Headline</th><th>Sizing</th><th>Tags</th>
           <th>CTR</th><th>ROAS</th><th>Page</th><th>Editor</th><th>Launched</th><th>Pipeline</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
