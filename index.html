@@ -335,6 +335,16 @@
   .qf-chip:hover{border-color:var(--accent);}
   .qf-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
   .qf-chip .count{opacity:.8;margin-left:3px;font-weight:700;}
+  .script-preview{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:6px;cursor:pointer;transition:border-color .15s ease;}
+  .script-preview:hover{border-color:var(--accent);}
+  .script-preview .sp-title{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .script-preview .sp-hint{font-size:11.5px;color:var(--accent);margin-top:3px;}
+  .detail-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;z-index:1100;padding:20px;}
+  .detail-modal-overlay.open{display:flex;}
+  .detail-modal-box{background:var(--surface);border-radius:14px;max-width:640px;width:100%;max-height:82vh;overflow-y:auto;padding:24px 26px;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.35);}
+  .detail-modal-close{position:absolute;top:14px;right:16px;cursor:pointer;font-size:22px;line-height:1;background:none;border:none;color:var(--ink-soft);padding:4px;}
+  .detail-modal-close:hover{color:var(--ink);}
+  .detail-modal-box h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;padding-right:24px;}
 </style>
 </head>
 <body>
@@ -347,6 +357,13 @@
     <input type="password" id="login-password" placeholder="Password" />
     <button class="btn btn-primary" id="login-submit" style="margin-top:10px;width:100%;">Enter</button>
     <div class="status-msg err" id="login-status" style="margin-top:8px;min-height:16px;"></div>
+  </div>
+</div>
+
+<div id="detail-modal-overlay" class="detail-modal-overlay">
+  <div class="detail-modal-box">
+    <button class="detail-modal-close" id="detail-modal-close" type="button" aria-label="Close">×</button>
+    <div id="detail-modal-content"></div>
   </div>
 </div>
 
@@ -869,6 +886,47 @@ function hideLogin(){
 
 document.getElementById('login-submit').addEventListener('click', doLogin);
 document.getElementById('login-password').addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') doLogin(); });
+
+// ---------- Details modal (Script + full Strategy readout) ----------
+function openDetailModal(e){
+  const content = document.getElementById('detail-modal-content');
+  const hasStrategy = e.market_awareness || e.type_of_ad || (e.hook_patterns&&e.hook_patterns.length) || e.headline || e.ad_copy || e.hypothesis || e.problem_text || e.desire;
+  content.innerHTML = `
+    <h3>${escapeHtml(e.ad_name||'Details')}</h3>
+    ${e.script?`<div class="entry-script" style="max-height:none;overflow-y:visible;">${escapeHtml(e.script)}</div>`:''}
+    ${hasStrategy?`
+    <div class="strategy-readout" style="margin-top:${e.script?'14px':'0'};">
+      ${e.problem_text?`<div><b>Problem angle:</b> ${escapeHtml(e.problem_text)}</div>`:''}
+      ${e.desire?`<div><b>Desire:</b> ${escapeHtml(e.desire)}</div>`:''}
+      ${e.market_awareness?`<div><b>Awareness:</b> ${escapeHtml(labelFor(AWARENESS,e.market_awareness))}</div>`:''}
+      ${e.market_sophistication?`<div><b>Sophistication:</b> ${escapeHtml(labelFor(SOPHISTICATION,e.market_sophistication))}</div>`:''}
+      ${e.hypothesis?`<div><b>Hypothesis:</b> ${escapeHtml(e.hypothesis)}</div>`:''}
+      ${e.type_of_ad?`<div><b>Type of Ad:</b> ${escapeHtml(e.type_of_ad)}</div>`:''}
+      ${(e.hook_patterns&&e.hook_patterns.length)?`<div><b>Hooks:</b> ${e.hook_patterns.map(h=>escapeHtml(h)).join(', ')}</div>`:''}
+      ${e.headline?`<div><b>Headline:</b> ${escapeHtml(e.headline)}</div>`:''}
+      ${e.ad_copy?`<div><b>Ad Copy:</b> ${escapeHtml(e.ad_copy)}</div>`:''}
+    </div>`:''}
+  `;
+  document.getElementById('detail-modal-overlay').classList.add('open');
+}
+function closeDetailModal(){
+  document.getElementById('detail-modal-overlay').classList.remove('open');
+}
+document.addEventListener('click', (ev)=>{
+  const trigger = ev.target.closest('.act-open-details');
+  if(trigger){
+    ev.stopPropagation();
+    const found = entries.find(x=>x.id===trigger.dataset.id);
+    if(found) openDetailModal(found);
+  }
+});
+document.getElementById('detail-modal-close').addEventListener('click', closeDetailModal);
+document.getElementById('detail-modal-overlay').addEventListener('click', (ev)=>{
+  if(ev.target.id==='detail-modal-overlay') closeDetailModal();
+});
+document.addEventListener('keydown', (ev)=>{
+  if(ev.key==='Escape') closeDetailModal();
+});
 
 async function doLogin(){
   const pw = document.getElementById('login-password').value;
@@ -2003,19 +2061,11 @@ async function renderEntries(){
         ${e.output_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View output ↗</a></div>`:''}
         ${e.adset_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View adset ↗</a></div>`:''}
         ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-        ${e.script?`<div class="entry-script">${escapeHtml(e.script)}</div>`:''}
-        ${(e.market_awareness||e.type_of_ad||(e.hook_patterns&&e.hook_patterns.length)||e.headline||e.ad_copy||e.hypothesis||e.problem_text||e.desire)?`
-        <div class="strategy-readout">
-          ${e.problem_text?`<div><b>Problem angle:</b> ${escapeHtml(e.problem_text)}</div>`:''}
-          ${e.desire?`<div><b>Desire:</b> ${escapeHtml(e.desire)}</div>`:''}
-          ${e.market_awareness?`<div><b>Awareness:</b> ${escapeHtml(labelFor(AWARENESS,e.market_awareness))}</div>`:''}
-          ${e.market_sophistication?`<div><b>Sophistication:</b> ${escapeHtml(labelFor(SOPHISTICATION,e.market_sophistication))}</div>`:''}
-          ${e.hypothesis?`<div><b>Hypothesis:</b> ${escapeHtml(e.hypothesis)}</div>`:''}
-          ${e.type_of_ad?`<div><b>Type of Ad:</b> ${escapeHtml(e.type_of_ad)}</div>`:''}
-          ${(e.hook_patterns&&e.hook_patterns.length)?`<div><b>Hooks:</b> ${e.hook_patterns.map(h=>escapeHtml(h)).join(', ')}</div>`:''}
-          ${e.headline?`<div><b>Headline:</b> ${escapeHtml(e.headline)}</div>`:''}
-          ${e.ad_copy?`<div><b>Ad Copy:</b> ${escapeHtml(e.ad_copy)}</div>`:''}
-        </div>`:''}
+        ${(e.script || e.market_awareness || e.type_of_ad || (e.hook_patterns&&e.hook_patterns.length) || e.headline || e.ad_copy || e.hypothesis || e.problem_text || e.desire) ? `
+        <div class="script-preview act-open-details" data-id="${e.id}">
+          <div class="sp-title">${escapeHtml((e.script||'').split('\n').find(l=>l.trim()) || 'Script & strategy details')}</div>
+          <div class="sp-hint">Tap to view full script &amp; strategy details</div>
+        </div>` : ''}
         ${(perf&&perf.review)?`
         <div class="perf-grid" style="margin-top:8px;">
           <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(perf.review.ctr||'—')}</div></div>
