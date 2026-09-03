@@ -345,6 +345,26 @@
   .detail-modal-close{position:absolute;top:14px;right:16px;cursor:pointer;font-size:22px;line-height:1;background:none;border:none;color:var(--ink-soft);padding:4px;}
   .detail-modal-close:hover{color:var(--ink);}
   .detail-modal-box h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;padding-right:24px;}
+  .tracker-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);}
+  .tracker-table{width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap;}
+  .tracker-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface);white-space:nowrap;}
+  .tracker-table td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--ink);}
+  .tracker-table tbody tr{cursor:pointer;transition:background-color .12s ease;}
+  .tracker-table tbody tr:hover{background:var(--accent-soft);}
+  .tracker-table tbody tr:hover .tt-name-cell{background:var(--accent-soft);}
+  .tracker-table tbody tr:last-child td{border-bottom:none;}
+  .tt-name-cell{position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:2px 0 4px rgba(0,0,0,.05);}
+  .tt-name{font-family:'Fraunces',serif;font-weight:600;font-size:13.5px;}
+  .tt-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+  .tt-badge.winner{background:var(--winner-soft);color:var(--winner);}
+  .tt-badge.pending{background:var(--pending-soft);color:var(--pending);}
+  .tt-badge.not_winner{background:var(--not-winner-soft);color:var(--not-winner);}
+  .tt-badge.review{background:#3A2620;color:#E08A6A;}
+  [data-theme="rose"] .tt-badge.review, [data-theme="navy"] .tt-badge.review, [data-theme="emerald"] .tt-badge.review, [data-theme="slate"] .tt-badge.review, [data-theme="purple"] .tt-badge.review{background:#FBE8E0;color:#C05A32;}
+  .tt-truncate{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle;}
+  .tt-pipe{display:flex;gap:3px;}
+  .tt-pipe-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .tt-pipe-dot.done{background:var(--winner);}
 </style>
 </head>
 <body>
@@ -887,15 +907,20 @@ function hideLogin(){
 document.getElementById('login-submit').addEventListener('click', doLogin);
 document.getElementById('login-password').addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') doLogin(); });
 
-// ---------- Details modal (Script + full Strategy readout) ----------
-function openDetailModal(e){
-  const content = document.getElementById('detail-modal-content');
+// ---------- Details modal (full entry: script, strategy, links, tags, performance, history, actions) ----------
+function renderDetailModalReadView(e){
+  const perf = e.performance;
   const hasStrategy = e.market_awareness || e.type_of_ad || (e.hook_patterns&&e.hook_patterns.length) || e.headline || e.ad_copy || e.hypothesis || e.problem_text || e.desire;
-  content.innerHTML = `
+  return `
     <h3>${escapeHtml(e.ad_name||'Details')}</h3>
-    ${e.script?`<div class="entry-script" style="max-height:none;overflow-y:visible;">${escapeHtml(e.script)}</div>`:''}
+    <div class="entry-meta" style="margin-bottom:10px;">${pageLabel(e.page)||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
+    ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
+    ${e.output_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View output ↗</a></div>`:''}
+    ${e.adset_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View adset ↗</a></div>`:''}
+    ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:8px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+    ${e.script?`<div class="entry-script" style="max-height:none;overflow-y:visible;margin-top:10px;">${escapeHtml(e.script)}</div>`:''}
     ${hasStrategy?`
-    <div class="strategy-readout" style="margin-top:${e.script?'14px':'0'};">
+    <div class="strategy-readout" style="margin-top:${e.script?'14px':'10px'};">
       ${e.problem_text?`<div><b>Problem angle:</b> ${escapeHtml(e.problem_text)}</div>`:''}
       ${e.desire?`<div><b>Desire:</b> ${escapeHtml(e.desire)}</div>`:''}
       ${e.market_awareness?`<div><b>Awareness:</b> ${escapeHtml(labelFor(AWARENESS,e.market_awareness))}</div>`:''}
@@ -906,19 +931,186 @@ function openDetailModal(e){
       ${e.headline?`<div><b>Headline:</b> ${escapeHtml(e.headline)}</div>`:''}
       ${e.ad_copy?`<div><b>Ad Copy:</b> ${escapeHtml(e.ad_copy)}</div>`:''}
     </div>`:''}
+    ${(perf&&perf.review)?`
+    <div class="perf-grid" style="margin-top:12px;">
+      <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(perf.review.ctr||'—')}</div></div>
+      <div class="perf-cell"><div class="k">CPC</div><div class="v">${escapeHtml(perf.review.cpc||'—')}</div></div>
+      <div class="perf-cell"><div class="k">CPA</div><div class="v">${escapeHtml(perf.review.cpa||'—')}</div></div>
+      <div class="perf-cell"><div class="k">ROAS</div><div class="v">${escapeHtml(perf.review.roas||'—')}</div></div>
+      <div class="perf-cell"><div class="k">Hook Rate</div><div class="v">${escapeHtml(perf.review.hookRate||'—')}</div></div>
+      <div class="perf-cell"><div class="k">Hold Rate</div><div class="v">${escapeHtml(perf.review.holdRate||'—')}</div></div>
+    </div>
+    ${perf.review.notes?`<div class="hint" style="margin-top:6px;">${escapeHtml(perf.review.notes)}</div>`:''}
+    `:''}
+    ${perf?`
+    <div class="perf-grid" style="margin-top:8px;">
+      <div class="perf-cell"><div class="k">Spend</div><div class="v">${escapeHtml(String(perf.spend ?? '—'))}</div></div>
+      <div class="perf-cell"><div class="k">Impressions</div><div class="v">${escapeHtml(String(perf.impressions ?? '—'))}</div></div>
+      <div class="perf-cell"><div class="k">Clicks</div><div class="v">${escapeHtml(String(perf.clicks ?? '—'))}</div></div>
+      <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(String(perf.ctr ?? '—'))}</div></div>
+    </div>
+    ${(perf.actions&&perf.actions.length)?`<div class="hint">Actions: ${perf.actions.map(a=>escapeHtml(a.action_type+': '+a.value)).join(', ')}</div>`:''}
+    <div class="hint">Pulled ${perf.pulledAt ? new Date(perf.pulledAt).toLocaleString() : ''}</div>
+    `:''}
+    ${(e.history&&e.history.length)?`
+    <details class="history-block" style="margin-top:10px;">
+      <summary>History (${e.history.length})</summary>
+      <div class="history-list">
+        ${e.history.slice().reverse().map(h=>`<div class="history-row"><span class="history-time">${new Date(h.at).toLocaleString()}</span><span class="history-text">${escapeHtml(h.text)}</span></div>`).join('')}
+      </div>
+    </details>
+    `:''}
+    <div class="entry-actions" style="margin-top:14px;">
+      <button class="btn btn-ghost btn-sm act-edit">Edit</button>
+      <button class="btn btn-dup btn-sm act-dup">⧉ Duplicate</button>
+      <button class="btn btn-ghost btn-sm act-toggle-editing">${e.editing_done?'Undo editing':'Mark editing done'}</button>
+      <button class="btn btn-ghost btn-sm act-toggle-launch">${e.launched?'Undo launch':'Mark launched'}</button>
+      <button class="btn btn-ghost btn-sm act-pull">${perf?'Refresh performance':'Pull performance'}</button>
+      <button class="btn btn-ghost btn-sm act-winner">Mark winner</button>
+      <button class="btn btn-ghost btn-sm act-notwinner">Not a winner</button>
+      <button class="btn btn-ghost btn-sm act-pending">Reset to pending</button>
+      <button class="btn-danger-text act-delete" type="button">Delete</button>
+    </div>
+    <span class="status-msg act-status" style="display:block;margin-top:6px;"></span>
   `;
+}
+
+function openDetailModal(id){
+  const e = entries.find(x=>x.id===id);
+  if(!e) return;
+  const content = document.getElementById('detail-modal-content');
+
+  if(inlineEditId === id){
+    content.innerHTML = buildInlineEditHTML(e);
+    wireTagInput(content.querySelector('.tag-input-box'), e.tags||[]);
+    const ieStatus = content.querySelector('.ie-status');
+    content.querySelector('.ie-save').addEventListener('click', async ()=>{
+      const cc = content.querySelector('.ie-cc').value.trim();
+      const by = content.querySelector('.ie-by').value.trim();
+      const name = content.querySelector('.ie-name').value.trim();
+      try{
+        await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+          id: e.id,
+          concept_creator: cc || 'Unassigned',
+          ad_name: name || e.ad_name || `Untitled — ${new Date().toLocaleDateString()}`,
+          submitted_by: by || cc || e.submitted_by || 'Unknown',
+          page: content.querySelector('.ie-page').value || null,
+          date_launched: content.querySelector('.ie-date').value || null,
+          editor: content.querySelector('.ie-editor').value.trim(),
+          concept_link: content.querySelector('.ie-link').value.trim(),
+          output_link: content.querySelector('.ie-output').value.trim(),
+          script: content.querySelector('.ie-script').value.trim(),
+          tags: content.querySelector('.tag-input-box')._tags || [],
+          market_awareness: content.querySelector('.ie-awareness').value || null,
+          market_sophistication: content.querySelector('.ie-sophistication').value || null,
+          hypothesis: content.querySelector('.ie-hypothesis').value.trim(),
+          headline: content.querySelector('.ie-headline').value.trim(),
+          ad_copy: content.querySelector('.ie-adcopy').value.trim(),
+          adset_link: content.querySelector('.ie-adsetlink').value.trim(),
+          performance: {
+            ...(e.performance||{}),
+            review: {
+              ctr: content.querySelector('.ie-rr-ctr').value.trim(),
+              cpc: content.querySelector('.ie-rr-cpc').value.trim(),
+              costPerAtc: content.querySelector('.ie-rr-atc').value.trim(),
+              cpa: content.querySelector('.ie-rr-cpa').value.trim(),
+              roas: content.querySelector('.ie-rr-roas').value.trim(),
+              hookRate: content.querySelector('.ie-rr-hookrate').value.trim(),
+              holdRate: content.querySelector('.ie-rr-holdrate').value.trim(),
+              notes: content.querySelector('.ie-rr-notes').value.trim()
+            }
+          }
+        })});
+        inlineEditId = null;
+        await renderEntries();
+        openDetailModal(id);
+      }catch(err){
+        ieStatus.textContent = "Couldn't save — try again.";
+        ieStatus.className = 'status-msg ie-status err';
+      }
+    });
+    content.querySelector('.ie-cancel').addEventListener('click', ()=>{
+      inlineEditId = null;
+      openDetailModal(id);
+    });
+    document.getElementById('detail-modal-overlay').classList.add('open');
+    return;
+  }
+
+  content.innerHTML = renderDetailModalReadView(e);
+  const statusMsg = content.querySelector('.act-status');
+
+  content.querySelector('.act-edit').addEventListener('click', ()=>{ inlineEditId = id; openDetailModal(id); });
+  content.querySelector('.act-dup').addEventListener('click', async ()=>{
+    try{
+      await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        ad_name: 'Copy of ' + e.ad_name, meta_ad_id: null, page: e.page || null, date_launched: null,
+        script: e.script, concept_link: e.concept_link, output_link: null, tags: e.tags || [],
+        concept_creator: e.concept_creator, editor: e.editor, submitted_by: e.submitted_by,
+        winner_status: 'pending', performance: null, editing_done: false, launched: false,
+        brand_id: e.brand_id || null, product_id: e.product_id || null, persona_id: e.persona_id || null,
+        problem_id: e.problem_id || null, problem_text: e.problem_text || null, desire: e.desire || null,
+        market_awareness: e.market_awareness || null, market_sophistication: e.market_sophistication || null,
+        hypothesis: e.hypothesis || '', type_of_ad: e.type_of_ad || null, hook_patterns: e.hook_patterns || [],
+        type_of_headline: e.type_of_headline || null, headline: e.headline || '', ad_copy: e.ad_copy || '', adset_link: ''
+      })});
+      showToast('✓ Duplicated — edit the copy to set it up');
+      closeDetailModal();
+      renderEntries();
+    }catch(err){
+      statusMsg.textContent = "Couldn't duplicate — try again.";
+      statusMsg.className = 'status-msg act-status err';
+    }
+  });
+  content.querySelector('.act-toggle-editing').addEventListener('click', async ()=>{
+    await toggleFlag(e.id,'editing_done',e.editing_done);
+    openDetailModal(id);
+  });
+  content.querySelector('.act-toggle-launch').addEventListener('click', async ()=>{
+    if(!e.launched && (!e.page || !e.date_launched)){
+      statusMsg.textContent = "Set page and date launched first — use Edit.";
+      statusMsg.className = 'status-msg act-status err';
+      return;
+    }
+    await toggleFlag(e.id,'launched',e.launched);
+    openDetailModal(id);
+  });
+  content.querySelector('.act-winner').addEventListener('click', async ()=>{ await updateStatus(e.id,'winner'); openDetailModal(id); });
+  content.querySelector('.act-notwinner').addEventListener('click', async ()=>{ await updateStatus(e.id,'not_winner'); openDetailModal(id); });
+  content.querySelector('.act-pending').addEventListener('click', async ()=>{ await updateStatus(e.id,'pending'); openDetailModal(id); });
+  content.querySelector('.act-delete').addEventListener('click', ()=>{ closeDetailModal(); deleteEntry(e.id); });
+  content.querySelector('.act-pull').addEventListener('click', async ()=>{
+    if(!e.page){
+      statusMsg.textContent = "No page set yet — use Edit to add one first.";
+      statusMsg.className = 'status-msg act-status err';
+      return;
+    }
+    statusMsg.innerHTML = '<span class="spinner"></span> Pulling from Meta…';
+    try{
+      const data = await api('/api/meta-pull', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ page: e.page, adId: e.meta_ad_id, adName: e.ad_name }) });
+      if(!data.found){
+        statusMsg.textContent = "Couldn't find matching data — you can still set status manually.";
+        statusMsg.className = 'status-msg act-status err';
+        return;
+      }
+      await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: e.id, performance: { ...data, pulledAt: new Date().toISOString() } }) });
+      await renderEntries();
+      openDetailModal(id);
+      showToast('Pulled ✓');
+    }catch(err){
+      statusMsg.textContent = "Couldn't reach Meta right now.";
+      statusMsg.className = 'status-msg act-status err';
+    }
+  });
+
   document.getElementById('detail-modal-overlay').classList.add('open');
 }
 function closeDetailModal(){
   document.getElementById('detail-modal-overlay').classList.remove('open');
 }
 document.addEventListener('click', (ev)=>{
-  const trigger = ev.target.closest('.act-open-details');
-  if(trigger){
-    ev.stopPropagation();
-    const found = entries.find(x=>x.id===trigger.dataset.id);
-    if(found) openDetailModal(found);
-  }
+  const row = ev.target.closest('#entries-holder tr[data-id]');
+  if(row) openDetailModal(row.dataset.id);
 });
 document.getElementById('detail-modal-close').addEventListener('click', closeDetailModal);
 document.getElementById('detail-modal-overlay').addEventListener('click', (ev)=>{
@@ -1967,247 +2159,44 @@ async function renderEntries(){
   }
 
   holder.innerHTML = '';
-  list.forEach((e,idx)=>{
-    const div = document.createElement('div');
+  const rowsHtml = list.map((e,idx)=>{
     const perf = e.performance;
-    div.style.animationDelay = Math.min(idx*0.035, 0.4) + 's';
-
-    if(inlineEditId === e.id){
-      div.className = 'entry';
-      div.innerHTML = buildInlineEditHTML(e);
-      holder.appendChild(div);
-      wireTagInput(div.querySelector('.tag-input-box'), e.tags||[]);
-      const ieStatus = div.querySelector('.ie-status');
-      div.querySelector('.ie-save').addEventListener('click', async ()=>{
-        const cc = div.querySelector('.ie-cc').value.trim();
-        const by = div.querySelector('.ie-by').value.trim();
-        const name = div.querySelector('.ie-name').value.trim();
-        try{
-          await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-            id: e.id,
-            concept_creator: cc || 'Unassigned',
-            ad_name: name || e.ad_name || `Untitled — ${new Date().toLocaleDateString()}`,
-            submitted_by: by || cc || e.submitted_by || 'Unknown',
-            page: div.querySelector('.ie-page').value || null,
-            date_launched: div.querySelector('.ie-date').value || null,
-            editor: div.querySelector('.ie-editor').value.trim(),
-            concept_link: div.querySelector('.ie-link').value.trim(),
-            output_link: div.querySelector('.ie-output').value.trim(),
-            script: div.querySelector('.ie-script').value.trim(),
-            tags: div.querySelector('.tag-input-box')._tags || [],
-            market_awareness: div.querySelector('.ie-awareness').value || null,
-            market_sophistication: div.querySelector('.ie-sophistication').value || null,
-            hypothesis: div.querySelector('.ie-hypothesis').value.trim(),
-            headline: div.querySelector('.ie-headline').value.trim(),
-            ad_copy: div.querySelector('.ie-adcopy').value.trim(),
-            adset_link: div.querySelector('.ie-adsetlink').value.trim(),
-            performance: {
-              ...(e.performance||{}),
-              review: {
-                ctr: div.querySelector('.ie-rr-ctr').value.trim(),
-                cpc: div.querySelector('.ie-rr-cpc').value.trim(),
-                costPerAtc: div.querySelector('.ie-rr-atc').value.trim(),
-                cpa: div.querySelector('.ie-rr-cpa').value.trim(),
-                roas: div.querySelector('.ie-rr-roas').value.trim(),
-                hookRate: div.querySelector('.ie-rr-hookrate').value.trim(),
-                holdRate: div.querySelector('.ie-rr-holdrate').value.trim(),
-                notes: div.querySelector('.ie-rr-notes').value.trim()
-              }
-            }
-          })});
-          inlineEditId = null;
-          renderEntries();
-        }catch(err){
-          ieStatus.textContent = "Couldn't save — try again.";
-          ieStatus.className = 'status-msg ie-status err';
-        }
-      });
-      div.querySelector('.ie-cancel').addEventListener('click', ()=>{
-        inlineEditId = null;
-        renderEntries();
-      });
-      return;
-    }
-
-    const isOpen = expandedIds.has(e.id);
     const daysLaunched = e.launched ? daysSince(e.date_launched) : null;
     const needsReview = e.launched && e.winner_status==='pending' && daysLaunched!==null && daysLaunched>=7;
     const bColor = brandColor(e.page);
-
-    div.className = 'entry ' + (isOpen?'open ':'') + (needsReview?'needs-review':(e.winner_status==='winner'?'winner':e.winner_status==='pending'?'pending':''));
     const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
-    div.innerHTML = `
-      <div class="entry-head">
-        <div class="entry-info">
-          <div class="entry-title">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)} <span class="chev">▸</span></div>
-          <div class="entry-meta">${pageLabel(e.page)||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
-          <div class="pipeline-track">
-            <div class="pipe-step done"><span class="pipe-dot"></span><span class="pipe-label">Concept</span></div>
-            <div class="pipe-line ${e.editing_done?'done':''}"></div>
-            <div class="pipe-step ${e.editing_done?'done':''}"><span class="pipe-dot"></span><span class="pipe-label">Editing</span></div>
-            <div class="pipe-line ${e.launched?'done':''}"></div>
-            <div class="pipe-step ${e.launched?'done':''}"><span class="pipe-dot"></span><span class="pipe-label">Launched</span></div>
-          </div>
-        </div>
-        <div class="badge-stack">
-          ${needsReview?'<span class="badge review">⚠ Needs review</span>':''}
-          ${e.editing_done?'<span class="badge done">Edited</span>':''}
-          ${e.launched?'<span class="badge done">Live</span>':''}
-          <span class="badge ${e.winner_status}">${badgeLabel}</span>
-        </div>
-      </div>
-      <div class="expand-body">
-        ${e.concept_link?`<div style="margin-top:6px;"><a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View concept ↗</a></div>`:''}
-        ${e.output_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View output ↗</a></div>`:''}
-        ${e.adset_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View adset ↗</a></div>`:''}
-        ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-        ${(e.script || e.market_awareness || e.type_of_ad || (e.hook_patterns&&e.hook_patterns.length) || e.headline || e.ad_copy || e.hypothesis || e.problem_text || e.desire) ? `
-        <div class="script-preview act-open-details" data-id="${e.id}">
-          <div class="sp-title">${escapeHtml((e.script||'').split('\n').find(l=>l.trim()) || 'Script & strategy details')}</div>
-          <div class="sp-hint">Tap to view full script &amp; strategy details</div>
-        </div>` : ''}
-        ${(perf&&perf.review)?`
-        <div class="perf-grid" style="margin-top:8px;">
-          <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(perf.review.ctr||'—')}</div></div>
-          <div class="perf-cell"><div class="k">CPC</div><div class="v">${escapeHtml(perf.review.cpc||'—')}</div></div>
-          <div class="perf-cell"><div class="k">CPA</div><div class="v">${escapeHtml(perf.review.cpa||'—')}</div></div>
-          <div class="perf-cell"><div class="k">ROAS</div><div class="v">${escapeHtml(perf.review.roas||'—')}</div></div>
-          <div class="perf-cell"><div class="k">Hook Rate</div><div class="v">${escapeHtml(perf.review.hookRate||'—')}</div></div>
-          <div class="perf-cell"><div class="k">Hold Rate</div><div class="v">${escapeHtml(perf.review.holdRate||'—')}</div></div>
-        </div>
-        ${perf.review.notes?`<div class="hint" style="margin-top:6px;">${escapeHtml(perf.review.notes)}</div>`:''}
-        `:''}
-        ${perf?`
-        <div class="perf-grid">
-          <div class="perf-cell"><div class="k">Spend</div><div class="v">${escapeHtml(String(perf.spend ?? '—'))}</div></div>
-          <div class="perf-cell"><div class="k">Impressions</div><div class="v">${escapeHtml(String(perf.impressions ?? '—'))}</div></div>
-          <div class="perf-cell"><div class="k">Clicks</div><div class="v">${escapeHtml(String(perf.clicks ?? '—'))}</div></div>
-          <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml(String(perf.ctr ?? '—'))}</div></div>
-        </div>
-        ${(perf.actions&&perf.actions.length)?`<div class="hint">Actions: ${perf.actions.map(a=>escapeHtml(a.action_type+': '+a.value)).join(', ')}</div>`:''}
-        <div class="hint">Pulled ${perf.pulledAt ? new Date(perf.pulledAt).toLocaleString() : ''}</div>
-        `:''}
-        ${(e.history&&e.history.length)?`
-        <details class="history-block">
-          <summary>History (${e.history.length})</summary>
-          <div class="history-list">
-            ${e.history.slice().reverse().map(h=>`<div class="history-row"><span class="history-time">${new Date(h.at).toLocaleString()}</span><span class="history-text">${escapeHtml(h.text)}</span></div>`).join('')}
-          </div>
-        </details>
-        `:''}
-        <div class="entry-actions" data-id="${e.id}">
-          <button class="btn btn-ghost btn-sm act-edit">Edit</button>
-          <button class="btn btn-dup btn-sm act-dup">⧉ Duplicate</button>
-          <button class="btn btn-ghost btn-sm act-toggle-editing">${e.editing_done?'Undo editing':'Mark editing done'}</button>
-          <button class="btn btn-ghost btn-sm act-toggle-launch">${e.launched?'Undo launch':'Mark launched'}</button>
-          <button class="btn btn-ghost btn-sm act-pull">${perf?'Refresh performance':'Pull performance'}</button>
-          <button class="btn btn-ghost btn-sm act-winner">Mark winner</button>
-          <button class="btn btn-ghost btn-sm act-notwinner">Not a winner</button>
-          <button class="btn btn-ghost btn-sm act-pending">Reset to pending</button>
-          <button class="btn-danger-text act-delete" type="button">Delete</button>
-        </div>
-        <span class="status-msg act-status" style="display:block;margin-top:6px;"></span>
-      </div>
-    `;
-    holder.appendChild(div);
+    const badgeClass = needsReview ? 'review' : e.winner_status;
+    const finalBadgeLabel = needsReview ? '⚠ Needs review' : badgeLabel;
+    const pipeDone = [true, !!e.editing_done, !!e.launched];
+    const awarenessShort = e.market_awareness ? labelFor(AWARENESS,e.market_awareness).split(' — ')[0] : '';
+    return `
+      <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
+        <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
+        <td><span class="tt-badge ${badgeClass}">${finalBadgeLabel}</span></td>
+        <td><div class="tt-pipe" title="Concept → Editing → Launched">${pipeDone.map(done=>`<span class="tt-pipe-dot ${done?'done':''}"></span>`).join('')}</div></td>
+        <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
+        <td>${escapeHtml(e.editor||'—')}</td>
+        <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
+        <td>${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
+        <td>${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
+        <td>${e.desire?escapeHtml(e.desire):'—'}</td>
+        <td>${e.type_of_ad?`<span class="tt-truncate" title="${escapeHtml(e.type_of_ad)}">${escapeHtml(e.type_of_ad)}</span>`:'—'}</td>
+        <td>${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>
+        <td>${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>
+        <td>${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>
+      </tr>`;
+  }).join('');
 
-    div.querySelector('.entry-head').addEventListener('click',()=>{
-      if(expandedIds.has(e.id)) expandedIds.delete(e.id); else expandedIds.add(e.id);
-      renderEntries();
-    });
-
-    const actions = div.querySelector('.entry-actions');
-    const statusMsg = div.querySelector('.act-status');
-
-    actions.querySelector('.act-edit').addEventListener('click',(ev)=>{ ev.stopPropagation(); inlineEditId = e.id; renderEntries(); });
-    actions.querySelector('.act-dup').addEventListener('click', async (ev)=>{
-      ev.stopPropagation();
-      try{
-        await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-          ad_name: 'Copy of ' + e.ad_name,
-          meta_ad_id: null,
-          page: e.page || null,
-          date_launched: null,
-          script: e.script,
-          concept_link: e.concept_link,
-          output_link: null,
-          tags: e.tags || [],
-          concept_creator: e.concept_creator,
-          editor: e.editor,
-          submitted_by: e.submitted_by,
-          winner_status: 'pending',
-          performance: null,
-          editing_done: false,
-          launched: false,
-          brand_id: e.brand_id || null,
-          product_id: e.product_id || null,
-          persona_id: e.persona_id || null,
-          problem_id: e.problem_id || null,
-          problem_text: e.problem_text || null,
-          desire: e.desire || null,
-          market_awareness: e.market_awareness || null,
-          market_sophistication: e.market_sophistication || null,
-          hypothesis: e.hypothesis || '',
-          type_of_ad: e.type_of_ad || null,
-          hook_patterns: e.hook_patterns || [],
-          type_of_headline: e.type_of_headline || null,
-          headline: e.headline || '',
-          ad_copy: e.ad_copy || '',
-          adset_link: ''
-        })});
-        showToast('✓ Duplicated — edit the copy to set it up');
-        renderEntries();
-      }catch(err){
-        statusMsg.textContent = "Couldn't duplicate — try again.";
-        statusMsg.className = 'status-msg act-status err';
-      }
-    });
-    actions.querySelector('.act-toggle-editing').addEventListener('click',(ev)=>{ ev.stopPropagation(); toggleFlag(e.id,'editing_done',e.editing_done); });
-    actions.querySelector('.act-toggle-launch').addEventListener('click', async (ev)=>{
-      ev.stopPropagation();
-      if(!e.launched && (!e.page || !e.date_launched)){
-        statusMsg.textContent = "Set page and date launched first — use Edit.";
-        statusMsg.className = 'status-msg act-status err';
-        return;
-      }
-      toggleFlag(e.id,'launched',e.launched);
-    });
-    actions.querySelector('.act-winner').addEventListener('click',(ev)=>{ ev.stopPropagation(); updateStatus(e.id,'winner'); });
-    actions.querySelector('.act-notwinner').addEventListener('click',(ev)=>{ ev.stopPropagation(); updateStatus(e.id,'not_winner'); });
-    actions.querySelector('.act-pending').addEventListener('click',(ev)=>{ ev.stopPropagation(); updateStatus(e.id,'pending'); });
-    actions.querySelector('.act-delete').addEventListener('click',(ev)=>{ ev.stopPropagation(); deleteEntry(e.id); });
-    actions.querySelector('.act-pull').addEventListener('click', async (ev)=>{
-      ev.stopPropagation();
-      if(!e.page){
-        statusMsg.textContent = "No page set yet — use Edit to add one first.";
-        statusMsg.className = 'status-msg act-status err';
-        return;
-      }
-      statusMsg.innerHTML = '<span class="spinner"></span> Pulling from Meta…';
-      try{
-        const data = await api('/api/meta-pull', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-
-          body: JSON.stringify({ page: e.page, adId: e.meta_ad_id, adName: e.ad_name })
-        });
-        if(!data.found){
-          statusMsg.textContent = "Couldn't find matching data — you can still set status manually.";
-          statusMsg.className = 'status-msg act-status err';
-          return;
-        }
-        await api('/api/entries', {
-          method:'PUT', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ id: e.id, performance: { ...data, pulledAt: new Date().toISOString() } })
-        });
-        statusMsg.textContent = 'Pulled ✓ — review the numbers, then confirm the status.';
-        statusMsg.className = 'status-msg act-status ok';
-        renderEntries();
-      }catch(err){
-        statusMsg.textContent = "Couldn't reach Meta right now.";
-        statusMsg.className = 'status-msg act-status err';
-      }
-    });
-  });
+  holder.innerHTML = `
+    <div class="tracker-table-wrap">
+      <table class="tracker-table">
+        <thead><tr>
+          <th>Ad name</th><th>Status</th><th>Pipeline</th><th>Page</th><th>Editor</th><th>Launched</th>
+          <th>Awareness</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>CTR</th><th>ROAS</th><th>Tags</th>
+        </tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
 }
 
 function buildInlineEditHTML(e){
