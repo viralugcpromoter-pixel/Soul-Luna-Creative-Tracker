@@ -538,7 +538,25 @@
       <h2 class="wiz-step-title">Score each persona's problems</h2>
       <p class="hint" style="margin-top:0;margin-bottom:16px;">I-score ang bawat problem mula 1–10. Total Score = Intensity × Repeatability × Scale. Auto-rank yung Top 3.</p>
       <div class="field" style="max-width:340px;"><label>Editing problems for</label><select id="strat-prob-persona-select"></select></div>
-      <div class="form-grid" style="margin-top:14px;">
+
+      <div class="card" style="margin-top:16px;background:var(--bg);">
+        <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-weight:600;font-size:13.5px;">✨ Mabilis na paraan</div>
+            <div class="hint" style="margin-top:2px;">Kunin ang prompt, i-paste sa ChatGPT/Claude, tapos i-paste dito ang buong sagot — isang beses lang.</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="strat-copy-problem-prompt" type="button">📋 Copy Problem-Finder Prompt</button>
+        </div>
+        <span class="status-msg" id="strat-copy-problem-status"></span>
+        <div class="field full" style="margin-top:10px;margin-bottom:0;">
+          <label>Paste ang buong listahan dito</label>
+          <textarea id="strat-bulk-problems" placeholder="Problem text | Intensity | Repeatability | Scale — isa bawat linya"></textarea>
+        </div>
+        <div class="submit-row"><button class="btn btn-primary btn-sm" id="strat-bulk-add" type="button">+ Add all pasted problems</button><span class="status-msg" id="strat-bulk-status"></span></div>
+      </div>
+
+      <div class="an-h" style="margin:18px 0 8px;">O i-fill out nang isa-isa (optional)</div>
+      <div class="form-grid">
         <div class="field full"><label>Problem</label><input type="text" id="strat-prob-text" placeholder="Describe the problem…" /></div>
         <div class="field"><label>Intensity</label><select id="strat-prob-intensity"></select></div>
         <div class="field"><label>Repeatability</label><select id="strat-prob-repeatability"></select></div>
@@ -1878,6 +1896,82 @@ document.getElementById('strat-prob-save').addEventListener('click', async ()=>{
     renderProblemsWorkspace();
     setTimeout(()=>statusEl.textContent='',2000);
   }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
+});
+
+function buildProblemFinderPrompt(){
+  const b = BRANDS[stratActiveBrand];
+  const products = STRAT_PRODUCTS.filter(p=>p.brand_id===stratActiveBrand);
+  const persona = STRAT_PERSONAS.find(p=>p.id===stratManagingPersonaId);
+  let txt = `Ikaw ay isang customer research at marketing strategist para sa isang aesthetics/wellness clinic sa Pilipinas.\n\n`;
+  txt += `BRAND: ${b?b.name:''}\n`;
+  if(b && b.description) txt += `${b.description}\n`;
+  txt += `\n`;
+  if(products.length){
+    txt += `PRODUCT/S:\n`;
+    products.forEach(p=>{ txt += `- ${p.name}${p.details?` (${p.details})`:''}: ${p.positioning||''}\n`; });
+    txt += `\n`;
+  }
+  txt += `TARGET PERSONA: ${persona?persona.name:''}\n`;
+  if(persona && persona.description) txt += `${persona.description}\n`;
+  if(persona && persona.desire) txt += `Core Desire: ${persona.desire}\n`;
+  txt += `\n`;
+  txt += `TASK:\nGumawa ng 5-8 distinct na PROBLEMS (pain points) na maaaring nararanasan ng persona na ito, kaugnay ng product/brand sa itaas. Para sa bawat problem, magbigay ng score (1-10) para sa:\n`;
+  txt += `- INTENSITY: gaano kasakit, kaurgent, o emotionally important ang problema kapag nangyari\n`;
+  txt += `- REPEATABILITY: gaano kadalas ito na-eexperience ng persona\n`;
+  txt += `- SCALE: gaano karaming katulad na tao ang nakaka-experience nito\n\n`;
+  txt += `Isulat ang sagot mo NANG EKSAKTO sa format na ito, isang problem bawat linya, walang numbering, walang ibang text bago o pagkatapos:\n`;
+  txt += `Problem text | Intensity | Repeatability | Scale\n\n`;
+  txt += `Halimbawa:\nAyaw nang magsuot ng itim dahil sa flakes | 9 | 8 | 9`;
+  return txt;
+}
+
+document.getElementById('strat-copy-problem-prompt').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('strat-copy-problem-status');
+  if(!stratManagingPersonaId){ statusEl.textContent = 'Pumili muna ng persona sa itaas.'; statusEl.className='status-msg err'; return; }
+  const txt = buildProblemFinderPrompt();
+  try{
+    await navigator.clipboard.writeText(txt);
+    statusEl.textContent = 'Nakopya ✓ — i-paste sa ChatGPT/Claude.'; statusEl.className='status-msg ok';
+    setTimeout(()=>{ statusEl.textContent=''; },3000);
+  }catch(err){
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); statusEl.textContent='Nakopya ✓'; statusEl.className='status-msg ok'; }
+    catch(err2){ statusEl.textContent="Hindi na-copy — subukan ulit."; statusEl.className='status-msg err'; }
+    document.body.removeChild(ta);
+  }
+});
+
+function parseBulkProblems(text){
+  return text.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{
+    const parts = line.split('|').map(p=>p.trim());
+    if(parts.length<4) return null;
+    const problem = parts[0];
+    const i = parseInt(parts[1],10), r = parseInt(parts[2],10), s = parseInt(parts[3],10);
+    if(!problem || isNaN(i) || isNaN(r) || isNaN(s)) return null;
+    return { problem, intensity: Math.min(10,Math.max(1,i)), repeatability: Math.min(10,Math.max(1,r)), scale: Math.min(10,Math.max(1,s)) };
+  }).filter(Boolean);
+}
+document.getElementById('strat-bulk-add').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('strat-bulk-status');
+  if(!stratManagingPersonaId){ statusEl.textContent = 'Pumili muna ng persona sa itaas.'; statusEl.className='status-msg err'; return; }
+  const raw = document.getElementById('strat-bulk-problems').value;
+  const parsed = parseBulkProblems(raw);
+  if(parsed.length===0){ statusEl.textContent = 'Walang na-detect na wastong format. Tingnan ang halimbawa sa placeholder.'; statusEl.className='status-msg err'; return; }
+  statusEl.innerHTML = '<span class="spinner"></span> Idinadagdag…'; statusEl.className='status-msg';
+  try{
+    for(const p of parsed){
+      await api('/api/strategy?resource=problems', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ persona_id: stratManagingPersonaId, problem: p.problem, intensity: p.intensity, repeatability: p.repeatability, scale: p.scale }) });
+    }
+    document.getElementById('strat-bulk-problems').value = '';
+    statusEl.textContent = `Naidagdag ✓ — ${parsed.length} problem(s).`; statusEl.className='status-msg ok';
+    await loadProblemsFor(stratManagingPersonaId);
+    renderProblemsWorkspace();
+    setTimeout(()=>{ statusEl.textContent=''; },3000);
+  }catch(err){
+    statusEl.textContent = "May error — subukan ulit."; statusEl.className='status-msg err';
+  }
 });
 
 async function renderCreativeBrief(){
