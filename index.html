@@ -321,6 +321,7 @@
   .wiz-step-kicker{font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
   .wiz-step-title{font-family:'Fraunces',serif;font-size:21px;margin:0 0 6px;}
   .wiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px;padding-top:16px;border-top:1px solid var(--line);}
+  .wiz-nav .btn-disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
   .wiz-req{font-size:11px;font-weight:600;color:#B8677A;text-transform:none;letter-spacing:0;}
   .brief-section{margin-bottom:18px;}
   .brief-section h4{font-family:'Fraunces',serif;font-size:15px;margin:0 0 8px;}
@@ -1227,6 +1228,14 @@ function renderWizardHeader(){
   });
   document.getElementById('strat-products-req').textContent = unlocks[3] ? '' : 'At least 1 required';
   document.getElementById('strat-personas-req').textContent = unlocks[4] ? '' : 'At least 1 required';
+
+  const continueBtns = { 'wiz-to-2':2, 'wiz-to-3':3, 'wiz-to-4':4, 'wiz-to-5':5 };
+  Object.entries(continueBtns).forEach(([btnId,step])=>{
+    const btn = document.getElementById(btnId);
+    const ok = unlocks[step];
+    btn.disabled = !ok;
+    btn.classList.toggle('btn-disabled', !ok);
+  });
 }
 function goToStep(n){
   const unlocks = computeStepUnlocks();
