@@ -1805,6 +1805,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     product_id: document.getElementById('f-product').value || null,
     persona_id: document.getElementById('f-persona').value || null,
     problem_id: document.getElementById('f-problem').value || null,
+    problem_text: (STRAT_PROBLEMS_CACHE[document.getElementById('f-persona').value]||[]).find(p=>p.id===document.getElementById('f-problem').value)?.problem || null,
     desire: document.getElementById('f-desire').value || null,
     market_awareness: document.getElementById('f-awareness').value || null,
     market_sophistication: document.getElementById('f-sophistication').value || null,
@@ -2003,8 +2004,10 @@ async function renderEntries(){
         ${e.adset_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View adset ↗</a></div>`:''}
         ${(e.tags&&e.tags.length)?`<div class="tag-row">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
         ${e.script?`<div class="entry-script">${escapeHtml(e.script)}</div>`:''}
-        ${(e.market_awareness||e.type_of_ad||(e.hook_patterns&&e.hook_patterns.length)||e.headline||e.ad_copy||e.hypothesis)?`
+        ${(e.market_awareness||e.type_of_ad||(e.hook_patterns&&e.hook_patterns.length)||e.headline||e.ad_copy||e.hypothesis||e.problem_text||e.desire)?`
         <div class="strategy-readout">
+          ${e.problem_text?`<div><b>Problem angle:</b> ${escapeHtml(e.problem_text)}</div>`:''}
+          ${e.desire?`<div><b>Desire:</b> ${escapeHtml(e.desire)}</div>`:''}
           ${e.market_awareness?`<div><b>Awareness:</b> ${escapeHtml(labelFor(AWARENESS,e.market_awareness))}</div>`:''}
           ${e.market_sophistication?`<div><b>Sophistication:</b> ${escapeHtml(labelFor(SOPHISTICATION,e.market_sophistication))}</div>`:''}
           ${e.hypothesis?`<div><b>Hypothesis:</b> ${escapeHtml(e.hypothesis)}</div>`:''}
@@ -2090,6 +2093,7 @@ async function renderEntries(){
           product_id: e.product_id || null,
           persona_id: e.persona_id || null,
           problem_id: e.problem_id || null,
+          problem_text: e.problem_text || null,
           desire: e.desire || null,
           market_awareness: e.market_awareness || null,
           market_sophistication: e.market_sophistication || null,
