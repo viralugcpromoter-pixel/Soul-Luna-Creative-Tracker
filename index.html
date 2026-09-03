@@ -370,6 +370,8 @@
   .tt-pipe{display:flex;gap:3px;}
   .tt-pipe-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
   .tt-pipe-dot.done{background:var(--winner);}
+  .tt-link-icon{display:inline-block;font-size:15px;text-decoration:none;padding:2px 3px;border-radius:5px;transition:background-color .12s ease;}
+  .tt-link-icon:hover{background:var(--accent-soft);}
   .tt-stage{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
   .tt-stage-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
   .tt-stage-dot.concept{background:var(--ink-soft);}
@@ -2549,6 +2551,12 @@ async function renderEntries(){
         <td>${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>
         <td>${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>
         <td>${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>
+        <td>${[
+          e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" title="Concept" class="tt-link-icon" onclick="event.stopPropagation()">📄</a>`:'',
+          e.output_link?`<a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" title="Output" class="tt-link-icon" onclick="event.stopPropagation()">🎬</a>`:'',
+          e.adset_link?`<a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" title="Adset" class="tt-link-icon" onclick="event.stopPropagation()">📊</a>`:'',
+          e.ads_manager_link?`<a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" title="Ads Manager" class="tt-link-icon" onclick="event.stopPropagation()">📈</a>`:''
+        ].filter(Boolean).join(' ') || '—'}</td>
         <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
         <td>${escapeHtml(e.editor||'—')}</td>
         <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
@@ -2561,7 +2569,7 @@ async function renderEntries(){
       <table class="tracker-table">
         <thead><tr>
           <th>Ad name</th><th>Status</th><th>Awareness</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>Hook Pattern</th><th>Type of Headline</th><th>Sizing</th><th>Tags</th>
-          <th>CTR</th><th>ROAS</th><th>Page</th><th>Editor</th><th>Launched</th><th>Pipeline</th>
+          <th>CTR</th><th>ROAS</th><th>Links</th><th>Page</th><th>Editor</th><th>Launched</th><th>Pipeline</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
