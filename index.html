@@ -1969,9 +1969,16 @@ function buildProblemFinderPrompt(){
   txt += `- INTENSITY: gaano kasakit, kaurgent, o emotionally important ang problema kapag nangyari\n`;
   txt += `- REPEATABILITY: gaano kadalas ito na-eexperience ng persona\n`;
   txt += `- SCALE: gaano karaming katulad na tao ang nakaka-experience nito\n\n`;
-  txt += `Isulat ang sagot mo NANG EKSAKTO sa format na ito, isang problem bawat linya, walang numbering, walang ibang text bago o pagkatapos:\n`;
-  txt += `Problem text | Intensity | Repeatability | Scale\n\n`;
-  txt += `Halimbawa:\nAyaw nang magsuot ng itim dahil sa flakes | 9 | 8 | 9`;
+  txt += `MAHALAGA — sundin ang format na ito NANG EKSAKTO, walang eksepsiyon:\n`;
+  txt += `- Isang problem bawat linya\n`;
+  txt += `- 4 na parte bawat linya, hiwalay ng " | " (space-pipe-space): Problem text | Intensity | Repeatability | Scale\n`;
+  txt += `- Ang Intensity, Repeatability, at Scale ay HIWALAY na plain number (1-10), HINDI pinagsama (huwag gawing "8×10×9")\n`;
+  txt += `- HUWAG gumawa ng markdown table (walang "---", walang column headers)\n`;
+  txt += `- HUWAG maglagay ng bold (**), bullet points, numbering (1. 2. 3.), o anumang ibang text/paliwanag bago o pagkatapos ng listahan\n\n`;
+  txt += `TAMANG halimbawa (sundin ito):\n`;
+  txt += `Ayaw nang magsuot ng itim dahil sa flakes | 9 | 8 | 9\n`;
+  txt += `Bumabalik ang balakubak kahit maligo na | 8 | 9 | 8\n\n`;
+  txt += `MALING halimbawa (HUWAG gawin ito): "Ayaw nang magsuot ng itim | 9×8×9 | **648**" — huwag pagsamahin ang scores, huwag mag-bold, huwag gumawa ng table.`;
   return txt;
 }
 
@@ -1994,14 +2001,44 @@ document.getElementById('strat-copy-problem-prompt').addEventListener('click', a
 });
 
 function parseBulkProblems(text){
-  return text.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{
-    const parts = line.split('|').map(p=>p.trim());
-    if(parts.length<4) return null;
+  const results = [];
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  for(const rawLine of lines){
+    // Strip markdown table edge pipes, bold markers, and stray backticks
+    let line = rawLine.replace(/^\|+|\|+$/g, '').trim();
+    line = line.replace(/\*\*/g, '').replace(/`/g, '');
+    // Skip markdown separator rows like "---|---|---" or "===|===|==="
+    if(/^[-=:\s|]+$/.test(line)) continue;
+
+    const parts = line.split('|').map(p=>p.trim()).filter(p=>p.length>0);
+    if(parts.length===0) continue;
     const problem = parts[0];
-    const i = parseInt(parts[1],10), r = parseInt(parts[2],10), s = parseInt(parts[3],10);
-    if(!problem || isNaN(i) || isNaN(r) || isNaN(s)) return null;
-    return { problem, intensity: Math.min(10,Math.max(1,i)), repeatability: Math.min(10,Math.max(1,r)), scale: Math.min(10,Math.max(1,s)) };
-  }).filter(Boolean);
+    // Skip header rows (e.g. "Problem | I×R×S | Score" or "Problem | Intensity | Repeatability | Scale")
+    if(!problem || /^(problem|problem text|i.?r.?s|score|intensity)$/i.test(problem)) continue;
+
+    const rest = parts.slice(1).join(' ');
+    // Preferred: an "N x N x N" style combined score (handles ×, x, X, *)
+    const mult = rest.match(/(\d{1,2})\s*[×xX*]\s*(\d{1,2})\s*[×xX*]\s*(\d{1,2})/);
+    let intensity, repeatability, scale;
+    if(mult){
+      intensity = parseInt(mult[1],10);
+      repeatability = parseInt(mult[2],10);
+      scale = parseInt(mult[3],10);
+    } else {
+      // Fallback: three separate numeric fields (our originally requested format)
+      const nums = parts.slice(1).map(p=>parseInt(p,10)).filter(n=>!isNaN(n));
+      if(nums.length<3) continue;
+      [intensity, repeatability, scale] = nums;
+    }
+    if([intensity,repeatability,scale].some(n=>isNaN(n))) continue;
+    results.push({
+      problem,
+      intensity: Math.min(10,Math.max(1,intensity)),
+      repeatability: Math.min(10,Math.max(1,repeatability)),
+      scale: Math.min(10,Math.max(1,scale))
+    });
+  }
+  return results;
 }
 document.getElementById('strat-bulk-add').addEventListener('click', async ()=>{
   const statusEl = document.getElementById('strat-bulk-status');
