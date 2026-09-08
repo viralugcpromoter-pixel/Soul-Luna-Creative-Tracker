@@ -2668,7 +2668,7 @@ async function renderEntries(){
     return `
       <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
         <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
-        <td><span class="tt-badge ${badgeClass}">${finalBadgeLabel}</span></td>
+        <td><span class="tt-badge ${badgeClass}" style="cursor:pointer;" title="I-click para baguhin ang tag" onclick="event.stopPropagation(); cycleWinnerStatus('${e.id}','${e.winner_status||'pending'}')">${finalBadgeLabel}</span></td>
         <td>${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
         <td>${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
         <td>${e.desire?escapeHtml(e.desire):'—'}</td>
@@ -2688,7 +2688,7 @@ async function renderEntries(){
         <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
         <td>${escapeHtml(e.editor||'—')}</td>
         <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
-        <td><span class="tt-stage"><span class="tt-stage-dot ${stage.cls}"></span>${stage.label}</span></td>
+        <td><span class="tt-stage" style="cursor:pointer;" title="I-click para baguhin ang pipeline stage" onclick="event.stopPropagation(); cyclePipelineStage('${e.id}','${stage.cls}')"><span class="tt-stage-dot ${stage.cls}"></span>${stage.label}</span></td>
       </tr>`;
   }).join('');
 
@@ -2832,10 +2832,27 @@ function buildInlineEditHTML(e){
 
 async function updateStatus(id, status){
   await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, winner_status: status }) });
+  const label = status==='winner'?'Winner':status==='not_winner'?'Not a winner':'Pending';
+  showToast('✓ Tagged as '+label);
   renderEntries();
+}
+async function cycleWinnerStatus(id, current){
+  const order = ['pending','winner','not_winner'];
+  const next = order[(order.indexOf(current||'pending')+1)%order.length];
+  await updateStatus(id, next);
 }
 async function toggleFlag(id, field, current){
   await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, [field]: !current }) });
+  showToast(!current ? '✓ Marked as '+(field==='editing_done'?'editing done':'launched') : '✓ Unmarked');
+  renderEntries();
+}
+async function cyclePipelineStage(id, currentStage){
+  let next, label;
+  if(currentStage==='concept'){ next = {editing_done:true, launched:false}; label='Editing'; }
+  else if(currentStage==='editing'){ next = {editing_done:true, launched:true}; label='Launched'; }
+  else { next = {editing_done:false, launched:false}; label='Concept'; }
+  await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, ...next }) });
+  showToast('✓ Pipeline updated — '+label);
   renderEntries();
 }
 async function deleteEntry(id){
