@@ -682,6 +682,10 @@
           <label>Script</label>
           <textarea id="f-script" placeholder="Paste the script, or a link to it (Drive, Doc, etc.)"></textarea>
         </div>
+        <div class="field full">
+          <label>Note <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+          <textarea id="f-notes" placeholder="Anumang paalala o karagdagang detalye..."></textarea>
+        </div>
       </div>
 
       <div class="submit-row">
@@ -767,7 +771,21 @@
       </select>
       <select id="filt-awareness"><option value="">All Awareness</option></select>
       <select id="filt-desire"><option value="">All Desires</option></select>
-      <input type="text" id="filt-tag" placeholder="Filter by tag…" style="width:150px;padding:8px 10px;font-size:13px;" />
+      <select id="filt-pipeline">
+        <option value="">All pipeline stages</option>
+        <option value="concept">● Concept</option>
+        <option value="editing">● Editing</option>
+        <option value="launched">● Launched</option>
+      </select>
+      <div class="tag-filter-wrap" style="position:relative;">
+        <button type="button" class="btn btn-ghost btn-sm" id="filt-tag-btn" style="font-size:13px;">Tags/Service <span id="filt-tag-count" class="count-note" style="display:none;"></span> ▾</button>
+        <div id="filt-tag-popover" style="display:none;position:absolute;top:100%;left:0;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:8px;min-width:200px;max-height:260px;overflow-y:auto;margin-top:4px;">
+          <div id="filt-tag-checks"><div class="hint" style="padding:6px;">Wala pang tags.</div></div>
+          <div style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px;">
+            <button type="button" class="btn-link" id="filt-tag-clear" style="font-size:12px;">Clear tags</button>
+          </div>
+        </div>
+      </div>
       <input type="text" id="filt-editor" placeholder="Filter by editor…" style="width:150px;padding:8px 10px;font-size:13px;" />
       <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;">From<input type="date" id="filt-date-from" style="width:auto;padding:7px 8px;font-size:12.5px;" /></label>
       <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;">To<input type="date" id="filt-date-to" style="width:auto;padding:7px 8px;font-size:12.5px;" /></label>
@@ -990,6 +1008,7 @@ function renderDetailModalReadView(e){
     ${e.ads_manager_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View in Ads Manager ↗</a></div>`:''}
     ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:8px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
     ${e.script?`<div class="entry-script" style="max-height:none;overflow-y:visible;margin-top:10px;">${escapeHtml(e.script)}</div>`:''}
+    ${e.notes?`<div style="margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:8px;font-size:13px;"><b>Note:</b> ${escapeHtml(e.notes)}</div>`:''}
     ${hasStrategy?`
     <div class="strategy-readout" style="margin-top:${e.script?'14px':'10px'};">
       ${e.problem_text?`<div><b>Problem angle:</b> ${escapeHtml(e.problem_text)}</div>`:''}
@@ -1078,6 +1097,7 @@ async function openDetailModal(id){
           concept_link: content.querySelector('.ie-link').value.trim(),
           output_link: content.querySelector('.ie-output').value.trim(),
           script: content.querySelector('.ie-script').value.trim(),
+          notes: content.querySelector('.ie-notes').value.trim(),
           tags: content.querySelector('.tag-input-box')._tags || [],
           brand_id: content.querySelector('.ie-brand').value || null,
           product_id: content.querySelector('.ie-product').value || null,
@@ -1110,6 +1130,7 @@ async function openDetailModal(id){
           }
         })});
         inlineEditId = null;
+        showToast('✓ Changes saved — edit successful');
         await renderEntries();
         openDetailModal(id);
       }catch(err){
@@ -1134,7 +1155,7 @@ async function openDetailModal(id){
     try{
       await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
         ad_name: 'Copy of ' + e.ad_name, meta_ad_id: null, page: e.page || null, date_launched: null,
-        script: e.script, concept_link: e.concept_link, output_link: null, tags: e.tags || [],
+        script: e.script, notes: e.notes || '', concept_link: e.concept_link, output_link: null, tags: e.tags || [],
         concept_creator: e.concept_creator, editor: e.editor, submitted_by: e.submitted_by,
         winner_status: 'pending', performance: null, editing_done: false, launched: false,
         brand_id: e.brand_id || null, product_id: e.product_id || null, persona_id: e.persona_id || null,
@@ -1705,6 +1726,7 @@ document.getElementById('strat-save-brand').addEventListener('click', async ()=>
     document.getElementById('strat-new-brand-name').value='';
     document.getElementById('strat-new-brand-site').value='';
     statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
+    showToast('✓ Brand added — "'+name+'"');
     renderStrategyTab();
   }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
 });
@@ -1716,6 +1738,7 @@ document.getElementById('strat-save-brand-desc').addEventListener('click', async
     await api('/api/strategy?resource=brands', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: stratActiveBrand, description: desc}) });
     await loadBrands();
     statusEl.textContent='Saved ✓'; statusEl.className='status-msg ok';
+    showToast('✓ Brand description saved');
     setTimeout(()=>statusEl.textContent='',2000);
   }catch(e){ statusEl.textContent="Couldn't save."; statusEl.className='status-msg err'; }
 });
@@ -1767,6 +1790,7 @@ function renderStrategyProducts(){
       if(!name || !positioning) return;
       await api('/api/strategy?resource=products', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: btn.dataset.id, name, details, positioning}) });
       editingProductId = null;
+      showToast('✓ Product updated — "'+name+'"');
       await loadStrategyLibrary();
       renderStrategyProducts();
     });
@@ -1794,6 +1818,7 @@ document.getElementById('strat-p-save').addEventListener('click', async ()=>{
     document.getElementById('strat-p-details').value='';
     document.getElementById('strat-p-positioning').value='';
     statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
+    showToast('✓ Product added — "'+name+'"');
     await loadStrategyLibrary();
     renderStrategyProducts();
     renderWizardHeader();
@@ -1854,6 +1879,7 @@ function renderStrategyPersonas(){
       if(!name) return;
       await api('/api/strategy?resource=personas', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: btn.dataset.id, name, desire, market_awareness, market_sophistication, description}) });
       editingPersonaId = null;
+      showToast('✓ Persona updated — "'+name+'"');
       await loadStrategyLibrary();
       renderStrategyPersonas();
     });
@@ -1885,6 +1911,7 @@ document.getElementById('strat-per-save').addEventListener('click', async ()=>{
     document.getElementById('strat-per-sophistication').value='';
     document.getElementById('strat-per-desc').value='';
     statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
+    showToast('✓ Persona added — "'+name+'"');
     await loadStrategyLibrary();
     renderStrategyPersonas();
     renderWizardHeader();
@@ -1951,6 +1978,7 @@ function renderProblemsWorkspace(){
         if(!problem) return;
         await api('/api/strategy?resource=problems', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: btn.dataset.id, problem, intensity, repeatability, scale}) });
         editingProblemId = null;
+        showToast('✓ Problem updated');
         await loadProblemsFor(stratManagingPersonaId);
         renderProblemsWorkspace();
       });
@@ -1980,6 +2008,7 @@ document.getElementById('strat-prob-save').addEventListener('click', async ()=>{
     await api('/api/strategy?resource=problems', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({persona_id: stratManagingPersonaId, problem, intensity, repeatability, scale}) });
     document.getElementById('strat-prob-text').value='';
     statusEl.textContent='Added ✓'; statusEl.className='status-msg ok';
+    showToast('✓ Problem added');
     await loadProblemsFor(stratManagingPersonaId);
     renderProblemsWorkspace();
     setTimeout(()=>statusEl.textContent='',2000);
@@ -2364,6 +2393,7 @@ function resetForm(){
   document.getElementById('f-by').value='';
   document.getElementById('f-concept').value='';
   document.getElementById('f-script').value='';
+  document.getElementById('f-notes').value='';
   document.getElementById('f-manual-name').value='';
   wireTagInput(document.getElementById('f-tags-box'), []);
   pickedAd = null;
@@ -2397,6 +2427,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
   const by = document.getElementById('f-by').value.trim();
   const editor = document.getElementById('f-editor').value.trim();
   const script = document.getElementById('f-script').value.trim();
+  const notesVal = document.getElementById('f-notes').value.trim();
   const conceptLink = document.getElementById('f-concept').value.trim();
   const tags = document.getElementById('f-tags-box')._tags || [];
   const manualName = document.getElementById('f-manual-name').value.trim();
@@ -2417,6 +2448,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     page: page || null,
     date_launched: date || null,
     script,
+    notes: notesVal,
     concept_link: conceptLink,
     tags,
     concept_creator: finalConceptCreator,
@@ -2468,7 +2500,7 @@ function downloadCurrentListAsCSV(){
   const headers = [
     'Ad Name','Status','Editing Done','Launched','Concept Creator','Submitted By','Editor','Page','Meta Ad ID','Date Launched',
     'Awareness','Sophistication','Problem Angle','Desire','Hypothesis',
-    'Type of Ad','Hook Patterns','Type of Headline','Headline','Ad Copy','Script',
+    'Type of Ad','Hook Patterns','Type of Headline','Headline','Ad Copy','Script','Note',
     'Format','Sizing','Creative Variations','Tags',
     'CTR (Review)','CPC (Review)','Cost Per ATC (Review)','CPA (Review)','ROAS (Review)','Hook Rate (Review)','Hold Rate (Review)','Media Buyer Notes',
     'Meta Spend','Meta Impressions','Meta Clicks','Meta CTR',
@@ -2481,7 +2513,7 @@ function downloadCurrentListAsCSV(){
     lines.push([
       e.ad_name, e.winner_status, e.editing_done?'Yes':'No', e.launched?'Yes':'No', e.concept_creator, e.submitted_by, e.editor, pageLabel(e.page), e.meta_ad_id, e.date_launched,
       e.market_awareness?labelFor(AWARENESS,e.market_awareness):'', e.market_sophistication?labelFor(SOPHISTICATION,e.market_sophistication):'', e.problem_text, e.desire, e.hypothesis,
-      e.type_of_ad, (e.hook_patterns||[]).join('; '), e.type_of_headline, e.headline, e.ad_copy, e.script,
+      e.type_of_ad, (e.hook_patterns||[]).join('; '), e.type_of_headline, e.headline, e.ad_copy, e.script, e.notes,
       e.format, e.sizing, e.creative_variations, (e.tags||[]).join('; '),
       rev.ctr, rev.cpc, rev.costPerAtc, rev.cpa, rev.roas, rev.hookRate, rev.holdRate, rev.notes,
       perf.spend, perf.impressions, perf.clicks, perf.ctr,
@@ -2505,12 +2537,48 @@ document.getElementById('filt-page').addEventListener('change', renderEntries);
 document.getElementById('filt-status').addEventListener('change', renderEntries);
 document.getElementById('filt-awareness').addEventListener('change', renderEntries);
 document.getElementById('filt-desire').addEventListener('change', renderEntries);
-document.getElementById('filt-tag').addEventListener('input', renderEntries);
+document.getElementById('filt-pipeline').addEventListener('change', renderEntries);
+// (Tag filter is now a multi-select popover — wired via wireTagFilterPopover() below)
 document.getElementById('filt-editor').addEventListener('input', renderEntries);
 document.getElementById('filt-date-from').addEventListener('change', renderEntries);
 document.getElementById('filt-date-to').addEventListener('change', renderEntries);
 document.getElementById('filt-awareness').innerHTML = '<option value="">All Awareness</option>' + AWARENESS.map(([v,l])=>`<option value="${v}">${escapeHtml(l.split(' — ')[0])}</option>`).join('');
 document.getElementById('filt-desire').innerHTML = '<option value="">All Desires</option>' + DESIRES.map(([n])=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+
+let filtSelectedTags = [];
+function populateTagFilterChecks(){
+  const holder = document.getElementById('filt-tag-checks');
+  const allTags = Array.from(new Set(entries.flatMap(e=>e.tags||[]))).sort();
+  if(allTags.length===0){ holder.innerHTML = '<div class="hint" style="padding:6px;">Wala pang tags.</div>'; return; }
+  holder.innerHTML = allTags.map(t=>`<label style="display:flex;align-items:center;gap:6px;padding:5px 4px;font-size:13px;cursor:pointer;"><input type="checkbox" value="${escapeHtml(t)}" class="filt-tag-cb" ${filtSelectedTags.includes(t)?'checked':''} /> ${escapeHtml(t)}</label>`).join('');
+  holder.querySelectorAll('.filt-tag-cb').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      filtSelectedTags = Array.from(holder.querySelectorAll('.filt-tag-cb:checked')).map(x=>x.value);
+      updateTagFilterButtonLabel();
+      renderEntries();
+    });
+  });
+}
+function updateTagFilterButtonLabel(){
+  const countEl = document.getElementById('filt-tag-count');
+  if(filtSelectedTags.length>0){ countEl.textContent = filtSelectedTags.length; countEl.style.display='inline'; }
+  else { countEl.style.display='none'; }
+}
+document.getElementById('filt-tag-btn').addEventListener('click', (ev)=>{
+  ev.stopPropagation();
+  const pop = document.getElementById('filt-tag-popover');
+  pop.style.display = pop.style.display==='none' ? 'block' : 'none';
+});
+document.addEventListener('click', (ev)=>{
+  const wrap = document.querySelector('.tag-filter-wrap');
+  if(wrap && !wrap.contains(ev.target)) document.getElementById('filt-tag-popover').style.display='none';
+});
+document.getElementById('filt-tag-clear').addEventListener('click', ()=>{
+  filtSelectedTags = [];
+  populateTagFilterChecks();
+  updateTagFilterButtonLabel();
+  renderEntries();
+});
 
 let activeQuickFilter = '';
 const QUICK_FILTERS = [
@@ -2549,15 +2617,17 @@ async function renderEntries(){
   const holder = document.getElementById('entries-holder');
   if(entries.length===0) holder.innerHTML = `<div class="empty"><span class="spinner"></span> Loading…</div>`;
   await loadEntries();
+  populateTagFilterChecks();
   const fq = document.getElementById('filt-search').value.trim().toLowerCase();
   const fp = document.getElementById('filt-page').value;
   const fs = document.getElementById('filt-status').value;
   const fa = document.getElementById('filt-awareness').value;
   const fdes = document.getElementById('filt-desire').value;
-  const ft = document.getElementById('filt-tag').value.trim().toLowerCase();
+  const fpipe = document.getElementById('filt-pipeline').value;
   const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
   const fdFrom = document.getElementById('filt-date-from').value;
   const fdTo = document.getElementById('filt-date-to').value;
+  function pipelineStageOf(e){ return e.launched ? 'launched' : (e.editing_done ? 'editing' : 'concept'); }
   const preQuickList = entries.filter(e=>{
     const submittedDate = (e.submitted_at||'').slice(0,10);
     return (!fq || (e.ad_name||'').toLowerCase().includes(fq) || (e.script||'').toLowerCase().includes(fq) || (e.problem_text||'').toLowerCase().includes(fq) || (e.type_of_ad||'').toLowerCase().includes(fq)) &&
@@ -2565,13 +2635,16 @@ async function renderEntries(){
     (!fs || e.winner_status===fs) &&
     (!fa || e.market_awareness===fa) &&
     (!fdes || e.desire===fdes) &&
-    (!ft || (e.tags||[]).some(t=>t.toLowerCase().includes(ft))) &&
+    (!fpipe || pipelineStageOf(e)===fpipe) &&
+    (filtSelectedTags.length===0 || (e.tags||[]).some(t=>filtSelectedTags.includes(t))) &&
     (!fe || (e.editor||'').toLowerCase().includes(fe)) &&
     (!fdFrom || submittedDate>=fdFrom) &&
     (!fdTo || submittedDate<=fdTo);
   });
   renderQuickFilterBar(preQuickList);
-  let list = activeQuickFilter ? preQuickList.filter(e=>matchesQuickFilter(e, activeQuickFilter)) : preQuickList;
+  let list = activeQuickFilter
+    ? preQuickList.filter(e=>matchesQuickFilter(e, activeQuickFilter))
+    : preQuickList.filter(e=>e.winner_status!=='winner');
 
   window.__currentTrackerList = list;
   document.getElementById('entry-count').textContent = `${list.length} creative${list.length===1?'':'s'}`;
@@ -2708,6 +2781,10 @@ function buildInlineEditHTML(e){
       <div class="field full">
         <label>Script</label>
         <textarea class="ie-script">${escapeHtml(e.script||'')}</textarea>
+      </div>
+      <div class="field full">
+        <label>Note</label>
+        <textarea class="ie-notes">${escapeHtml(e.notes||'')}</textarea>
       </div>
     </div>
 
