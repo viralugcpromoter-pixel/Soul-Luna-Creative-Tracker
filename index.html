@@ -373,11 +373,9 @@
   .tt-link-chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);text-decoration:none;color:var(--ink-soft);margin:1px 3px 1px 0;white-space:nowrap;transition:all .12s ease;}
   .tt-link-chip:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
   .tt-stage{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
-  .tt-stage-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-  .tt-stage-dot.script{background:var(--ink-soft);}
-  .tt-stage-dot.editing_progress{background:var(--accent);}
-  .tt-stage-dot.editing_done{background:var(--pending);}
-  .tt-stage-dot.launch{background:var(--winner);}
+  .tt-badge.stage-accent{background:var(--accent-soft);color:var(--accent);}
+  .tt-badge.stage-off{background:transparent;border:1px dashed var(--line);color:var(--ink-soft);opacity:.55;}
+  .tt-tags{display:flex;flex-wrap:wrap;gap:4px;max-width:220px;}
 </style>
 </head>
 <body>
@@ -766,7 +764,6 @@
       </select>
       <select id="filt-pipeline">
         <option value="">All statuses</option>
-        <option value="script">● Done script</option>
         <option value="editing_progress">● Editing in progress</option>
         <option value="editing_done">● Done editing</option>
         <option value="launch">● Done launch</option>
@@ -2634,7 +2631,13 @@ async function renderEntries(){
   const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
   const fdFrom = document.getElementById('filt-date-from').value;
   const fdTo = document.getElementById('filt-date-to').value;
-  function pipelineStageOf(e){ return e.launched ? 'launch' : (e.editing_done ? 'editing_done' : (e.editing_started ? 'editing_progress' : 'script')); }
+  function matchesPipelineFilter(e, val){
+    if(!val) return true;
+    if(val==='editing_progress') return !!e.editing_started;
+    if(val==='editing_done') return !!e.editing_done;
+    if(val==='launch') return !!e.launched;
+    return true;
+  }
   const preQuickList = entries.filter(e=>{
     const submittedDate = (e.submitted_at||'').slice(0,10);
     return (!fq || (e.ad_name||'').toLowerCase().includes(fq) || (e.script||'').toLowerCase().includes(fq) || (e.problem_text||'').toLowerCase().includes(fq) || (e.type_of_ad||'').toLowerCase().includes(fq)) &&
@@ -2642,7 +2645,7 @@ async function renderEntries(){
     (!fs || e.winner_status===fs) &&
     (!fa || e.market_awareness===fa) &&
     (!fdes || e.desire===fdes) &&
-    (!fpipe || pipelineStageOf(e)===fpipe) &&
+    (!fpipe || matchesPipelineFilter(e,fpipe)) &&
     (filtSelectedTags.length===0 || (e.tags||[]).some(t=>filtSelectedTags.includes(t))) &&
     (!fe || (e.editor||'').toLowerCase().includes(fe)) &&
     (!fdFrom || submittedDate>=fdFrom) &&
@@ -2670,12 +2673,17 @@ async function renderEntries(){
     const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
     const badgeClass = needsReview ? 'review' : e.winner_status;
     const finalBadgeLabel = needsReview ? '⚠ Needs review' : badgeLabel;
-    const stage = e.launched ? {label:'Done launch', cls:'launch'} : (e.editing_done ? {label:'Done editing', cls:'editing_done'} : (e.editing_started ? {label:'Editing in progress', cls:'editing_progress'} : {label:'Done script', cls:'script'}));
+    const stageTagsHtml = `<div class="tt-tags">`
+      + `<span class="tt-badge not_winner" title="Naka-log na, may script na">Done script</span>`
+      + `<span class="tt-badge ${e.editing_started?'stage-accent':'stage-off'}" style="cursor:pointer;" title="I-click para i-toggle" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_started',${!!e.editing_started});">Editing in progress</span>`
+      + `<span class="tt-badge ${e.editing_done?'pending':'stage-off'}" style="cursor:pointer;" title="I-click para i-toggle" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_done',${!!e.editing_done});">Done editing</span>`
+      + `<span class="tt-badge ${e.launched?'winner':'stage-off'}" style="cursor:pointer;" title="I-click para i-toggle" onclick="event.stopPropagation(); toggleFlag('${e.id}','launched',${!!e.launched});">Done launch</span>`
+      + `</div>`;
     const awarenessShort = e.market_awareness ? labelFor(AWARENESS,e.market_awareness).split(' — ')[0] : '';
     return `
       <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
         <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
-        <td><span class="tt-stage" style="cursor:pointer;" title="I-click para baguhin ang status" onclick="event.stopPropagation(); cyclePipelineStage('${e.id}','${stage.cls}')"><span class="tt-stage-dot ${stage.cls}"></span>${stage.label}</span></td>
+        <td>${stageTagsHtml}</td>
         <td>${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
         <td>${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
         <td>${e.desire?escapeHtml(e.desire):'—'}</td>
@@ -2852,16 +2860,6 @@ async function toggleFlag(id, field, current){
   await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, [field]: !current }) });
   const fieldLabel = field==='editing_done' ? 'editing done' : field==='editing_started' ? 'editing in progress' : 'launched';
   showToast(!current ? '✓ Marked as '+fieldLabel : '✓ Unmarked');
-  renderEntries();
-}
-async function cyclePipelineStage(id, currentStage){
-  let next, label;
-  if(currentStage==='script'){ next = {editing_started:true, editing_done:false, launched:false}; label='Editing in progress'; }
-  else if(currentStage==='editing_progress'){ next = {editing_started:true, editing_done:true, launched:false}; label='Done editing'; }
-  else if(currentStage==='editing_done'){ next = {editing_started:true, editing_done:true, launched:true}; label='Done launch'; }
-  else { next = {editing_started:false, editing_done:false, launched:false}; label='Done script'; }
-  await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, ...next }) });
-  showToast('✓ Status updated — '+label);
   renderEntries();
 }
 async function deleteEntry(id){
