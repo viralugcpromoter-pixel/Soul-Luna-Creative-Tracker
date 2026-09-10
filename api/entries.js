@@ -14,8 +14,9 @@ function checkAuth(req, res) {
   return true;
 }
 
-const TRACKED_FIELDS = ['editing_done', 'launched', 'winner_status', 'page'];
+const TRACKED_FIELDS = ['editing_started', 'editing_done', 'launched', 'winner_status', 'page'];
 const LABELS = {
+  editing_started: 'Editing in progress',
   editing_done: 'Editing done',
   launched: 'Launched',
   winner_status: 'Status',
@@ -23,7 +24,7 @@ const LABELS = {
 };
 
 function describe(field, from, to) {
-  if (field === 'editing_done' || field === 'launched') {
+  if (field === 'editing_started' || field === 'editing_done' || field === 'launched') {
     return `${LABELS[field]}: ${to ? 'yes' : 'no'}`;
   }
   if (field === 'winner_status') {
@@ -61,7 +62,7 @@ export default async function handler(req, res) {
 
       const { data: current, error: fetchErr } = await supabase
         .from('creatives')
-        .select('editing_done,launched,winner_status,page,history')
+        .select('editing_started,editing_done,launched,winner_status,page,history')
         .eq('id', id)
         .single();
       if (fetchErr) throw fetchErr;
