@@ -977,11 +977,16 @@ async function api(path, opts){
 }
 
 function showToast(msg){
-  const t = document.getElementById('toast');
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toast';
+    document.body.appendChild(t);
+  }
   t.textContent = msg;
-  t.classList.add('show');
+  t.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1B1A18;color:#FFFFFF;padding:12px 22px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:99999;opacity:1;pointer-events:none;transition:opacity .25s ease;';
   clearTimeout(t._timer);
-  t._timer = setTimeout(()=>t.classList.remove('show'), 2200);
+  t._timer = setTimeout(()=>{ if(t) t.style.opacity='0'; }, 2400);
 }
 
 function showLogin(){
