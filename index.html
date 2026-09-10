@@ -374,9 +374,10 @@
   .tt-link-chip:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
   .tt-stage{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
   .tt-stage-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-  .tt-stage-dot.concept{background:var(--ink-soft);}
-  .tt-stage-dot.editing{background:var(--pending);}
-  .tt-stage-dot.launched{background:var(--winner);}
+  .tt-stage-dot.script{background:var(--ink-soft);}
+  .tt-stage-dot.editing_progress{background:var(--accent);}
+  .tt-stage-dot.editing_done{background:var(--pending);}
+  .tt-stage-dot.launch{background:var(--winner);}
 </style>
 </head>
 <body>
@@ -763,19 +764,20 @@
       <select id="filt-page">
         <option value="">All pages</option>
       </select>
-      <select id="filt-status">
+      <select id="filt-pipeline">
         <option value="">All statuses</option>
-        <option value="pending">Pending</option>
-        <option value="winner">Winner</option>
-        <option value="not_winner">Not a winner</option>
+        <option value="script">● Done script</option>
+        <option value="editing_progress">● Editing in progress</option>
+        <option value="editing_done">● Done editing</option>
+        <option value="launch">● Done launch</option>
       </select>
       <select id="filt-awareness"><option value="">All Awareness</option></select>
       <select id="filt-desire"><option value="">All Desires</option></select>
-      <select id="filt-pipeline">
-        <option value="">All pipeline stages</option>
-        <option value="concept">● Concept</option>
-        <option value="editing">● Editing</option>
-        <option value="launched">● Launched</option>
+      <select id="filt-status">
+        <option value="">All ads statuses</option>
+        <option value="pending">Pending</option>
+        <option value="winner">Winner</option>
+        <option value="not_winner">Not a winner</option>
       </select>
       <div class="tag-filter-wrap" style="position:relative;">
         <button type="button" class="btn btn-ghost btn-sm" id="filt-tag-btn" style="font-size:13px;">Tags/Service <span id="filt-tag-count" class="count-note" style="display:none;"></span> ▾</button>
@@ -1056,7 +1058,8 @@ function renderDetailModalReadView(e){
     <div class="entry-actions" style="margin-top:14px;">
       <button class="btn btn-ghost btn-sm act-edit">Edit</button>
       <button class="btn btn-dup btn-sm act-dup">⧉ Duplicate</button>
-      <button class="btn btn-ghost btn-sm act-toggle-editing">${e.editing_done?'Undo editing':'Mark editing done'}</button>
+      <button class="btn btn-ghost btn-sm act-toggle-start">${e.editing_started?'Undo editing in progress':'Mark editing in progress'}</button>
+      <button class="btn btn-ghost btn-sm act-toggle-editing">${e.editing_done?'Undo editing done':'Mark editing done'}</button>
       <button class="btn btn-ghost btn-sm act-toggle-launch">${e.launched?'Undo launch':'Mark launched'}</button>
       <button class="btn btn-ghost btn-sm act-pull">${perf?'Refresh performance':'Pull performance'}</button>
       <button class="btn btn-ghost btn-sm act-winner">Mark winner</button>
@@ -1157,7 +1160,7 @@ async function openDetailModal(id){
         ad_name: 'Copy of ' + e.ad_name, meta_ad_id: null, page: e.page || null, date_launched: null,
         script: e.script, notes: e.notes || '', concept_link: e.concept_link, output_link: null, tags: e.tags || [],
         concept_creator: e.concept_creator, editor: e.editor, submitted_by: e.submitted_by,
-        winner_status: 'pending', performance: null, editing_done: false, launched: false,
+        winner_status: 'pending', performance: null, editing_started: false, editing_done: false, launched: false,
         brand_id: e.brand_id || null, product_id: e.product_id || null, persona_id: e.persona_id || null,
         problem_id: e.problem_id || null, problem_text: e.problem_text || null, desire: e.desire || null,
         market_awareness: e.market_awareness || null, market_sophistication: e.market_sophistication || null,
@@ -1172,6 +1175,10 @@ async function openDetailModal(id){
       statusMsg.textContent = "Couldn't duplicate — try again.";
       statusMsg.className = 'status-msg act-status err';
     }
+  });
+  content.querySelector('.act-toggle-start').addEventListener('click', async ()=>{
+    await toggleFlag(e.id,'editing_started',e.editing_started);
+    openDetailModal(id);
   });
   content.querySelector('.act-toggle-editing').addEventListener('click', async ()=>{
     await toggleFlag(e.id,'editing_done',e.editing_done);
@@ -2498,7 +2505,7 @@ function downloadCurrentListAsCSV(){
   const rows = window.__currentTrackerList || [];
   if(rows.length===0){ showToast('Walang makikitang entries sa kasalukuyang filter.'); return; }
   const headers = [
-    'Ad Name','Status','Editing Done','Launched','Concept Creator','Submitted By','Editor','Page','Meta Ad ID','Date Launched',
+    'Ad Name','Ads Status','Editing In Progress','Editing Done','Launched','Concept Creator','Submitted By','Editor','Page','Meta Ad ID','Date Launched',
     'Awareness','Sophistication','Problem Angle','Desire','Hypothesis',
     'Type of Ad','Hook Patterns','Type of Headline','Headline','Ad Copy','Script','Note',
     'Format','Sizing','Creative Variations','Tags',
@@ -2511,7 +2518,7 @@ function downloadCurrentListAsCSV(){
     const perf = e.performance || {};
     const rev = perf.review || {};
     lines.push([
-      e.ad_name, e.winner_status, e.editing_done?'Yes':'No', e.launched?'Yes':'No', e.concept_creator, e.submitted_by, e.editor, pageLabel(e.page), e.meta_ad_id, e.date_launched,
+      e.ad_name, e.winner_status, e.editing_started?'Yes':'No', e.editing_done?'Yes':'No', e.launched?'Yes':'No', e.concept_creator, e.submitted_by, e.editor, pageLabel(e.page), e.meta_ad_id, e.date_launched,
       e.market_awareness?labelFor(AWARENESS,e.market_awareness):'', e.market_sophistication?labelFor(SOPHISTICATION,e.market_sophistication):'', e.problem_text, e.desire, e.hypothesis,
       e.type_of_ad, (e.hook_patterns||[]).join('; '), e.type_of_headline, e.headline, e.ad_copy, e.script, e.notes,
       e.format, e.sizing, e.creative_variations, (e.tags||[]).join('; '),
@@ -2627,7 +2634,7 @@ async function renderEntries(){
   const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
   const fdFrom = document.getElementById('filt-date-from').value;
   const fdTo = document.getElementById('filt-date-to').value;
-  function pipelineStageOf(e){ return e.launched ? 'launched' : (e.editing_done ? 'editing' : 'concept'); }
+  function pipelineStageOf(e){ return e.launched ? 'launch' : (e.editing_done ? 'editing_done' : (e.editing_started ? 'editing_progress' : 'script')); }
   const preQuickList = entries.filter(e=>{
     const submittedDate = (e.submitted_at||'').slice(0,10);
     return (!fq || (e.ad_name||'').toLowerCase().includes(fq) || (e.script||'').toLowerCase().includes(fq) || (e.problem_text||'').toLowerCase().includes(fq) || (e.type_of_ad||'').toLowerCase().includes(fq)) &&
@@ -2663,12 +2670,12 @@ async function renderEntries(){
     const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
     const badgeClass = needsReview ? 'review' : e.winner_status;
     const finalBadgeLabel = needsReview ? '⚠ Needs review' : badgeLabel;
-    const stage = e.launched ? {label:'Launched', cls:'launched'} : (e.editing_done ? {label:'Editing', cls:'editing'} : {label:'Concept', cls:'concept'});
+    const stage = e.launched ? {label:'Done launch', cls:'launch'} : (e.editing_done ? {label:'Done editing', cls:'editing_done'} : (e.editing_started ? {label:'Editing in progress', cls:'editing_progress'} : {label:'Done script', cls:'script'}));
     const awarenessShort = e.market_awareness ? labelFor(AWARENESS,e.market_awareness).split(' — ')[0] : '';
     return `
       <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
         <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
-        <td><span class="tt-badge ${badgeClass}" style="cursor:pointer;" title="I-click para baguhin ang tag" onclick="event.stopPropagation(); cycleWinnerStatus('${e.id}','${e.winner_status||'pending'}')">${finalBadgeLabel}</span></td>
+        <td><span class="tt-stage" style="cursor:pointer;" title="I-click para baguhin ang status" onclick="event.stopPropagation(); cyclePipelineStage('${e.id}','${stage.cls}')"><span class="tt-stage-dot ${stage.cls}"></span>${stage.label}</span></td>
         <td>${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
         <td>${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
         <td>${e.desire?escapeHtml(e.desire):'—'}</td>
@@ -2688,7 +2695,7 @@ async function renderEntries(){
         <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
         <td>${escapeHtml(e.editor||'—')}</td>
         <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
-        <td><span class="tt-stage" style="cursor:pointer;" title="I-click para baguhin ang pipeline stage" onclick="event.stopPropagation(); cyclePipelineStage('${e.id}','${stage.cls}')"><span class="tt-stage-dot ${stage.cls}"></span>${stage.label}</span></td>
+        <td><span class="tt-badge ${badgeClass}" style="cursor:pointer;" title="I-click para baguhin ang tag" onclick="event.stopPropagation(); cycleWinnerStatus('${e.id}','${e.winner_status||'pending'}')">${finalBadgeLabel}</span></td>
       </tr>`;
   }).join('');
 
@@ -2697,7 +2704,7 @@ async function renderEntries(){
       <table class="tracker-table">
         <thead><tr>
           <th>Ad name</th><th>Status</th><th>Awareness</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>Hook Pattern</th><th>Type of Headline</th><th>Sizing</th><th>Tags</th>
-          <th>CTR</th><th>ROAS</th><th>Links</th><th>Page</th><th>Editor</th><th>Launched</th><th>Pipeline</th>
+          <th>CTR</th><th>ROAS</th><th>Links</th><th>Page</th><th>Editor</th><th>Launched</th><th>Ads Status</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
@@ -2843,16 +2850,18 @@ async function cycleWinnerStatus(id, current){
 }
 async function toggleFlag(id, field, current){
   await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, [field]: !current }) });
-  showToast(!current ? '✓ Marked as '+(field==='editing_done'?'editing done':'launched') : '✓ Unmarked');
+  const fieldLabel = field==='editing_done' ? 'editing done' : field==='editing_started' ? 'editing in progress' : 'launched';
+  showToast(!current ? '✓ Marked as '+fieldLabel : '✓ Unmarked');
   renderEntries();
 }
 async function cyclePipelineStage(id, currentStage){
   let next, label;
-  if(currentStage==='concept'){ next = {editing_done:true, launched:false}; label='Editing'; }
-  else if(currentStage==='editing'){ next = {editing_done:true, launched:true}; label='Launched'; }
-  else { next = {editing_done:false, launched:false}; label='Concept'; }
+  if(currentStage==='script'){ next = {editing_started:true, editing_done:false, launched:false}; label='Editing in progress'; }
+  else if(currentStage==='editing_progress'){ next = {editing_started:true, editing_done:true, launched:false}; label='Done editing'; }
+  else if(currentStage==='editing_done'){ next = {editing_started:true, editing_done:true, launched:true}; label='Done launch'; }
+  else { next = {editing_started:false, editing_done:false, launched:false}; label='Done script'; }
   await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, ...next }) });
-  showToast('✓ Pipeline updated — '+label);
+  showToast('✓ Status updated — '+label);
   renderEntries();
 }
 async function deleteEntry(id){
