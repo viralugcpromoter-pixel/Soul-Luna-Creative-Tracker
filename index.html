@@ -720,6 +720,7 @@
             <button class="btn btn-ghost btn-sm" id="f-type-of-ad-add" type="button">+ Add</button>
           </div>
         </div>
+        <div class="field"><label>Campaign Objective</label><select id="f-objective"><option value="">Select…</option><option value="Website">Website</option><option value="Message">Message</option><option value="Lead">Lead</option></select></div>
         <div class="field"><label>Format</label><select id="f-format"><option value="">Select…</option><option value="Video">Video</option><option value="Image">Image</option><option value="Carousel">Carousel</option><option value="Static">Static</option></select></div>
         <div class="field"><label>Sizing</label><input type="text" id="f-sizing" list="sizing-presets" placeholder="Pumili o mag-type ng kahit anong size" /></div>
         <div class="field"><label>Creative Variations</label><input type="number" id="f-creative-variations" min="1" placeholder="e.g. 3" /></div>
@@ -770,6 +771,12 @@
         <option value="launch">● Done launch</option>
       </select>
       <select id="filt-awareness"><option value="">All Awareness</option></select>
+      <select id="filt-objective">
+        <option value="">All objectives</option>
+        <option value="Website">Website</option>
+        <option value="Message">Message</option>
+        <option value="Lead">Lead</option>
+      </select>
       <select id="filt-desire"><option value="">All Desires</option></select>
       <select id="filt-status">
         <option value="">All ads statuses</option>
@@ -1009,7 +1016,7 @@ document.getElementById('login-password').addEventListener('keydown', (ev)=>{ if
 // ---------- Details modal (full entry: script, strategy, links, tags, performance, history, actions) ----------
 function renderDetailModalReadView(e){
   const perf = e.performance;
-  const hasStrategy = e.market_awareness || e.type_of_ad || (e.hook_patterns&&e.hook_patterns.length) || e.headline || e.ad_copy || e.hypothesis || e.problem_text || e.desire || e.format || e.sizing || e.creative_variations;
+  const hasStrategy = e.market_awareness || e.type_of_ad || (e.hook_patterns&&e.hook_patterns.length) || e.headline || e.ad_copy || e.hypothesis || e.problem_text || e.desire || e.format || e.sizing || e.creative_variations || e.campaign_objective;
   return `
     <h3>${escapeHtml(e.ad_name||'Details')}</h3>
     <div class="entry-meta" style="margin-bottom:10px;">${pageLabel(e.page)||'No page yet'} · ${e.date_launched?('Launched '+e.date_launched):'Not launched yet'} · Concept: ${escapeHtml(e.concept_creator||'—')} · Editor: ${escapeHtml(e.editor||'—')} · Logged by ${escapeHtml(e.submitted_by)}${e.meta_ad_id?' · ID '+escapeHtml(e.meta_ad_id):''}</div>
@@ -1028,6 +1035,7 @@ function renderDetailModalReadView(e){
       ${e.market_sophistication?`<div><b>Sophistication:</b> ${escapeHtml(labelFor(SOPHISTICATION,e.market_sophistication))}</div>`:''}
       ${e.hypothesis?`<div><b>Hypothesis:</b> ${escapeHtml(e.hypothesis)}</div>`:''}
       ${e.type_of_ad?`<div><b>Type of Ad:</b> ${escapeHtml(e.type_of_ad)}</div>`:''}
+      ${e.campaign_objective?`<div><b>Campaign Objective:</b> ${escapeHtml(e.campaign_objective)}</div>`:''}
       ${(e.format||e.sizing||e.creative_variations)?`<div><b>Production:</b> ${[e.format,e.sizing,e.creative_variations?`${e.creative_variations} variations`:''].filter(Boolean).map(escapeHtml).join(' · ')}</div>`:''}
       ${(e.hook_patterns&&e.hook_patterns.length)?`<div><b>Hooks:</b> ${e.hook_patterns.map(h=>escapeHtml(h)).join(', ')}</div>`:''}
       ${e.headline?`<div><b>Headline:</b> ${escapeHtml(e.headline)}</div>`:''}
@@ -1125,6 +1133,7 @@ async function openDetailModal(id){
           adset_link: content.querySelector('.ie-adsetlink').value.trim(),
           ads_manager_link: content.querySelector('.ie-adsmanagerlink').value.trim(),
           format: content.querySelector('.ie-format').value || null,
+          campaign_objective: content.querySelector('.ie-objective').value || null,
           sizing: content.querySelector('.ie-sizing').value || null,
           creative_variations: content.querySelector('.ie-creative-variations').value ? parseInt(content.querySelector('.ie-creative-variations').value, 10) : null,
           performance: {
@@ -1175,7 +1184,7 @@ async function openDetailModal(id){
         market_awareness: e.market_awareness || null, market_sophistication: e.market_sophistication || null,
         hypothesis: e.hypothesis || '', type_of_ad: e.type_of_ad || null, hook_patterns: e.hook_patterns || [],
         type_of_headline: e.type_of_headline || null, headline: e.headline || '', ad_copy: e.ad_copy || '', adset_link: '', ads_manager_link: '',
-        format: e.format || null, sizing: e.sizing || null, creative_variations: e.creative_variations || null
+        format: e.format || null, sizing: e.sizing || null, creative_variations: e.creative_variations || null, campaign_objective: e.campaign_objective || null
       })});
       showToast('✓ Duplicated — edit the copy to set it up');
       closeDetailModal();
@@ -2429,6 +2438,7 @@ function resetForm(){
   document.getElementById('f-ad-copy').value='';
   document.getElementById('f-adset-link').value='';
   document.getElementById('f-copy-details-status').textContent='';
+  document.getElementById('f-objective').value='';
   document.getElementById('f-format').value='';
   document.getElementById('f-sizing').value='';
   document.getElementById('f-creative-variations').value='';
@@ -2487,6 +2497,7 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     adset_link: document.getElementById('f-adset-link').value.trim(),
     ads_manager_link: document.getElementById('f-ads-manager-link').value.trim(),
     format: document.getElementById('f-format').value || null,
+    campaign_objective: document.getElementById('f-objective').value || null,
     sizing: document.getElementById('f-sizing').value || null,
     creative_variations: document.getElementById('f-creative-variations').value ? parseInt(document.getElementById('f-creative-variations').value, 10) : null
   };
@@ -2517,7 +2528,7 @@ function downloadCurrentListAsCSV(){
     'Ad Name','Ads Status','Editing In Progress','Editing Done','Launched','Concept Creator','Submitted By','Editor','Page','Meta Ad ID','Date Launched',
     'Awareness','Sophistication','Problem Angle','Desire','Hypothesis',
     'Type of Ad','Hook Patterns','Type of Headline','Headline','Ad Copy','Script','Note',
-    'Format','Sizing','Creative Variations','Tags',
+    'Format','Sizing','Creative Variations','Campaign Objective','Tags',
     'CTR (Review)','CPC (Review)','Cost Per ATC (Review)','CPA (Review)','ROAS (Review)','Hook Rate (Review)','Hold Rate (Review)','Media Buyer Notes',
     'Meta Spend','Meta Impressions','Meta Clicks','Meta CTR',
     'Concept Link','Output Link','Adset Link','Ads Manager Link'
@@ -2530,7 +2541,7 @@ function downloadCurrentListAsCSV(){
       e.ad_name, e.winner_status, e.editing_started?'Yes':'No', e.editing_done?'Yes':'No', e.launched?'Yes':'No', e.concept_creator, e.submitted_by, e.editor, pageLabel(e.page), e.meta_ad_id, e.date_launched,
       e.market_awareness?labelFor(AWARENESS,e.market_awareness):'', e.market_sophistication?labelFor(SOPHISTICATION,e.market_sophistication):'', e.problem_text, e.desire, e.hypothesis,
       e.type_of_ad, (e.hook_patterns||[]).join('; '), e.type_of_headline, e.headline, e.ad_copy, e.script, e.notes,
-      e.format, e.sizing, e.creative_variations, (e.tags||[]).join('; '),
+      e.format, e.sizing, e.creative_variations, e.campaign_objective, (e.tags||[]).join('; '),
       rev.ctr, rev.cpc, rev.costPerAtc, rev.cpa, rev.roas, rev.hookRate, rev.holdRate, rev.notes,
       perf.spend, perf.impressions, perf.clicks, perf.ctr,
       e.concept_link, e.output_link, e.adset_link, e.ads_manager_link
@@ -2552,6 +2563,7 @@ document.getElementById('filt-search').addEventListener('input', renderEntries);
 document.getElementById('filt-page').addEventListener('change', renderEntries);
 document.getElementById('filt-status').addEventListener('change', renderEntries);
 document.getElementById('filt-awareness').addEventListener('change', renderEntries);
+document.getElementById('filt-objective').addEventListener('change', renderEntries);
 document.getElementById('filt-desire').addEventListener('change', renderEntries);
 document.getElementById('filt-pipeline').addEventListener('change', renderEntries);
 // (Tag filter is now a multi-select popover — wired via wireTagFilterPopover() below)
@@ -2638,6 +2650,7 @@ async function renderEntries(){
   const fp = document.getElementById('filt-page').value;
   const fs = document.getElementById('filt-status').value;
   const fa = document.getElementById('filt-awareness').value;
+  const fobj = document.getElementById('filt-objective').value;
   const fdes = document.getElementById('filt-desire').value;
   const fpipe = document.getElementById('filt-pipeline').value;
   const fe = document.getElementById('filt-editor').value.trim().toLowerCase();
@@ -2656,6 +2669,7 @@ async function renderEntries(){
     (!fp || e.page===fp) &&
     (!fs || e.winner_status===fs) &&
     (!fa || e.market_awareness===fa) &&
+    (!fobj || e.campaign_objective===fobj) &&
     (!fdes || e.desire===fdes) &&
     (!fpipe || matchesPipelineFilter(e,fpipe)) &&
     (filtSelectedTags.length===0 || (e.tags||[]).some(t=>filtSelectedTags.includes(t))) &&
@@ -2696,6 +2710,7 @@ async function renderEntries(){
         <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
         <td>${stageTagsHtml}</td>
         <td>${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
+        <td>${e.campaign_objective?escapeHtml(e.campaign_objective):'—'}</td>
         <td>${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
         <td>${e.desire?escapeHtml(e.desire):'—'}</td>
         <td>${e.type_of_ad?`<span class="tt-truncate" title="${escapeHtml(e.type_of_ad)}">${escapeHtml(e.type_of_ad)}</span>`:'—'}</td>
@@ -2722,7 +2737,7 @@ async function renderEntries(){
     <div class="tracker-table-wrap">
       <table class="tracker-table">
         <thead><tr>
-          <th>Ad name</th><th>Status</th><th>Awareness</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>Hook Pattern</th><th>Type of Headline</th><th>Sizing</th><th>Tags</th>
+          <th>Ad name</th><th>Status</th><th>Awareness</th><th>Objective</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>Hook Pattern</th><th>Type of Headline</th><th>Sizing</th><th>Tags</th>
           <th>CTR</th><th>ROAS</th><th>Links</th><th>Page</th><th>Editor</th><th>Launched</th><th>Ads Status</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
@@ -2828,6 +2843,7 @@ function buildInlineEditHTML(e){
         <div class="field full"><label>Ad Copy</label><textarea class="ie-adcopy">${escapeHtml(e.ad_copy||'')}</textarea></div>
         <div class="field full"><label>Link to Adset</label><input type="text" class="ie-adsetlink" value="${escapeHtml(e.adset_link||'')}" /></div>
         <div class="field full"><label>Link to Ads Manager</label><input type="text" class="ie-adsmanagerlink" value="${escapeHtml(e.ads_manager_link||'')}" placeholder="Paste Ads Manager URL for this ad" /></div>
+        <div class="field"><label>Campaign Objective</label><select class="ie-objective"><option value="">Select…</option>${['Website','Message','Lead'].map(o=>`<option value="${o}" ${e.campaign_objective===o?'selected':''}>${o}</option>`).join('')}</select></div>
         <div class="field"><label>Format</label><select class="ie-format"><option value="">Select…</option>${['Video','Image','Carousel','Static'].map(f=>`<option value="${f}" ${e.format===f?'selected':''}>${f}</option>`).join('')}</select></div>
         <div class="field"><label>Sizing</label><input type="text" class="ie-sizing" list="sizing-presets" value="${escapeHtml(e.sizing||'')}" placeholder="Pumili o mag-type ng kahit anong size" /></div>
         <div class="field"><label>Creative Variations</label><input type="number" class="ie-creative-variations" min="1" value="${e.creative_variations||''}" placeholder="e.g. 3" /></div>
