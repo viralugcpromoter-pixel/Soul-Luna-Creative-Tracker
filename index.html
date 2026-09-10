@@ -749,7 +749,11 @@
           <textarea id="f-ad-copy" placeholder="Add final ad copy…"></textarea>
         </div>
         <div class="field full"><label>Link to Adset</label><input type="text" id="f-adset-link" placeholder="Paste adset URL (once it's live)" /></div>
-        <div class="field full"><label>Link to Ads Manager</label><input type="text" id="f-ads-manager-link" placeholder="Paste Ads Manager URL (once it's live)" /></div>
+        <div class="field full"><label>Link to Ads Manager <span style="font-weight:400;text-transform:none;letter-spacing:0;">(hanggang 3 — kung tumatakbo sa iba't ibang page/website)</span></label>
+          <input type="text" id="f-ads-manager-link" placeholder="Ads Manager URL — Page/Website 1" style="margin-bottom:6px;" />
+          <input type="text" id="f-ads-manager-link-2" placeholder="Ads Manager URL — Page/Website 2 (optional)" style="margin-bottom:6px;" />
+          <input type="text" id="f-ads-manager-link-3" placeholder="Ads Manager URL — Page/Website 3 (optional)" />
+        </div>
       </div>
     </div>
   </section>
@@ -1024,6 +1028,8 @@ function renderDetailModalReadView(e){
     ${e.output_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View output ↗</a></div>`:''}
     ${e.adset_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View adset ↗</a></div>`:''}
     ${e.ads_manager_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View in Ads Manager ↗</a></div>`:''}
+    ${e.ads_manager_link_2?`<div style="margin-top:4px;"><a href="${escapeHtml(e.ads_manager_link_2)}" target="_blank" rel="noopener noreferrer" class="btn-link">View in Ads Manager (2) ↗</a></div>`:''}
+    ${e.ads_manager_link_3?`<div style="margin-top:4px;"><a href="${escapeHtml(e.ads_manager_link_3)}" target="_blank" rel="noopener noreferrer" class="btn-link">View in Ads Manager (3) ↗</a></div>`:''}
     ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:8px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
     ${e.script?`<div class="entry-script" style="max-height:none;overflow-y:visible;margin-top:10px;">${escapeHtml(e.script)}</div>`:''}
     ${e.notes?`<div style="margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:8px;font-size:13px;"><b>Note:</b> ${escapeHtml(e.notes)}</div>`:''}
@@ -1132,6 +1138,8 @@ async function openDetailModal(id){
           ad_copy: content.querySelector('.ie-adcopy').value.trim(),
           adset_link: content.querySelector('.ie-adsetlink').value.trim(),
           ads_manager_link: content.querySelector('.ie-adsmanagerlink').value.trim(),
+          ads_manager_link_2: content.querySelector('.ie-adsmanagerlink2').value.trim(),
+          ads_manager_link_3: content.querySelector('.ie-adsmanagerlink3').value.trim(),
           format: content.querySelector('.ie-format').value || null,
           campaign_objective: content.querySelector('.ie-objective').value || null,
           sizing: content.querySelector('.ie-sizing').value || null,
@@ -1183,7 +1191,7 @@ async function openDetailModal(id){
         problem_id: e.problem_id || null, problem_text: e.problem_text || null, desire: e.desire || null,
         market_awareness: e.market_awareness || null, market_sophistication: e.market_sophistication || null,
         hypothesis: e.hypothesis || '', type_of_ad: e.type_of_ad || null, hook_patterns: e.hook_patterns || [],
-        type_of_headline: e.type_of_headline || null, headline: e.headline || '', ad_copy: e.ad_copy || '', adset_link: '', ads_manager_link: '',
+        type_of_headline: e.type_of_headline || null, headline: e.headline || '', ad_copy: e.ad_copy || '', adset_link: '', ads_manager_link: '', ads_manager_link_2: '', ads_manager_link_3: '',
         format: e.format || null, sizing: e.sizing || null, creative_variations: e.creative_variations || null, campaign_objective: e.campaign_objective || null
       })});
       showToast('✓ Duplicated — edit the copy to set it up');
@@ -2443,6 +2451,8 @@ function resetForm(){
   document.getElementById('f-sizing').value='';
   document.getElementById('f-creative-variations').value='';
   document.getElementById('f-ads-manager-link').value='';
+  document.getElementById('f-ads-manager-link-2').value='';
+  document.getElementById('f-ads-manager-link-3').value='';
 }
 
 // ---------- Submit new creative ----------
@@ -2496,6 +2506,8 @@ document.getElementById('btn-submit').addEventListener('click', async ()=>{
     ad_copy: document.getElementById('f-ad-copy').value.trim(),
     adset_link: document.getElementById('f-adset-link').value.trim(),
     ads_manager_link: document.getElementById('f-ads-manager-link').value.trim(),
+    ads_manager_link_2: document.getElementById('f-ads-manager-link-2').value.trim(),
+    ads_manager_link_3: document.getElementById('f-ads-manager-link-3').value.trim(),
     format: document.getElementById('f-format').value || null,
     campaign_objective: document.getElementById('f-objective').value || null,
     sizing: document.getElementById('f-sizing').value || null,
@@ -2531,7 +2543,7 @@ function downloadCurrentListAsCSV(){
     'Format','Sizing','Creative Variations','Campaign Objective','Tags',
     'CTR (Review)','CPC (Review)','Cost Per ATC (Review)','CPA (Review)','ROAS (Review)','Hook Rate (Review)','Hold Rate (Review)','Media Buyer Notes',
     'Meta Spend','Meta Impressions','Meta Clicks','Meta CTR',
-    'Concept Link','Output Link','Adset Link','Ads Manager Link'
+    'Concept Link','Output Link','Adset Link','Ads Manager Link','Ads Manager Link 2','Ads Manager Link 3'
   ];
   const lines = [headers.map(csvEscape).join(',')];
   rows.forEach(e=>{
@@ -2544,7 +2556,7 @@ function downloadCurrentListAsCSV(){
       e.format, e.sizing, e.creative_variations, e.campaign_objective, (e.tags||[]).join('; '),
       rev.ctr, rev.cpc, rev.costPerAtc, rev.cpa, rev.roas, rev.hookRate, rev.holdRate, rev.notes,
       perf.spend, perf.impressions, perf.clicks, perf.ctr,
-      e.concept_link, e.output_link, e.adset_link, e.ads_manager_link
+      e.concept_link, e.output_link, e.adset_link, e.ads_manager_link, e.ads_manager_link_2, e.ads_manager_link_3
     ].map(csvEscape).join(','));
   });
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -2724,7 +2736,9 @@ async function renderEntries(){
           e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📄 Concept</a>`:'',
           e.output_link?`<a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">🎬 Output</a>`:'',
           e.adset_link?`<a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📊 Adset</a>`:'',
-          e.ads_manager_link?`<a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr</a>`:''
+          e.ads_manager_link?`<a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr</a>`:'',
+          e.ads_manager_link_2?`<a href="${escapeHtml(e.ads_manager_link_2)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr 2</a>`:'',
+          e.ads_manager_link_3?`<a href="${escapeHtml(e.ads_manager_link_3)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr 3</a>`:''
         ].filter(Boolean).join('') || '—'}</td>
         <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
         <td>${escapeHtml(e.editor||'—')}</td>
@@ -2842,7 +2856,11 @@ function buildInlineEditHTML(e){
         <div class="field full"><label>Headline</label><textarea class="ie-headline">${escapeHtml(e.headline||'')}</textarea></div>
         <div class="field full"><label>Ad Copy</label><textarea class="ie-adcopy">${escapeHtml(e.ad_copy||'')}</textarea></div>
         <div class="field full"><label>Link to Adset</label><input type="text" class="ie-adsetlink" value="${escapeHtml(e.adset_link||'')}" /></div>
-        <div class="field full"><label>Link to Ads Manager</label><input type="text" class="ie-adsmanagerlink" value="${escapeHtml(e.ads_manager_link||'')}" placeholder="Paste Ads Manager URL for this ad" /></div>
+        <div class="field full"><label>Link to Ads Manager <span style="font-weight:400;text-transform:none;letter-spacing:0;">(hanggang 3)</span></label>
+          <input type="text" class="ie-adsmanagerlink" value="${escapeHtml(e.ads_manager_link||'')}" placeholder="Ads Manager URL — Page/Website 1" style="margin-bottom:6px;" />
+          <input type="text" class="ie-adsmanagerlink2" value="${escapeHtml(e.ads_manager_link_2||'')}" placeholder="Ads Manager URL — Page/Website 2 (optional)" style="margin-bottom:6px;" />
+          <input type="text" class="ie-adsmanagerlink3" value="${escapeHtml(e.ads_manager_link_3||'')}" placeholder="Ads Manager URL — Page/Website 3 (optional)" />
+        </div>
         <div class="field"><label>Campaign Objective</label><select class="ie-objective"><option value="">Select…</option>${['Website','Message','Lead'].map(o=>`<option value="${o}" ${e.campaign_objective===o?'selected':''}>${o}</option>`).join('')}</select></div>
         <div class="field"><label>Format</label><select class="ie-format"><option value="">Select…</option>${['Video','Image','Carousel','Static'].map(f=>`<option value="${f}" ${e.format===f?'selected':''}>${f}</option>`).join('')}</select></div>
         <div class="field"><label>Sizing</label><input type="text" class="ie-sizing" list="sizing-presets" value="${escapeHtml(e.sizing||'')}" placeholder="Pumili o mag-type ng kahit anong size" /></div>
