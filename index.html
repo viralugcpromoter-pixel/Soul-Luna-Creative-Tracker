@@ -432,6 +432,7 @@
       <button class="swatch" data-theme="slate" style="--sw:#52616F" aria-label="Slate theme"></button>
       <button class="swatch" data-theme="charcoal" style="--sw:#D0A15E" aria-label="Charcoal theme"></button>
     </div>
+    <button type="button" id="logout-btn" class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px;">⏻ Log out</button>
   </aside>
   <main class="main-content">
   <div class="wrap">
@@ -995,6 +996,12 @@ function showLogin(){
 function hideLogin(){
   document.getElementById('login-overlay').style.display = 'none';
 }
+function doLogout(){
+  if(!confirm('Log out ka ba talaga?')) return;
+  localStorage.removeItem('cocoon-admin-token');
+  showLogin();
+}
+document.getElementById('logout-btn').addEventListener('click', doLogout);
 
 document.getElementById('login-submit').addEventListener('click', doLogin);
 document.getElementById('login-password').addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') doLogin(); });
