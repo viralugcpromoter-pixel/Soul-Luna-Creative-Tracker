@@ -2673,12 +2673,11 @@ async function renderEntries(){
     const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
     const badgeClass = needsReview ? 'review' : e.winner_status;
     const finalBadgeLabel = needsReview ? '⚠ Needs review' : badgeLabel;
-    const stageTagsHtml = `<div class="tt-tags">`
-      + `<span class="tt-badge not_winner" title="Naka-log na, may script na">Done script</span>`
-      + `<span class="tt-badge ${e.editing_started?'stage-accent':'stage-off'}" style="cursor:pointer;" title="I-click para i-toggle" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_started',${!!e.editing_started});">Editing in progress</span>`
-      + `<span class="tt-badge ${e.editing_done?'pending':'stage-off'}" style="cursor:pointer;" title="I-click para i-toggle" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_done',${!!e.editing_done});">Done editing</span>`
-      + `<span class="tt-badge ${e.launched?'winner':'stage-off'}" style="cursor:pointer;" title="I-click para i-toggle" onclick="event.stopPropagation(); toggleFlag('${e.id}','launched',${!!e.launched});">Done launch</span>`
-      + `</div>`;
+    const stageChips = [`<span class="tt-badge not_winner" title="Naka-log na, may script na">Done script</span>`];
+    if(e.editing_started) stageChips.push(`<span class="tt-badge stage-accent" style="cursor:pointer;" title="I-click para tanggalin" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_started',true);">Editing in progress</span>`);
+    if(e.editing_done) stageChips.push(`<span class="tt-badge pending" style="cursor:pointer;" title="I-click para tanggalin" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_done',true);">Done editing</span>`);
+    if(e.launched) stageChips.push(`<span class="tt-badge winner" style="cursor:pointer;" title="I-click para tanggalin" onclick="event.stopPropagation(); toggleFlag('${e.id}','launched',true);">Done launch</span>`);
+    const stageTagsHtml = `<div class="tt-tags">${stageChips.join('')}</div>`;
     const awarenessShort = e.market_awareness ? labelFor(AWARENESS,e.market_awareness).split(' — ')[0] : '';
     return `
       <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
