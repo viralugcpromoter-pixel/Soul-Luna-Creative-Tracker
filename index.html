@@ -985,7 +985,7 @@ function showToast(msg){
     document.body.appendChild(t);
   }
   t.textContent = msg;
-  t.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1B1A18;color:#FFFFFF;padding:12px 22px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:99999;opacity:1;pointer-events:none;transition:opacity .25s ease;';
+  t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1B1A18;color:#FFFFFF;padding:12px 22px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:99999;opacity:1;pointer-events:none;transition:opacity .25s ease, transform .25s ease;transform:translateY(0);';
   clearTimeout(t._timer);
   t._timer = setTimeout(()=>{ if(t) t.style.opacity='0'; }, 2400);
 }
