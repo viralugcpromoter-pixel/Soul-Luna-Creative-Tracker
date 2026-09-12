@@ -376,6 +376,41 @@
   .tt-badge.stage-accent{background:var(--accent-soft);color:var(--accent);}
   .tt-badge.stage-off{background:transparent;border:1px dashed var(--line);color:var(--ink-soft);opacity:.55;}
   .tt-tags{display:flex;flex-wrap:wrap;gap:4px;max-width:220px;}
+  .tt-dot-row{display:flex;align-items:center;gap:5px;}
+  .tt-mini-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;display:inline-block;}
+  .tt-mini-dot.clickable{cursor:pointer;}
+  .tt-mini-dot.mdot-script{background:var(--not-winner);}
+  .tt-mini-dot.mdot-progress{background:var(--accent);}
+  .tt-mini-dot.mdot-done{background:var(--pending);}
+  .tt-mini-dot.mdot-launch{background:var(--winner);}
+  .tt-progress-wrap{display:flex;flex-direction:column;gap:3px;}
+  .tt-progress-bar{display:flex;gap:3px;width:78px;}
+  .tt-progress-seg{height:6px;flex:1;border-radius:3px;background:var(--line);}
+  .tt-progress-seg.clickable{cursor:pointer;}
+  .tt-progress-seg.seg-script{background:var(--not-winner);}
+  .tt-progress-seg.seg-progress{background:var(--accent);}
+  .tt-progress-seg.seg-done{background:var(--pending);}
+  .tt-progress-seg.seg-launch{background:var(--winner);}
+  .tt-progress-label{font-size:11px;color:var(--ink-soft);font-weight:600;white-space:nowrap;}
+  .tracker-table[data-hide~="status"] .col-status,
+  .tracker-table[data-hide~="awareness"] .col-awareness,
+  .tracker-table[data-hide~="objective"] .col-objective,
+  .tracker-table[data-hide~="problem"] .col-problem,
+  .tracker-table[data-hide~="desire"] .col-desire,
+  .tracker-table[data-hide~="typeofad"] .col-typeofad,
+  .tracker-table[data-hide~="hook"] .col-hook,
+  .tracker-table[data-hide~="headline"] .col-headline,
+  .tracker-table[data-hide~="sizing"] .col-sizing,
+  .tracker-table[data-hide~="tags"] .col-tags,
+  .tracker-table[data-hide~="ctr"] .col-ctr,
+  .tracker-table[data-hide~="roas"] .col-roas,
+  .tracker-table[data-hide~="links"] .col-links,
+  .tracker-table[data-hide~="page"] .col-page,
+  .tracker-table[data-hide~="editor"] .col-editor,
+  .tracker-table[data-hide~="launched"] .col-launched,
+  .tracker-table[data-hide~="adsstatus"] .col-adsstatus{display:none;}
+  .columns-popover{display:none;position:absolute;top:100%;right:0;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:8px;min-width:190px;max-height:280px;overflow-y:auto;margin-top:4px;}
+  .columns-popover label{display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12.5px;font-weight:500;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -801,6 +836,10 @@
       <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;">From<input type="date" id="filt-date-from" style="width:auto;padding:7px 8px;font-size:12.5px;" /></label>
       <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;">To<input type="date" id="filt-date-to" style="width:auto;padding:7px 8px;font-size:12.5px;" /></label>
       <button class="btn btn-ghost btn-sm" id="btn-download-csv" type="button">⬇ Download CSV</button>
+      <div class="columns-filter-wrap" style="position:relative;">
+        <button type="button" class="btn btn-ghost btn-sm" id="columns-btn">Columns ▾</button>
+        <div id="columns-popover" class="columns-popover"></div>
+      </div>
       <span class="count-note" id="entry-count"></span>
     </div>
     <div id="entries-holder"></div>
@@ -2653,6 +2692,51 @@ function renderQuickFilterBar(list){
   });
 }
 
+const TRACKER_COLUMNS = [
+  ['status','Status'], ['awareness','Awareness'], ['objective','Objective'], ['problem','Problem angle'],
+  ['desire','Desire'], ['typeofad','Type of ad'], ['hook','Hook Pattern'], ['headline','Type of Headline'],
+  ['sizing','Sizing'], ['tags','Tags'], ['ctr','CTR'], ['roas','ROAS'], ['links','Links'],
+  ['page','Page'], ['editor','Editor'], ['launched','Launched'], ['adsstatus','Ads Status']
+];
+function getHiddenCols(){
+  try{ return JSON.parse(localStorage.getItem('cocoon-tracker-hidden-cols')||'[]'); }catch(e){ return []; }
+}
+function setHiddenCols(arr){
+  try{ localStorage.setItem('cocoon-tracker-hidden-cols', JSON.stringify(arr)); }catch(e){}
+}
+function renderColumnsPopover(){
+  const hidden = getHiddenCols();
+  const pop = document.getElementById('columns-popover');
+  pop.innerHTML = TRACKER_COLUMNS.map(([key,label])=>`
+    <label><input type="checkbox" class="col-toggle" data-col="${key}" ${hidden.includes(key)?'':'checked'} /> ${escapeHtml(label)}</label>
+  `).join('') + `<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px;"><button type="button" class="btn-link" id="columns-reset" style="font-size:12px;">Ipakita lahat</button></div>`;
+  pop.querySelectorAll('.col-toggle').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      let h = getHiddenCols();
+      if(cb.checked) h = h.filter(k=>k!==cb.dataset.col);
+      else if(!h.includes(cb.dataset.col)) h.push(cb.dataset.col);
+      setHiddenCols(h);
+      renderEntries();
+    });
+  });
+  document.getElementById('columns-reset').addEventListener('click', ()=>{
+    setHiddenCols([]);
+    renderColumnsPopover();
+    renderEntries();
+  });
+}
+document.getElementById('columns-btn').addEventListener('click', (ev)=>{
+  ev.stopPropagation();
+  const pop = document.getElementById('columns-popover');
+  const willOpen = pop.style.display!=='block';
+  if(willOpen) renderColumnsPopover();
+  pop.style.display = willOpen ? 'block' : 'none';
+});
+document.addEventListener('click', (ev)=>{
+  const wrap = document.querySelector('.columns-filter-wrap');
+  if(wrap && !wrap.contains(ev.target)) document.getElementById('columns-popover').style.display='none';
+});
+
 async function renderEntries(){
   const holder = document.getElementById('entries-holder');
   if(entries.length===0) holder.innerHTML = `<div class="empty"><span class="spinner"></span> Loading…</div>`;
@@ -2711,28 +2795,34 @@ async function renderEntries(){
     const badgeLabel = e.winner_status==='winner'?'Winner':e.winner_status==='not_winner'?'Not a winner':'Pending';
     const badgeClass = needsReview ? 'review' : e.winner_status;
     const finalBadgeLabel = needsReview ? '⚠ Needs review' : badgeLabel;
-    const stageChips = [`<span class="tt-badge not_winner" title="Naka-log na, may script na">Done script</span>`];
-    if(e.editing_started) stageChips.push(`<span class="tt-badge stage-accent" style="cursor:pointer;" title="I-click para tanggalin" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_started',true);">Editing in progress</span>`);
-    if(e.editing_done) stageChips.push(`<span class="tt-badge pending" style="cursor:pointer;" title="I-click para tanggalin" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_done',true);">Done editing</span>`);
-    if(e.launched) stageChips.push(`<span class="tt-badge winner" style="cursor:pointer;" title="I-click para tanggalin" onclick="event.stopPropagation(); toggleFlag('${e.id}','launched',true);">Done launch</span>`);
-    const stageTagsHtml = `<div class="tt-tags">${stageChips.join('')}</div>`;
+    const stageLabel = e.launched ? 'Done launch' : (e.editing_done ? 'Done editing' : (e.editing_started ? 'Editing in progress' : 'Done script'));
+    const stageTagsHtml = `<div class="tt-progress-wrap">
+      <div class="tt-progress-bar">
+        <span class="tt-progress-seg seg-script" title="Done script"></span>
+        <span class="tt-progress-seg clickable ${e.editing_started?'seg-progress':''}" title="${e.editing_started?'Editing in progress — click to remove':'Click to mark: Editing in progress'}" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_started',${!!e.editing_started});"></span>
+        <span class="tt-progress-seg clickable ${e.editing_done?'seg-done':''}" title="${e.editing_done?'Done editing — click to remove':'Click to mark: Done editing'}" onclick="event.stopPropagation(); toggleFlag('${e.id}','editing_done',${!!e.editing_done});"></span>
+        <span class="tt-progress-seg clickable ${e.launched?'seg-launch':''}" title="${e.launched?'Done launch — click to remove':'Click to mark: Done launch'}" onclick="event.stopPropagation(); toggleFlag('${e.id}','launched',${!!e.launched});"></span>
+      </div>
+      <span class="tt-progress-label">${stageLabel}</span>
+    </div>`;
     const awarenessShort = e.market_awareness ? labelFor(AWARENESS,e.market_awareness).split(' — ')[0] : '';
     return `
       <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
         <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
-        <td>${stageTagsHtml}</td>
-        <td>${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
-        <td>${e.campaign_objective?escapeHtml(e.campaign_objective):'—'}</td>
-        <td>${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
-        <td>${e.desire?escapeHtml(e.desire):'—'}</td>
-        <td>${e.type_of_ad?`<span class="tt-truncate" title="${escapeHtml(e.type_of_ad)}">${escapeHtml(e.type_of_ad)}</span>`:'—'}</td>
-        <td>${(e.hook_patterns&&e.hook_patterns.length)?`<span class="tt-truncate" title="${escapeHtml(e.hook_patterns.join(', '))}">${escapeHtml(e.hook_patterns.join(', '))}</span>`:'—'}</td>
-        <td>${e.type_of_headline?`<span class="tt-truncate" title="${escapeHtml(e.type_of_headline)}">${escapeHtml(e.type_of_headline)}</span>`:'—'}</td>
-        <td>${e.sizing?escapeHtml(e.sizing):'—'}</td>
-        <td>${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>
-        <td>${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>
-        <td>${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>
-        <td>${[
+        <td class="col-status">${stageTagsHtml}</td>
+        <td class="col-adsstatus"><span class="tt-badge ${badgeClass}" style="cursor:pointer;" title="I-click para baguhin ang tag" onclick="event.stopPropagation(); cycleWinnerStatus('${e.id}','${e.winner_status||'pending'}')">${finalBadgeLabel}</span></td>
+        <td class="col-awareness">${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
+        <td class="col-objective">${e.campaign_objective?escapeHtml(e.campaign_objective):'—'}</td>
+        <td class="col-problem">${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
+        <td class="col-desire">${e.desire?escapeHtml(e.desire):'—'}</td>
+        <td class="col-typeofad">${e.type_of_ad?`<span class="tt-truncate" title="${escapeHtml(e.type_of_ad)}">${escapeHtml(e.type_of_ad)}</span>`:'—'}</td>
+        <td class="col-hook">${(e.hook_patterns&&e.hook_patterns.length)?`<span class="tt-truncate" title="${escapeHtml(e.hook_patterns.join(', '))}">${escapeHtml(e.hook_patterns.join(', '))}</span>`:'—'}</td>
+        <td class="col-headline">${e.type_of_headline?`<span class="tt-truncate" title="${escapeHtml(e.type_of_headline)}">${escapeHtml(e.type_of_headline)}</span>`:'—'}</td>
+        <td class="col-sizing">${e.sizing?escapeHtml(e.sizing):'—'}</td>
+        <td class="col-tags">${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>
+        <td class="col-ctr">${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>
+        <td class="col-roas">${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>
+        <td class="col-links">${[
           e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📄 Concept</a>`:'',
           e.output_link?`<a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">🎬 Output</a>`:'',
           e.adset_link?`<a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📊 Adset</a>`:'',
@@ -2740,19 +2830,18 @@ async function renderEntries(){
           e.ads_manager_link_2?`<a href="${escapeHtml(e.ads_manager_link_2)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr 2</a>`:'',
           e.ads_manager_link_3?`<a href="${escapeHtml(e.ads_manager_link_3)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr 3</a>`:''
         ].filter(Boolean).join('') || '—'}</td>
-        <td>${escapeHtml(pageLabel(e.page)||'—')}</td>
-        <td>${escapeHtml(e.editor||'—')}</td>
-        <td>${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
-        <td><span class="tt-badge ${badgeClass}" style="cursor:pointer;" title="I-click para baguhin ang tag" onclick="event.stopPropagation(); cycleWinnerStatus('${e.id}','${e.winner_status||'pending'}')">${finalBadgeLabel}</span></td>
+        <td class="col-page">${escapeHtml(pageLabel(e.page)||'—')}</td>
+        <td class="col-editor">${escapeHtml(e.editor||'—')}</td>
+        <td class="col-launched">${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
       </tr>`;
   }).join('');
 
   holder.innerHTML = `
     <div class="tracker-table-wrap">
-      <table class="tracker-table">
+      <table class="tracker-table" data-hide="${getHiddenCols().join(' ')}">
         <thead><tr>
-          <th>Ad name</th><th>Status</th><th>Awareness</th><th>Objective</th><th>Problem angle</th><th>Desire</th><th>Type of ad</th><th>Hook Pattern</th><th>Type of Headline</th><th>Sizing</th><th>Tags</th>
-          <th>CTR</th><th>ROAS</th><th>Links</th><th>Page</th><th>Editor</th><th>Launched</th><th>Ads Status</th>
+          <th>Ad name</th><th class="col-status">Status</th><th class="col-adsstatus">Ads Status</th><th class="col-awareness">Awareness</th><th class="col-objective">Objective</th><th class="col-problem">Problem angle</th><th class="col-desire">Desire</th><th class="col-typeofad">Type of ad</th><th class="col-hook">Hook Pattern</th><th class="col-headline">Type of Headline</th><th class="col-sizing">Sizing</th><th class="col-tags">Tags</th>
+          <th class="col-ctr">CTR</th><th class="col-roas">ROAS</th><th class="col-links">Links</th><th class="col-page">Page</th><th class="col-editor">Editor</th><th class="col-launched">Launched</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
