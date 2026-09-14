@@ -452,7 +452,8 @@
     <nav class="sidebar-nav">
       <button class="tab-btn active" data-tab="log">Log Creative</button>
       <button class="tab-btn" data-tab="strategy">Strategy</button>
-      <button class="tab-btn" data-tab="track">Tracker</button>
+      <button class="tab-btn" data-tab="track" data-scope="progress">In Progress</button>
+      <button class="tab-btn" data-tab="track" data-scope="launched">Launched</button>
       <button class="tab-btn" data-tab="analytics">Analytics</button>
       <button class="tab-btn" data-tab="assets">Assets</button>
       <button class="tab-btn" data-tab="adklaro">Ad-Klaro Winners</button>
@@ -988,6 +989,7 @@ let entries = [];
 let pickedAd = null; // {id, name}
 let inlineEditId = null; // entry id currently expanded for inline edit in Tracker
 let expandedIds = new Set(); // entry ids currently expanded (uncollapsed) in Tracker
+let trackerScope = 'progress'; // 'progress' = Draft Script + Editing in Progress/Done; 'launched' = Done Launch only (Winner tagging view)
 
 function pageLabel(pageId){
   if(!pageId) return null;
@@ -1431,7 +1433,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     btn.classList.add('active');
     document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
     if(btn.dataset.tab==='strategy') renderStrategyTab();
-    if(btn.dataset.tab==='track') renderEntries();
+    if(btn.dataset.tab==='track'){ trackerScope = btn.dataset.scope || 'progress'; updateFilterVisibilityForScope(); renderEntries(); }
     if(btn.dataset.tab==='analytics') renderAnalytics();
     if(btn.dataset.tab==='assets') renderAssets();
     if(btn.dataset.tab==='adklaro') renderAdklaro();
@@ -2660,8 +2662,13 @@ document.getElementById('filt-tag-clear').addEventListener('click', ()=>{
 });
 
 let activeQuickFilter = '';
-const QUICK_FILTERS = [
+const QUICK_FILTERS_PROGRESS = [
   ['', 'All'],
+  ['needs_editing', 'Needs Editing'],
+];
+const QUICK_FILTERS_LAUNCHED = [
+  ['', 'All'],
+  ['pending', 'Pending'],
   ['winner', 'Winners'],
   ['not_winner', 'Not a Winner'],
 ];
@@ -2680,6 +2687,7 @@ function matchesQuickFilter(e, key){
 }
 function renderQuickFilterBar(list){
   const bar = document.getElementById('quick-filter-bar');
+  const QUICK_FILTERS = trackerScope==='launched' ? QUICK_FILTERS_LAUNCHED : QUICK_FILTERS_PROGRESS;
   bar.innerHTML = QUICK_FILTERS.map(([key,label])=>{
     const count = key==='' ? list.length : list.filter(e=>matchesQuickFilter(e,key)).length;
     return `<button type="button" class="qf-chip ${activeQuickFilter===key?'active':''}" data-key="${key}">${escapeHtml(label)} <span class="count">${count}</span></button>`;
@@ -2690,6 +2698,16 @@ function renderQuickFilterBar(list){
       renderEntries();
     });
   });
+}
+
+function updateFilterVisibilityForScope(){
+  const pipeSelect = document.getElementById('filt-pipeline');
+  if(trackerScope==='launched'){
+    pipeSelect.style.display = 'none';
+    pipeSelect.value = '';
+  } else {
+    pipeSelect.style.display = '';
+  }
 }
 
 const TRACKER_COLUMNS = [
@@ -2771,7 +2789,8 @@ async function renderEntries(){
     (filtSelectedTags.length===0 || (e.tags||[]).some(t=>filtSelectedTags.includes(t))) &&
     (!fe || (e.editor||'').toLowerCase().includes(fe)) &&
     (!fdFrom || submittedDate>=fdFrom) &&
-    (!fdTo || submittedDate<=fdTo);
+    (!fdTo || submittedDate<=fdTo) &&
+    (trackerScope==='launched' ? !!e.launched : !e.launched);
   });
   renderQuickFilterBar(preQuickList);
   let list = activeQuickFilter
@@ -2782,7 +2801,9 @@ async function renderEntries(){
   document.getElementById('entry-count').textContent = `${list.length} creative${list.length===1?'':'s'}`;
 
   if(list.length===0){
-    holder.innerHTML = `<div class="empty"><div class="big">Nothing logged yet</div>Log your first creative from the Log Creative tab.</div>`;
+    const emptyMsg = trackerScope==='launched' ? 'No launched creatives yet' : 'Nothing in progress';
+    const emptySub = trackerScope==='launched' ? 'Ads will show up here once marked "Done launch."' : 'Log your first creative from the Log Creative tab.';
+    holder.innerHTML = `<div class="empty"><div class="big">${emptyMsg}</div>${emptySub}</div>`;
     return;
   }
 
