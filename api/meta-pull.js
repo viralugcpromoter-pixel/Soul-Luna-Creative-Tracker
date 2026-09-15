@@ -1,6 +1,6 @@
 function checkAuth(req, res) {
   const token = req.headers['x-admin-token'];
-  if (!token || token !== process.env.ADMIN_PASSWORD) {
+  if (!token || (token !== process.env.ADMIN_PASSWORD && token !== process.env.EDITOR_PASSWORD)) {
     res.status(401).json({ error: 'Unauthorized' });
     return false;
   }
