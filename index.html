@@ -1025,7 +1025,11 @@ async function api(path, opts){
     throw new Error('Unauthorized');
   }
   const data = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.error || ('Request failed: '+r.status));
+  if(!r.ok){
+    const err = new Error(data.message || data.error || ('Request failed: '+r.status));
+    err.status = r.status;
+    throw err;
+  }
   return data;
 }
 
@@ -1042,6 +1046,10 @@ function showToast(msg){
   t._timer = setTimeout(()=>{ if(t) t.style.opacity='0'; }, 2400);
 }
 
+function isEditor(){
+  return (localStorage.getItem('cocoon-role')||'admin') === 'editor';
+}
+
 function showLogin(){
   document.getElementById('login-overlay').style.display = 'flex';
 }
@@ -1051,6 +1059,7 @@ function hideLogin(){
 function doLogout(){
   if(!confirm('Log out ka ba talaga?')) return;
   localStorage.removeItem('cocoon-admin-token');
+  localStorage.removeItem('cocoon-role');
   showLogin();
 }
 document.getElementById('logout-btn').addEventListener('click', doLogout);
@@ -1071,7 +1080,7 @@ function renderDetailModalReadView(e){
     ${e.ads_manager_link?`<div style="margin-top:4px;"><a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" class="btn-link">View in Ads Manager ↗</a></div>`:''}
     ${e.ads_manager_link_2?`<div style="margin-top:4px;"><a href="${escapeHtml(e.ads_manager_link_2)}" target="_blank" rel="noopener noreferrer" class="btn-link">View in Ads Manager (2) ↗</a></div>`:''}
     ${e.ads_manager_link_3?`<div style="margin-top:4px;"><a href="${escapeHtml(e.ads_manager_link_3)}" target="_blank" rel="noopener noreferrer" class="btn-link">View in Ads Manager (3) ↗</a></div>`:''}
-    ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:8px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+    ${(e.tags&&e.tags.length)?`<div class="tag-row" style="margin-top:8px;">${e.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')} <span class="btn-link act-edit-tags" style="cursor:pointer;">✎ Edit tags</span></div>`:`<div class="tag-row" style="margin-top:8px;"><span class="btn-link act-edit-tags" style="cursor:pointer;">✎ Add tags</span></div>`}
     ${e.script?`<div class="entry-script" style="max-height:none;overflow-y:visible;margin-top:10px;">${escapeHtml(e.script)}</div>`:''}
     ${e.notes?`<div style="margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:8px;font-size:13px;"><b>Note:</b> ${escapeHtml(e.notes)}</div>`:''}
     ${hasStrategy?`
@@ -1090,7 +1099,7 @@ function renderDetailModalReadView(e){
     </div>`:''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
       <div class="an-h" style="margin:0;">📊 Results Review</div>
-      <span class="btn-link act-edit-results" style="cursor:pointer;">✎ Edit</span>
+      ${isEditor()?'':'<span class="btn-link act-edit-results" style="cursor:pointer;">✎ Edit</span>'}
     </div>
     <div class="perf-grid" style="margin-top:8px;">
       <div class="perf-cell"><div class="k">CTR</div><div class="v">${escapeHtml((perf&&perf.review&&perf.review.ctr)||'—')}</div></div>
@@ -1120,7 +1129,7 @@ function renderDetailModalReadView(e){
     </details>
     `:''}
     <div class="entry-actions" style="margin-top:14px;">
-      <button class="btn btn-ghost btn-sm act-edit">Edit</button>
+      ${isEditor()?'':'<button class="btn btn-ghost btn-sm act-edit">Edit</button>'}
       <button class="btn btn-dup btn-sm act-dup">⧉ Duplicate</button>
       <button class="btn btn-ghost btn-sm act-toggle-start">${e.editing_started?'Undo editing in progress':'Mark editing in progress'}</button>
       <button class="btn btn-ghost btn-sm act-toggle-editing">${e.editing_done?'Undo editing done':'Mark editing done'}</button>
@@ -1129,10 +1138,74 @@ function renderDetailModalReadView(e){
       <button class="btn btn-ghost btn-sm act-winner">Mark winner</button>
       <button class="btn btn-ghost btn-sm act-notwinner">Not a winner</button>
       <button class="btn btn-ghost btn-sm act-pending">Reset to pending</button>
-      <button class="btn-danger-text act-delete" type="button">Delete</button>
+      ${isEditor()?'':'<button class="btn-danger-text act-delete" type="button">Delete</button>'}
     </div>
     <span class="status-msg act-status" style="display:block;margin-top:6px;"></span>
   `;
+}
+
+async function openTagEditor(id){
+  const content = document.getElementById('detail-modal-content');
+  let fresh;
+  try{
+    fresh = await api('/api/entries?id='+encodeURIComponent(id));
+    const idx = entries.findIndex(x=>x.id===id);
+    if(idx !== -1) entries[idx] = fresh;
+  }catch(err){
+    fresh = entries.find(x=>x.id===id);
+  }
+  if(!fresh) return;
+  content.innerHTML = `
+    <h3>Edit tags</h3>
+    <div class="hint" style="margin-bottom:8px;">${escapeHtml(fresh.ad_name||'')}</div>
+    <div class="tag-input-box te-tags-box"><input type="text" class="tag-entry-input" placeholder="Type a tag, press Enter" /></div>
+    <div class="entry-actions" style="margin-top:14px;">
+      <button class="btn btn-primary btn-sm te-save">Save tags</button>
+      <button class="btn btn-ghost btn-sm te-cancel">Cancel</button>
+    </div>
+    <span class="status-msg te-status" style="display:block;margin-top:6px;"></span>
+  `;
+  const box = content.querySelector('.te-tags-box');
+  wireTagInput(box, fresh.tags||[]);
+  const status = content.querySelector('.te-status');
+  content.querySelector('.te-save').addEventListener('click', async ()=>{
+    try{
+      await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        id, tags: box._tags || [], expected_updated_at: fresh.updated_at || null
+      })});
+      showToast('✓ Tags saved');
+      await renderEntries();
+      openDetailModal(id);
+    }catch(err){
+      if(err.status === 409){
+        status.textContent = err.message;
+        status.className = 'status-msg te-status err';
+        await openTagEditor(id);
+      }else{
+        status.textContent = "Couldn't save — try again.";
+        status.className = 'status-msg te-status err';
+      }
+    }
+  });
+  content.querySelector('.te-cancel').addEventListener('click', ()=>openDetailModal(id));
+  document.getElementById('detail-modal-overlay').classList.add('open');
+}
+
+async function openEditFresh(id){
+  // Someone else on the team may have edited this entry (e.g. added the
+  // script) since our local `entries` list was last loaded. Pull the
+  // single freshest copy before opening the edit form so we don't show
+  // stale/blank fields that would then get saved back over their changes.
+  try{
+    const fresh = await api('/api/entries?id='+encodeURIComponent(id));
+    const idx = entries.findIndex(x=>x.id===id);
+    if(idx !== -1) entries[idx] = fresh;
+  }catch(err){
+    // If the refresh fails (e.g. offline), fall back to the cached copy
+    // rather than blocking the edit entirely.
+  }
+  inlineEditId = id;
+  openDetailModal(id);
 }
 
 async function openDetailModal(id){
@@ -1155,6 +1228,7 @@ async function openDetailModal(id){
       try{
         await api('/api/entries', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
           id: e.id,
+          expected_updated_at: e.updated_at || null,
           concept_creator: cc || 'Unassigned',
           ad_name: name || e.ad_name || `Untitled — ${new Date().toLocaleDateString()}`,
           submitted_by: by || cc || e.submitted_by || 'Unknown',
@@ -1204,8 +1278,14 @@ async function openDetailModal(id){
         await renderEntries();
         openDetailModal(id);
       }catch(err){
-        ieStatus.textContent = "Couldn't save — try again.";
-        ieStatus.className = 'status-msg ie-status err';
+        if(err.status === 409){
+          ieStatus.textContent = err.message;
+          ieStatus.className = 'status-msg ie-status err';
+          await openEditFresh(id);
+        } else {
+          ieStatus.textContent = "Couldn't save — try again.";
+          ieStatus.className = 'status-msg ie-status err';
+        }
       }
     });
     content.querySelector('.ie-cancel').addEventListener('click', ()=>{
@@ -1219,8 +1299,11 @@ async function openDetailModal(id){
   content.innerHTML = renderDetailModalReadView(e);
   const statusMsg = content.querySelector('.act-status');
 
-  content.querySelector('.act-edit').addEventListener('click', ()=>{ inlineEditId = id; openDetailModal(id); });
-  content.querySelector('.act-edit-results').addEventListener('click', ()=>{ inlineEditId = id; openDetailModal(id); });
+  const editBtn = content.querySelector('.act-edit');
+  if(editBtn) editBtn.addEventListener('click', ()=>openEditFresh(id));
+  const editResultsBtn = content.querySelector('.act-edit-results');
+  if(editResultsBtn) editResultsBtn.addEventListener('click', ()=>openEditFresh(id));
+  content.querySelector('.act-edit-tags').addEventListener('click', ()=>openTagEditor(id));
   content.querySelector('.act-dup').addEventListener('click', async ()=>{
     try{
       await api('/api/entries', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
@@ -1253,7 +1336,7 @@ async function openDetailModal(id){
   });
   content.querySelector('.act-toggle-launch').addEventListener('click', async ()=>{
     if(!e.launched && (!e.page || !e.date_launched)){
-      statusMsg.textContent = "Set page and date launched first — use Edit.";
+      statusMsg.textContent = "Set page and date launched first.";
       statusMsg.className = 'status-msg act-status err';
       return;
     }
@@ -1263,7 +1346,8 @@ async function openDetailModal(id){
   content.querySelector('.act-winner').addEventListener('click', async ()=>{ await updateStatus(e.id,'winner'); openDetailModal(id); });
   content.querySelector('.act-notwinner').addEventListener('click', async ()=>{ await updateStatus(e.id,'not_winner'); openDetailModal(id); });
   content.querySelector('.act-pending').addEventListener('click', async ()=>{ await updateStatus(e.id,'pending'); openDetailModal(id); });
-  content.querySelector('.act-delete').addEventListener('click', ()=>{ closeDetailModal(); deleteEntry(e.id); });
+  const deleteBtn = content.querySelector('.act-delete');
+  if(deleteBtn) deleteBtn.addEventListener('click', ()=>{ closeDetailModal(); deleteEntry(e.id); });
   content.querySelector('.act-pull').addEventListener('click', async ()=>{
     if(!e.page){
       statusMsg.textContent = "No page set yet — use Edit to add one first.";
@@ -1312,7 +1396,9 @@ async function doLogin(){
   try{
     const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password:pw}) });
     if(r.ok){
+      const data = await r.json().catch(()=>({}));
       localStorage.setItem('cocoon-admin-token', pw);
+      localStorage.setItem('cocoon-role', data.role || 'admin');
       hideLogin();
       loadPages();
       loadEntries();
