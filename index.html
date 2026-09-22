@@ -361,8 +361,8 @@
   .tt-name-cell{position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:2px 0 4px rgba(0,0,0,.05);}
   .tt-name{font-family:'Fraunces',serif;font-weight:600;font-size:12.5px;}
   .tt-name-date{font-size:10px;font-weight:500;color:var(--ink-soft);margin-top:3px;white-space:nowrap;}
-  .tracker-table th[draggable="true"]{cursor:grab;user-select:none;}
-  .tracker-table th[draggable="true"]:active{cursor:grabbing;}
+  .tracker-table th[data-col]{cursor:grab;user-select:none;touch-action:none;}
+  .tracker-table th[data-col]:active{cursor:grabbing;}
   .tracker-table th.col-dragging{opacity:.35;}
   .tracker-table th.col-drag-over{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent);}
   .tt-badge{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;padding:3px 8px;border-radius:999px;white-space:nowrap;}
@@ -2856,41 +2856,49 @@ function wireColumnDragAndDrop(table){
   if(!table) return;
   const headerRow = table.querySelector('thead tr');
   if(!headerRow) return;
+  const ths = Array.from(headerRow.querySelectorAll('th[data-col]'));
+  if(ths.length===0) return;
   let dragKey = null;
-  headerRow.querySelectorAll('th[draggable="true"]').forEach(th=>{
-    th.addEventListener('dragstart', (ev)=>{
-      dragKey = th.dataset.col;
-      th.classList.add('col-dragging');
-      if(ev.dataTransfer){
-        ev.dataTransfer.effectAllowed = 'move';
-        try{ ev.dataTransfer.setData('text/plain', dragKey); }catch(e){}
-      }
-    });
-    th.addEventListener('dragend', ()=>{
-      th.classList.remove('col-dragging');
-      headerRow.querySelectorAll('th').forEach(t=>t.classList.remove('col-drag-over'));
-    });
-    th.addEventListener('dragover', (ev)=>{
-      if(!dragKey || th.dataset.col===dragKey) return;
-      ev.preventDefault();
-      if(ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
-      th.classList.add('col-drag-over');
-    });
-    th.addEventListener('dragleave', ()=>{ th.classList.remove('col-drag-over'); });
-    th.addEventListener('drop', (ev)=>{
-      ev.preventDefault();
-      th.classList.remove('col-drag-over');
-      const targetKey = th.dataset.col;
-      if(!dragKey || dragKey===targetKey) return;
+
+  function clearDragStyles(){
+    ths.forEach(t=>t.classList.remove('col-dragging','col-drag-over'));
+  }
+  function findColTh(x,y){
+    const el = document.elementFromPoint(x,y);
+    return el ? el.closest('th[data-col]') : null;
+  }
+  function onPointerMove(ev){
+    if(!dragKey) return;
+    const hoverTh = findColTh(ev.clientX, ev.clientY);
+    ths.forEach(t=>t.classList.remove('col-drag-over'));
+    if(hoverTh && hoverTh.dataset.col!==dragKey) hoverTh.classList.add('col-drag-over');
+  }
+  function onPointerUp(ev){
+    if(!dragKey) return;
+    const hoverTh = findColTh(ev.clientX, ev.clientY);
+    const droppedKey = dragKey;
+    clearDragStyles();
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+    dragKey = null;
+    if(hoverTh && hoverTh.dataset.col && hoverTh.dataset.col!==droppedKey){
       const order = getColumnOrder();
-      const from = order.indexOf(dragKey);
-      const to = order.indexOf(targetKey);
+      const from = order.indexOf(droppedKey);
+      const to = order.indexOf(hoverTh.dataset.col);
       if(from===-1||to===-1) return;
       order.splice(from,1);
-      order.splice(to,0,dragKey);
+      order.splice(to,0,droppedKey);
       setColumnOrder(order);
-      dragKey = null;
       renderEntries();
+    }
+  }
+  ths.forEach(th=>{
+    th.addEventListener('pointerdown', (ev)=>{
+      if(ev.pointerType==='mouse' && ev.button!==0) return;
+      dragKey = th.dataset.col;
+      th.classList.add('col-dragging');
+      document.addEventListener('pointermove', onPointerMove);
+      document.addEventListener('pointerup', onPointerUp);
     });
   });
 }
@@ -3014,7 +3022,7 @@ async function renderEntries(){
       </tr>`;
   }).join('');
 
-  const headerCellsHtml = colOrder.map(key=>`<th class="col-${key}" draggable="true" data-col="${key}" title="I-drag para ilipat ang column">${escapeHtml(TRACKER_COLUMN_LABELS[key])}</th>`).join('');
+  const headerCellsHtml = colOrder.map(key=>`<th class="col-${key}" data-col="${key}" title="I-drag para ilipat ang column">${escapeHtml(TRACKER_COLUMN_LABELS[key])}</th>`).join('');
 
   holder.innerHTML = `
     <div class="tracker-table-wrap">
