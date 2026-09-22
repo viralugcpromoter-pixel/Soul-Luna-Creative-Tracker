@@ -361,10 +361,6 @@
   .tt-name-cell{position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:2px 0 4px rgba(0,0,0,.05);}
   .tt-name{font-family:'Fraunces',serif;font-weight:600;font-size:12.5px;}
   .tt-name-date{font-size:10px;font-weight:500;color:var(--ink-soft);margin-top:3px;white-space:nowrap;}
-  .tracker-table th[data-col]{cursor:grab;user-select:none;touch-action:none;}
-  .tracker-table th[data-col]:active{cursor:grabbing;}
-  .tracker-table th.col-dragging{opacity:.35;}
-  .tracker-table th.col-drag-over{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent);}
   .tt-badge{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;padding:3px 8px;border-radius:999px;white-space:nowrap;}
   .tt-badge.winner{background:var(--winner-soft);color:var(--winner);}
   .tt-badge.pending{background:var(--pending-soft);color:var(--pending);}
@@ -414,8 +410,14 @@
   .tracker-table[data-hide~="editor"] .col-editor,
   .tracker-table[data-hide~="launched"] .col-launched,
   .tracker-table[data-hide~="adsstatus"] .col-adsstatus{display:none;}
-  .columns-popover{display:none;position:absolute;top:100%;right:0;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:8px;min-width:190px;max-height:280px;overflow-y:auto;margin-top:4px;}
-  .columns-popover label{display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12.5px;font-weight:500;cursor:pointer;}
+  .columns-popover{display:none;position:absolute;top:100%;right:0;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:8px;min-width:230px;max-height:320px;overflow-y:auto;margin-top:4px;}
+  .columns-popover label{display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12.5px;font-weight:500;cursor:pointer;flex:1;min-width:0;}
+  .col-row{display:flex;align-items:center;justify-content:space-between;gap:4px;}
+  .col-row label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .col-move-btns{display:flex;gap:2px;flex-shrink:0;}
+  .col-move-btns button{width:22px;height:22px;border:1px solid var(--line);background:var(--bg);border-radius:5px;font-size:10px;line-height:1;cursor:pointer;color:var(--ink-soft);padding:0;}
+  .col-move-btns button:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+  .col-move-btns button:disabled{opacity:.3;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -2826,11 +2828,28 @@ function getColumnOrder(){
 function setColumnOrder(arr){
   try{ localStorage.setItem('cocoon-tracker-col-order', JSON.stringify(arr)); }catch(e){}
 }
+function moveColumnOrder(key, dir){
+  const order = getColumnOrder();
+  const idx = order.indexOf(key);
+  const swapWith = idx + dir;
+  if(idx===-1 || swapWith<0 || swapWith>=order.length) return;
+  [order[idx], order[swapWith]] = [order[swapWith], order[idx]];
+  setColumnOrder(order);
+  renderColumnsPopover();
+  renderEntries();
+}
 function renderColumnsPopover(){
   const hidden = getHiddenCols();
+  const order = getColumnOrder();
   const pop = document.getElementById('columns-popover');
-  pop.innerHTML = getColumnOrder().map(key=>`
-    <label><input type="checkbox" class="col-toggle" data-col="${key}" ${hidden.includes(key)?'':'checked'} /> ${escapeHtml(TRACKER_COLUMN_LABELS[key])}</label>
+  pop.innerHTML = order.map((key,i)=>`
+    <div class="col-row">
+      <label><input type="checkbox" class="col-toggle" data-col="${key}" ${hidden.includes(key)?'':'checked'} /> <span>${escapeHtml(TRACKER_COLUMN_LABELS[key])}</span></label>
+      <span class="col-move-btns">
+        <button type="button" class="col-move-up" data-col="${key}" ${i===0?'disabled':''} title="Ilipat pataas">▲</button>
+        <button type="button" class="col-move-down" data-col="${key}" ${i===order.length-1?'disabled':''} title="Ilipat pababa">▼</button>
+      </span>
+    </div>
   `).join('') + `<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px;display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-link" id="columns-reset" style="font-size:12px;">Ipakita lahat</button><button type="button" class="btn-link" id="columns-reset-order" style="font-size:12px;">Ibalik sa dating ayos</button></div>`;
   pop.querySelectorAll('.col-toggle').forEach(cb=>{
     cb.addEventListener('change', ()=>{
@@ -2841,6 +2860,12 @@ function renderColumnsPopover(){
       renderEntries();
     });
   });
+  pop.querySelectorAll('.col-move-up').forEach(btn=>{
+    btn.addEventListener('click', ()=>moveColumnOrder(btn.dataset.col, -1));
+  });
+  pop.querySelectorAll('.col-move-down').forEach(btn=>{
+    btn.addEventListener('click', ()=>moveColumnOrder(btn.dataset.col, 1));
+  });
   document.getElementById('columns-reset').addEventListener('click', ()=>{
     setHiddenCols([]);
     renderColumnsPopover();
@@ -2850,56 +2875,6 @@ function renderColumnsPopover(){
     setColumnOrder(TRACKER_COLUMN_KEYS.slice());
     renderColumnsPopover();
     renderEntries();
-  });
-}
-function wireColumnDragAndDrop(table){
-  if(!table) return;
-  const headerRow = table.querySelector('thead tr');
-  if(!headerRow) return;
-  const ths = Array.from(headerRow.querySelectorAll('th[data-col]'));
-  if(ths.length===0) return;
-  let dragKey = null;
-
-  function clearDragStyles(){
-    ths.forEach(t=>t.classList.remove('col-dragging','col-drag-over'));
-  }
-  function findColTh(x,y){
-    const el = document.elementFromPoint(x,y);
-    return el ? el.closest('th[data-col]') : null;
-  }
-  function onPointerMove(ev){
-    if(!dragKey) return;
-    const hoverTh = findColTh(ev.clientX, ev.clientY);
-    ths.forEach(t=>t.classList.remove('col-drag-over'));
-    if(hoverTh && hoverTh.dataset.col!==dragKey) hoverTh.classList.add('col-drag-over');
-  }
-  function onPointerUp(ev){
-    if(!dragKey) return;
-    const hoverTh = findColTh(ev.clientX, ev.clientY);
-    const droppedKey = dragKey;
-    clearDragStyles();
-    document.removeEventListener('pointermove', onPointerMove);
-    document.removeEventListener('pointerup', onPointerUp);
-    dragKey = null;
-    if(hoverTh && hoverTh.dataset.col && hoverTh.dataset.col!==droppedKey){
-      const order = getColumnOrder();
-      const from = order.indexOf(droppedKey);
-      const to = order.indexOf(hoverTh.dataset.col);
-      if(from===-1||to===-1) return;
-      order.splice(from,1);
-      order.splice(to,0,droppedKey);
-      setColumnOrder(order);
-      renderEntries();
-    }
-  }
-  ths.forEach(th=>{
-    th.addEventListener('pointerdown', (ev)=>{
-      if(ev.pointerType==='mouse' && ev.button!==0) return;
-      dragKey = th.dataset.col;
-      th.classList.add('col-dragging');
-      document.addEventListener('pointermove', onPointerMove);
-      document.addEventListener('pointerup', onPointerUp);
-    });
   });
 }
 document.getElementById('columns-btn').addEventListener('click', (ev)=>{
@@ -3022,7 +2997,7 @@ async function renderEntries(){
       </tr>`;
   }).join('');
 
-  const headerCellsHtml = colOrder.map(key=>`<th class="col-${key}" data-col="${key}" title="I-drag para ilipat ang column">${escapeHtml(TRACKER_COLUMN_LABELS[key])}</th>`).join('');
+  const headerCellsHtml = colOrder.map(key=>`<th class="col-${key}">${escapeHtml(TRACKER_COLUMN_LABELS[key])}</th>`).join('');
 
   holder.innerHTML = `
     <div class="tracker-table-wrap">
@@ -3033,7 +3008,6 @@ async function renderEntries(){
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>`;
-  wireColumnDragAndDrop(holder.querySelector('.tracker-table'));
 }
 
 function wireInlineEditStrategySelects(container, e){
