@@ -360,6 +360,11 @@
   .tracker-table tbody tr:last-child td{border-bottom:none;}
   .tt-name-cell{position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:2px 0 4px rgba(0,0,0,.05);}
   .tt-name{font-family:'Fraunces',serif;font-weight:600;font-size:12.5px;}
+  .tt-name-date{font-size:10px;font-weight:500;color:var(--ink-soft);margin-top:3px;white-space:nowrap;}
+  .tracker-table th[draggable="true"]{cursor:grab;user-select:none;}
+  .tracker-table th[draggable="true"]:active{cursor:grabbing;}
+  .tracker-table th.col-dragging{opacity:.35;}
+  .tracker-table th.col-drag-over{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent);}
   .tt-badge{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;padding:3px 8px;border-radius:999px;white-space:nowrap;}
   .tt-badge.winner{background:var(--winner-soft);color:var(--winner);}
   .tt-badge.pending{background:var(--pending-soft);color:var(--pending);}
@@ -2797,23 +2802,36 @@ function updateFilterVisibilityForScope(){
 }
 
 const TRACKER_COLUMNS = [
-  ['status','Status'], ['awareness','Awareness'], ['objective','Objective'], ['problem','Problem angle'],
-  ['desire','Desire'], ['typeofad','Type of ad'], ['hook','Hook Pattern'], ['headline','Type of Headline'],
-  ['sizing','Sizing'], ['tags','Tags'], ['ctr','CTR'], ['roas','ROAS'], ['links','Links'],
-  ['page','Page'], ['editor','Editor'], ['launched','Launched'], ['adsstatus','Ads Status']
+  ['status','Status'], ['adsstatus','Ads Status'], ['awareness','Awareness'], ['objective','Objective'],
+  ['problem','Problem angle'], ['desire','Desire'], ['typeofad','Type of ad'], ['hook','Hook Pattern'],
+  ['headline','Type of Headline'], ['sizing','Sizing'], ['tags','Tags'], ['ctr','CTR'], ['roas','ROAS'],
+  ['links','Links'], ['page','Page'], ['editor','Editor'], ['launched','Launched']
 ];
+const TRACKER_COLUMN_KEYS = TRACKER_COLUMNS.map(c=>c[0]);
+const TRACKER_COLUMN_LABELS = Object.fromEntries(TRACKER_COLUMNS);
 function getHiddenCols(){
   try{ return JSON.parse(localStorage.getItem('cocoon-tracker-hidden-cols')||'[]'); }catch(e){ return []; }
 }
 function setHiddenCols(arr){
   try{ localStorage.setItem('cocoon-tracker-hidden-cols', JSON.stringify(arr)); }catch(e){}
 }
+function getColumnOrder(){
+  let order;
+  try{ order = JSON.parse(localStorage.getItem('cocoon-tracker-col-order')||'null'); }catch(e){ order = null; }
+  if(!Array.isArray(order)) order = TRACKER_COLUMN_KEYS.slice();
+  order = order.filter(k=>TRACKER_COLUMN_KEYS.includes(k));
+  TRACKER_COLUMN_KEYS.forEach(k=>{ if(!order.includes(k)) order.push(k); });
+  return order;
+}
+function setColumnOrder(arr){
+  try{ localStorage.setItem('cocoon-tracker-col-order', JSON.stringify(arr)); }catch(e){}
+}
 function renderColumnsPopover(){
   const hidden = getHiddenCols();
   const pop = document.getElementById('columns-popover');
-  pop.innerHTML = TRACKER_COLUMNS.map(([key,label])=>`
-    <label><input type="checkbox" class="col-toggle" data-col="${key}" ${hidden.includes(key)?'':'checked'} /> ${escapeHtml(label)}</label>
-  `).join('') + `<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px;"><button type="button" class="btn-link" id="columns-reset" style="font-size:12px;">Ipakita lahat</button></div>`;
+  pop.innerHTML = getColumnOrder().map(key=>`
+    <label><input type="checkbox" class="col-toggle" data-col="${key}" ${hidden.includes(key)?'':'checked'} /> ${escapeHtml(TRACKER_COLUMN_LABELS[key])}</label>
+  `).join('') + `<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:6px;display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn-link" id="columns-reset" style="font-size:12px;">Ipakita lahat</button><button type="button" class="btn-link" id="columns-reset-order" style="font-size:12px;">Ibalik sa dating ayos</button></div>`;
   pop.querySelectorAll('.col-toggle').forEach(cb=>{
     cb.addEventListener('change', ()=>{
       let h = getHiddenCols();
@@ -2827,6 +2845,53 @@ function renderColumnsPopover(){
     setHiddenCols([]);
     renderColumnsPopover();
     renderEntries();
+  });
+  document.getElementById('columns-reset-order').addEventListener('click', ()=>{
+    setColumnOrder(TRACKER_COLUMN_KEYS.slice());
+    renderColumnsPopover();
+    renderEntries();
+  });
+}
+function wireColumnDragAndDrop(table){
+  if(!table) return;
+  const headerRow = table.querySelector('thead tr');
+  if(!headerRow) return;
+  let dragKey = null;
+  headerRow.querySelectorAll('th[draggable="true"]').forEach(th=>{
+    th.addEventListener('dragstart', (ev)=>{
+      dragKey = th.dataset.col;
+      th.classList.add('col-dragging');
+      if(ev.dataTransfer){
+        ev.dataTransfer.effectAllowed = 'move';
+        try{ ev.dataTransfer.setData('text/plain', dragKey); }catch(e){}
+      }
+    });
+    th.addEventListener('dragend', ()=>{
+      th.classList.remove('col-dragging');
+      headerRow.querySelectorAll('th').forEach(t=>t.classList.remove('col-drag-over'));
+    });
+    th.addEventListener('dragover', (ev)=>{
+      if(!dragKey || th.dataset.col===dragKey) return;
+      ev.preventDefault();
+      if(ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
+      th.classList.add('col-drag-over');
+    });
+    th.addEventListener('dragleave', ()=>{ th.classList.remove('col-drag-over'); });
+    th.addEventListener('drop', (ev)=>{
+      ev.preventDefault();
+      th.classList.remove('col-drag-over');
+      const targetKey = th.dataset.col;
+      if(!dragKey || dragKey===targetKey) return;
+      const order = getColumnOrder();
+      const from = order.indexOf(dragKey);
+      const to = order.indexOf(targetKey);
+      if(from===-1||to===-1) return;
+      order.splice(from,1);
+      order.splice(to,0,dragKey);
+      setColumnOrder(order);
+      dragKey = null;
+      renderEntries();
+    });
   });
 }
 document.getElementById('columns-btn').addEventListener('click', (ev)=>{
@@ -2894,6 +2959,7 @@ async function renderEntries(){
   }
 
   holder.innerHTML = '';
+  const colOrder = getColumnOrder();
   const rowsHtml = list.map((e,idx)=>{
     const perf = e.performance;
     const daysLaunched = e.launched ? daysSince(e.date_launched) : null;
@@ -2913,46 +2979,53 @@ async function renderEntries(){
       <span class="tt-progress-label">${stageLabel}</span>
     </div>`;
     const awarenessShort = e.market_awareness ? labelFor(AWARENESS,e.market_awareness).split(' — ')[0] : '';
-    return `
-      <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
-        <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div></td>
-        <td class="col-status">${stageTagsHtml}</td>
-        <td class="col-adsstatus"><span class="tt-badge ${badgeClass}" style="cursor:pointer;" title="I-click para baguhin ang tag" onclick="event.stopPropagation(); cycleWinnerStatus('${e.id}','${e.winner_status||'pending'}')">${finalBadgeLabel}</span></td>
-        <td class="col-awareness">${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>
-        <td class="col-objective">${e.campaign_objective?escapeHtml(e.campaign_objective):'—'}</td>
-        <td class="col-problem">${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>
-        <td class="col-desire">${e.desire?escapeHtml(e.desire):'—'}</td>
-        <td class="col-typeofad">${e.type_of_ad?`<span class="tt-truncate" title="${escapeHtml(e.type_of_ad)}">${escapeHtml(e.type_of_ad)}</span>`:'—'}</td>
-        <td class="col-hook">${(e.hook_patterns&&e.hook_patterns.length)?`<span class="tt-truncate" title="${escapeHtml(e.hook_patterns.join(', '))}">${escapeHtml(e.hook_patterns.join(', '))}</span>`:'—'}</td>
-        <td class="col-headline">${e.type_of_headline?`<span class="tt-truncate" title="${escapeHtml(e.type_of_headline)}">${escapeHtml(e.type_of_headline)}</span>`:'—'}</td>
-        <td class="col-sizing">${e.sizing?escapeHtml(e.sizing):'—'}</td>
-        <td class="col-tags">${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>
-        <td class="col-ctr">${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>
-        <td class="col-roas">${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>
-        <td class="col-links">${[
+    const nameDateLabel = (e.launched && e.date_launched) ? `Launched ${e.date_launched}` : ((e.submitted_at||'').slice(0,10) ? `Logged ${(e.submitted_at||'').slice(0,10)}` : '');
+    const cellsMap = {
+      status: `<td class="col-status">${stageTagsHtml}</td>`,
+      adsstatus: `<td class="col-adsstatus"><span class="tt-badge ${badgeClass}" style="cursor:pointer;" title="I-click para baguhin ang tag" onclick="event.stopPropagation(); cycleWinnerStatus('${e.id}','${e.winner_status||'pending'}')">${finalBadgeLabel}</span></td>`,
+      awareness: `<td class="col-awareness">${awarenessShort?`<span class="tt-truncate" title="${escapeHtml(labelFor(AWARENESS,e.market_awareness))}">${escapeHtml(awarenessShort)}</span>`:'—'}</td>`,
+      objective: `<td class="col-objective">${e.campaign_objective?escapeHtml(e.campaign_objective):'—'}</td>`,
+      problem: `<td class="col-problem">${e.problem_text?`<span class="tt-truncate" title="${escapeHtml(e.problem_text)}">${escapeHtml(e.problem_text)}</span>`:'—'}</td>`,
+      desire: `<td class="col-desire">${e.desire?escapeHtml(e.desire):'—'}</td>`,
+      typeofad: `<td class="col-typeofad">${e.type_of_ad?`<span class="tt-truncate" title="${escapeHtml(e.type_of_ad)}">${escapeHtml(e.type_of_ad)}</span>`:'—'}</td>`,
+      hook: `<td class="col-hook">${(e.hook_patterns&&e.hook_patterns.length)?`<span class="tt-truncate" title="${escapeHtml(e.hook_patterns.join(', '))}">${escapeHtml(e.hook_patterns.join(', '))}</span>`:'—'}</td>`,
+      headline: `<td class="col-headline">${e.type_of_headline?`<span class="tt-truncate" title="${escapeHtml(e.type_of_headline)}">${escapeHtml(e.type_of_headline)}</span>`:'—'}</td>`,
+      sizing: `<td class="col-sizing">${e.sizing?escapeHtml(e.sizing):'—'}</td>`,
+      tags: `<td class="col-tags">${(e.tags&&e.tags.length)?e.tags.slice(0,2).map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join(''):'—'}</td>`,
+      ctr: `<td class="col-ctr">${(perf&&perf.review&&perf.review.ctr)?escapeHtml(perf.review.ctr):'—'}</td>`,
+      roas: `<td class="col-roas">${(perf&&perf.review&&perf.review.roas)?escapeHtml(perf.review.roas):'—'}</td>`,
+      links: `<td class="col-links">${[
           e.concept_link?`<a href="${escapeHtml(e.concept_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📄 Concept</a>`:'',
           e.output_link?`<a href="${escapeHtml(e.output_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">🎬 Output</a>`:'',
           e.adset_link?`<a href="${escapeHtml(e.adset_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📊 Adset</a>`:'',
           e.ads_manager_link?`<a href="${escapeHtml(e.ads_manager_link)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr</a>`:'',
           e.ads_manager_link_2?`<a href="${escapeHtml(e.ads_manager_link_2)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr 2</a>`:'',
           e.ads_manager_link_3?`<a href="${escapeHtml(e.ads_manager_link_3)}" target="_blank" rel="noopener noreferrer" class="tt-link-chip" onclick="event.stopPropagation()">📈 Ads Mgr 3</a>`:''
-        ].filter(Boolean).join('') || '—'}</td>
-        <td class="col-page">${escapeHtml(pageLabel(e.page)||'—')}</td>
-        <td class="col-editor">${escapeHtml(e.editor||'—')}</td>
-        <td class="col-launched">${e.date_launched?escapeHtml(e.date_launched):'—'}</td>
+        ].filter(Boolean).join('') || '—'}</td>`,
+      page: `<td class="col-page">${escapeHtml(pageLabel(e.page)||'—')}</td>`,
+      editor: `<td class="col-editor">${escapeHtml(e.editor||'—')}</td>`,
+      launched: `<td class="col-launched">${e.date_launched?escapeHtml(e.date_launched):'—'}</td>`
+    };
+    const orderedCellsHtml = colOrder.map(key=>cellsMap[key]||'').join('');
+    return `
+      <tr data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(idx*0.03,0.35)}s;">
+        <td class="tt-name-cell"><div class="tt-name">${bColor?`<span class="brand-dot" style="background:${bColor}"></span>`:''}${escapeHtml(e.ad_name)}</div>${nameDateLabel?`<div class="tt-name-date">${escapeHtml(nameDateLabel)}</div>`:''}</td>
+        ${orderedCellsHtml}
       </tr>`;
   }).join('');
+
+  const headerCellsHtml = colOrder.map(key=>`<th class="col-${key}" draggable="true" data-col="${key}" title="I-drag para ilipat ang column">${escapeHtml(TRACKER_COLUMN_LABELS[key])}</th>`).join('');
 
   holder.innerHTML = `
     <div class="tracker-table-wrap">
       <table class="tracker-table" data-hide="${getHiddenCols().join(' ')}">
         <thead><tr>
-          <th>Ad name</th><th class="col-status">Status</th><th class="col-adsstatus">Ads Status</th><th class="col-awareness">Awareness</th><th class="col-objective">Objective</th><th class="col-problem">Problem angle</th><th class="col-desire">Desire</th><th class="col-typeofad">Type of ad</th><th class="col-hook">Hook Pattern</th><th class="col-headline">Type of Headline</th><th class="col-sizing">Sizing</th><th class="col-tags">Tags</th>
-          <th class="col-ctr">CTR</th><th class="col-roas">ROAS</th><th class="col-links">Links</th><th class="col-page">Page</th><th class="col-editor">Editor</th><th class="col-launched">Launched</th>
+          <th>Ad name</th>${headerCellsHtml}
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>`;
+  wireColumnDragAndDrop(holder.querySelector('.tracker-table'));
 }
 
 function wireInlineEditStrategySelects(container, e){
